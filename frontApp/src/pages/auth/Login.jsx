@@ -26,7 +26,15 @@ const Login = () => {
         const result = await login(formData)
 
         if(result.success){
-            navigate("/")
+            const rol = localStorage.getItem("rol")
+
+            if(rol === "nadador") {
+                navigate("/nadador")
+            }else if (rol === "profesor"){
+                navigate("/profesor")
+            } else{
+                navigate("/")
+            }
         }else{
             setError(result.message)
         }

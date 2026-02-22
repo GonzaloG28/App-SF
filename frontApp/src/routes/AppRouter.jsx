@@ -3,8 +3,11 @@ import Home from '../pages/Home'
 import Login from '../pages/auth/Login'
 import ProtectedRouter from './ProtectedRoute'
 
+import ProfesorLayout from '../layouts/ProfesorLayout'
+import Nadadores from '../pages/profesor/Nadadores'
 import DashboardNadador from '../pages/nadador/DashboardNadador'
 import DashboardProfesor from '../pages/profesor/DashboardProfesor'
+import Entrenamientos from '../pages/profesor/Entrenamientos'
 
 const AppRouter = () => {
     return (
@@ -32,10 +35,14 @@ const AppRouter = () => {
                 path='/profesor'
                 element={
                     <ProtectedRouter allowedRoles={["profesor"]}>
-                        <DashboardProfesor />
+                        <ProfesorLayout />
                     </ProtectedRouter>
                 }
-            />
+            >
+                <Route index element={<DashboardProfesor />} />
+                <Route path="nadadores" element={<Nadadores />} />
+                <Route path="entrenamientos" element={<Entrenamientos />} />    
+            </Route>
         </Routes>
     )
 }
