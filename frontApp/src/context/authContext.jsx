@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react"
 import { loginRequest } from "../api/auth.api"
+import { useNavigate } from "react-router-dom"
 
 export const AuthContext = createContext()
 
@@ -42,12 +43,15 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
+    const navigate = useNavigate()
+
     const logout = () => {
         localStorage.removeItem("token")
         localStorage.removeItem("rol")
 
         setUser(null)
         setIsAuthenticated(false)
+        navigate("/login")
     }
 
     return(

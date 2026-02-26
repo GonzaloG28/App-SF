@@ -1,8 +1,13 @@
 import bcrypt from "bcrypt"
+import mongoose from "mongoose"
 import User from "../models/User.js"
 import Nadador from "../models/Nadadores.js"
 
 export const crearNadador = async (req, res) => {
+
+    const session = await mongoose.startSession()
+    session.startTransaction()
+
     try {
         const {
             nombre,
@@ -15,11 +20,14 @@ export const crearNadador = async (req, res) => {
         } = req.body;
 
         // Verificar si ya existe usuario con ese correo
-        const existeUsuario = await User.findOne({ correo });
-        if (existeUsuario) {
-            return res.status(400).json({
-                message: "Ya existe un usuario con ese correo"
-            });
+
+        const existeUsuario = await User.findOne({ correo }).session(session)
+            if (existeUsuario) {
+                await session.abortTransaction()
+                session.endSession()
+                return res.status(400).json({
+                    message: "Ya existe un usuario con ese correo"
+                })
         }
 
         // Encriptar RUT como contraseña inicial
@@ -27,38 +35,36 @@ export const crearNadador = async (req, res) => {
         const passwordHash = await bcrypt.hash(rut, salt);
 
         // Crear usuario nadador
-        const nuevoUser = new User({
+        const nuevoUser = await User.create([{
             nombre,
             correo,
             password: passwordHash,
             rol: "nadador",
             debeCambiarPassword: true
-        });
+        }], { session })
 
-        const userGuardado = await nuevoUser.save();
-
-        // Crear documento Nadador vinculado al user
-        const nuevoNadador = new Nadador({
-            user: userGuardado._id,
+        await Nadador.create([{
+            user: nuevoUser[0]._id,
             fechaNacimiento,
             peso,
             altura,
             rut,
             pruebasEspecialidad
-        });
+        }], { session })
 
-        await nuevoNadador.save();
+         await session.commitTransaction()
+        session.endSession()
 
-        res.status(201).json({
-            message: "Nadador creado correctamente",
-            userId: userGuardado._id
-        });
+        res.status(201).json({ message: "Nadador creado correctamente",});
 
     } catch (error) {
+        await session.abortTransaction()
+        session.endSession()
+
         res.status(500).json({
-            message: "Error al crear nadador",
-            error: error.message
-        });
+        message: "Error al crear nadador",
+        error: error.message
+            });
     }
 };
 
@@ -158,16 +164,32 @@ export const actualizarMiPerfil = async (req, res) => {
 };
 
 export const obtenerNadadores = async (req, res) =>{
-    try{
-        const nadadores = await Nadador.find()
-        .populate("user", "nombre correo rol")
-        res.status(200).json(nadadores)
-    }catch(error){
-        res.status(500).json({
-            message: "Error con el servidor",
-            error: error.message
-        })
-    }
+    try {
+    const { categoria, nombre } = req.query
+
+    const nadadores = await Nadador.find()
+      .populate("user", "nombre correo rol")
+
+    const filtrados = nadadores.filter(n => {
+      const coincideCategoria = categoria
+        ? n.categoria === categoria
+        : true
+
+      const coincideNombre = nombre
+        ? n.user.nombre.toLowerCase().includes(nombre.toLowerCase())
+        : true
+
+      return coincideCategoria && coincideNombre
+    })
+
+    res.status(200).json(filtrados)
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Error con el servidor",
+      error: error.message
+    })
+  }
 }
 
 
@@ -189,19 +211,26 @@ export const obtenerNadadorPorId = async (req, res) =>{
 }
 
 
-export const eliminarNadador = async (req, res) =>{
-    try{
-        const nadador = await Nadador.findByIdAndDelete(req.params.id)
+export const eliminarNadador = async (req, res) => {
+  try {
+    const { id } = req.params
 
-        if(!nadador){
-            return res.status(404).json({ message: "Nadador no encontrado"})
-        }
+    const nadador = await Nadador.findById(id)
 
-        res.status(200).json({ message: "Nadador eliminado correctamente"})
-    }catch(error){
-        res.status(500).json({
-            message: "Error con el servidor",
-            error: error.message
-        })
+    if (!nadador) {
+      return res.status(404).json({ message: "Nadador no encontrado" })
     }
+
+    await Nadador.findByIdAndDelete(id)
+
+    await User.findByIdAndDelete(nadador.user)
+
+    res.status(200).json({ message: "Nadador eliminado correctamente" })
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al eliminar nadador",
+      error: error.message
+    })
+  }
 }

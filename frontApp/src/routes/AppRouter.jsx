@@ -8,6 +8,7 @@ import Nadadores from '../pages/profesor/Nadadores'
 import DashboardNadador from '../pages/nadador/DashboardNadador'
 import DashboardProfesor from '../pages/profesor/DashboardProfesor'
 import Entrenamientos from '../pages/profesor/Entrenamientos'
+import NadadorForm from '../pages/profesor/NadadorForm'
 
 const AppRouter = () => {
     return (
@@ -41,6 +42,8 @@ const AppRouter = () => {
             >
                 <Route index element={<DashboardProfesor />} />
                 <Route path="nadadores" element={<Nadadores />} />
+                <Route path="nadadores/nuevo" element={<NadadorForm />} />
+                <Route path="nadadores/editar/:id" element={<NadadorForm />} />
                 <Route path="entrenamientos" element={<Entrenamientos />} />    
             </Route>
         </Routes>
