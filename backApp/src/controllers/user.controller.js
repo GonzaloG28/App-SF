@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken"
 
 export const registerProfesor = async (req, res) =>{
     try{
-        const {nombre, correo, password} = req.body
+        const {nombre, apellido, correo, password} = req.body
 
         const existeUsuario = await User.findOne({correo})
         if (existeUsuario){
@@ -17,6 +17,7 @@ export const registerProfesor = async (req, res) =>{
 
         const nuevoUsuario = new User({
             nombre,
+            apellido,
             correo,
             password: passwordHash,
             rol: "profesor"
@@ -29,7 +30,7 @@ export const registerProfesor = async (req, res) =>{
         })
 
     } catch (error){
-        res.status(500).json({message: "Error con el servidor", error})
+        res.status(500).json({message: "Error con el servidor", message: error.message})
     }
 }
 

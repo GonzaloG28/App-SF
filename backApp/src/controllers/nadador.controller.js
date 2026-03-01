@@ -11,6 +11,7 @@ export const crearNadador = async (req, res) => {
     try {
         const {
             nombre,
+            apellido,
             correo,
             fechaNacimiento,
             peso,
@@ -37,6 +38,7 @@ export const crearNadador = async (req, res) => {
         // Crear usuario nadador
         const nuevoUser = await User.create([{
             nombre,
+            apellido,
             correo,
             password: passwordHash,
             rol: "nadador",
@@ -89,6 +91,7 @@ export const actualizarNadadorProfesor = async (req, res) => {
         // Campos permitidos en User
         const camposPermitidosUser = [
             "nombre",
+            "apellido",
             "correo"
         ];
 
@@ -168,7 +171,7 @@ export const obtenerNadadores = async (req, res) =>{
     const { categoria, nombre } = req.query
 
     const nadadores = await Nadador.find()
-      .populate("user", "nombre correo rol")
+      .populate("user", "nombre apellido correo rol")
 
     const filtrados = nadadores.filter(n => {
       const coincideCategoria = categoria

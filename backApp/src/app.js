@@ -6,6 +6,9 @@ import connectDB from "./config/db.js"
 import nadadorRoutes from "./routes/nadador.routes.js"
 import authRoutes from "./routes/auth.routes.js";
 
+import competenciaRoutes from "./routes/competencia.routes.js";
+import pruebaRoutes from "./routes/prueba.routes.js";
+
 
 const app = express()
 // conexion mongo
@@ -18,6 +21,8 @@ app.use(express.json())
 //rutas oficiales
 app.use("/api/auth", authRoutes)
 app.use("/api/nadadores", nadadorRoutes)
+app.use("/api/competencias", competenciaRoutes);
+app.use("/api/pruebas", pruebaRoutes);
 
 //ruta de prueba
 app.get("/", (req, res) => {
