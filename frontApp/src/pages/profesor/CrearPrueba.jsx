@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { createPrueba } from "../../api/pruebas.api";
 
 const CrearPrueba = () => {
-  const { competenciaId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -20,8 +20,8 @@ const CrearPrueba = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createPrueba(competenciaId, form);
-      navigate(`/profesor/competencias/${competenciaId}/pruebas`);
+      await createPrueba(id, form);
+      navigate(`/profesor/competencia/${id}/pruebas`);
     } catch (error) {
       console.error(error);
       alert("Error al crear prueba");

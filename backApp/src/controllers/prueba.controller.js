@@ -64,11 +64,19 @@ export const listarPruebasPorCompetencia = async (req, res) => {
   try {
     const { competenciaId } = req.params;
 
+    const competencia = await Competencia.findById(competenciaId);
+
+    if (!competencia) {
+      return res.status(404).json({ message: "Competencia no encontrada" });
+    }
+
     const pruebas = await Prueba.find({ competencia: competenciaId })
-      .sort({ tiempoNumerico: 1 }); // menor tiempo primero
+      .sort({ tiempoNumerico: 1 });
 
-    res.json(pruebas);
-
+    res.json({
+      pruebas,
+      nadadorId: competencia.nadador
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

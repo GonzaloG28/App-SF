@@ -56,8 +56,8 @@ const AppRouter = () => {
                 <Route path="/profesor/nadador/:id/competencias/nuevo" element={<CrearCompetencia />} />
 
                 {/* Pruebas */}
-                <Route path="/profesor/competencias/:id/pruebas" element={<PruebasList />} />
-                <Route path="/profesor/competencias/:id/pruebas/nuevo" element={<CrearPrueba />} />
+                <Route path="/profesor/competencia/:id/pruebas" element={<PruebasList />} />
+                <Route path="/profesor/competencia/:id/pruebas/nuevo" element={<CrearPrueba />} />
                 
                 <Route path="entrenamientos" element={<Entrenamientos />} />    
             </Route>
