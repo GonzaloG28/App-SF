@@ -6,6 +6,10 @@ const nadadorSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+    apellido:{
+        type: String,
+        required: true
+    },
     fechaNacimiento:{
         type: Date,
         required: true

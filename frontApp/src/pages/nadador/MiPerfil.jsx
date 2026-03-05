@@ -1,39 +1,28 @@
-import { useParams, Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { getNadadorById } from "../../api/profesor.api"
+import api from "../../api/axios" // Tu instancia de axios
 import { 
-  User, 
-  ArrowLeft, 
-  Trophy, 
-  BarChart3, 
-  Calendar, 
-  Weight, 
-  Ruler, 
-  Fingerprint, 
-  Waves, 
-  Loader2, 
-  ExternalLink 
+  User, Trophy, BarChart3, Calendar, Weight, 
+  Ruler, Fingerprint, Waves, Loader2, ExternalLink 
 } from "lucide-react"
 
-const NadadorProfile = () => {
-  const { id } = useParams()
-
+const MiPerfil = () => {
+  // 1. Obtenemos el perfil del nadador logueado
   const {
     data: nadador,
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: ["nadador", id],
-    queryFn: () => getNadadorById(id).then(res => res.data),
-    enabled: !!id,
+    queryKey: ["miPerfilNadador"],
+    queryFn: () => api.get("/nadadores/perfil").then(res => res.data), // Ajusta según tu ruta de backend
   })
 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 text-slate-400">
         <Loader2 size={48} className="animate-spin text-blue-600 mb-4" />
-        <p className="font-black text-[10px] uppercase tracking-[0.4em]">Sincronizando Expediente...</p>
+        <p className="font-black text-[10px] uppercase tracking-[0.4em]">Cargando tu Expediente...</p>
       </div>
     )
   }
@@ -41,9 +30,8 @@ const NadadorProfile = () => {
   if (isError) {
     return (
       <div className="max-w-2xl mx-auto mt-20 bg-red-50 border border-red-100 p-8 rounded-[2.5rem] text-center">
-        <h2 className="text-red-800 font-black mb-2">Error de Sistema</h2>
-        <p className="text-red-600 text-sm">{error.message}</p>
-        <Link to="/profesor/nadadores" className="mt-6 inline-block text-red-800 font-bold underline">Volver a la lista</Link>
+        <h2 className="text-red-800 font-black mb-2">Error de Sincronización</h2>
+        <p className="text-red-600 text-sm">{error.message || "No se pudo cargar tu perfil."}</p>
       </div>
     )
   }
@@ -51,27 +39,21 @@ const NadadorProfile = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       
-      {/* NAVEGACIÓN SUPERIOR */}
+      {/* HEADER DE BIENVENIDA */}
       <div className="flex items-center justify-between">
-        <Link 
-          to="/profesor/nadadores" 
-          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 font-bold text-xs uppercase tracking-widest transition-colors group"
-        >
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          Volver al Equipo
-        </Link>
+        <h2 className="text-slate-400 font-black text-xs uppercase tracking-[0.3em]">
+          Información de Atleta
+        </h2>
         <div className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-          Perfil Verificado ÑSF
+          Perfil Oficial ÑSF
         </div>
       </div>
 
-      {/* HEADER DE IDENTIDAD */}
+      {/* CARD DE IDENTIDAD (DARK MODE STYLE) */}
       <div className="bg-[#0f172a] rounded-[3rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
-        {/* Decoración de fondo */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] -mr-32 -mt-32"></div>
         
         <div className="relative flex flex-col md:flex-row items-center gap-8">
-          {/* Avatar Pro */}
           <div className="w-32 h-32 rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-5xl font-black shadow-xl border-4 border-white/10">
             {nadador.user?.nombre?.charAt(0)}
           </div>
@@ -92,77 +74,67 @@ const NadadorProfile = () => {
         </div>
       </div>
 
-      {/* GRID DE MÉTRICAS BIOMÉTRICAS */}
+      {/* GRID DE MÉTRICAS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Calendar} title="Edad Actual" value={`${nadador.edad} Años`} color="blue" />
-        <StatCard icon={Weight} title="Peso Corporal" value={`${nadador.peso} kg`} color="indigo" />
+        <StatCard icon={Calendar} title="Edad" value={`${nadador.edad} Años`} color="blue" />
+        <StatCard icon={Weight} title="Peso" value={`${nadador.peso} kg`} color="indigo" />
         <StatCard icon={Ruler} title="Estatura" value={`${nadador.altura} cm`} color="emerald" />
-        <StatCard icon={Trophy} title="Estado" value="Activo" color="amber" />
+        <StatCard icon={Trophy} title="Nivel" value="Federado" color="amber" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        
         {/* ESPECIALIDADES */}
         <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
               <Waves size={20} />
             </div>
-            <h3 className="font-black text-slate-800 uppercase tracking-tight">Pruebas de Especialidad</h3>
+            <h3 className="font-black text-slate-800 uppercase tracking-tight">Mis Especialidades</h3>
           </div>
 
           <div className="flex flex-wrap gap-3">
             {nadador.pruebasEspecialidad?.length > 0 ? (
               nadador.pruebasEspecialidad.map((prueba, index) => (
-                <div
-                  key={index}
-                  className="bg-slate-50 border border-slate-100 text-slate-600 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:border-blue-200 hover:text-blue-600 transition-all cursor-default"
-                >
+                <div key={index} className="bg-slate-50 border border-slate-100 text-slate-600 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest">
                   {prueba}
                 </div>
               ))
             ) : (
-              <p className="text-slate-400 text-sm italic">Sin especialidades registradas.</p>
+              <p className="text-slate-400 text-sm italic">Pendiente de asignación por el coach.</p>
             )}
           </div>
         </div>
 
-        {/* ACCIONES RÁPIDAS / NAVEGACIÓN */}
+        {/* ACCESO A MIS DATOS */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4">Análisis de Datos</h3>
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4">Progreso Deportivo</h3>
           
-          <Link
-            to={`/profesor/nadador/${id}/competencias`}
-            className="group flex items-center justify-between bg-white hover:bg-blue-600 p-6 rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300"
-          >
+          <Link to="/nadador/competencias" className="group flex items-center justify-between bg-white hover:bg-blue-600 p-6 rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-white/20 group-hover:text-white transition-colors">
                 <Trophy size={20} />
               </div>
-              <span className="font-black text-slate-700 group-hover:text-white text-sm uppercase tracking-tight">Competencias</span>
+              <span className="font-black text-slate-700 group-hover:text-white text-sm uppercase tracking-tight">Mis Logros</span>
             </div>
             <ExternalLink size={18} className="text-slate-300 group-hover:text-white transition-colors" />
           </Link>
 
-          <Link
-            to={`/profesor/nadador/${id}/ranking`}
-            className="group flex items-center justify-between bg-white hover:bg-amber-500 p-6 rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300"
-          >
+          <Link to="/nadador/mis-tiempos" className="group flex items-center justify-between bg-white hover:bg-amber-500 p-6 rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-white/20 group-hover:text-white transition-colors">
                 <BarChart3 size={20} />
               </div>
-              <span className="font-black text-slate-700 group-hover:text-white text-sm uppercase tracking-tight">Ranking Pruebas</span>
+              <span className="font-black text-slate-700 group-hover:text-white text-sm uppercase tracking-tight">Ranking Personal</span>
             </div>
             <ExternalLink size={18} className="text-slate-300 group-hover:text-white transition-colors" />
           </Link>
         </div>
-
       </div>
     </div>
   )
 }
 
+// Subcomponente StatCard (igual al anterior)
 const StatCard = ({ title, value, icon: Icon, color }) => {
   const themes = {
     blue: "text-blue-600 bg-blue-50",
@@ -170,9 +142,8 @@ const StatCard = ({ title, value, icon: Icon, color }) => {
     emerald: "text-emerald-600 bg-emerald-50",
     amber: "text-amber-600 bg-amber-50"
   }
-  
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
       <div className={`w-10 h-10 ${themes[color]} rounded-xl flex items-center justify-center mb-4`}>
         <Icon size={20} />
       </div>
@@ -182,4 +153,4 @@ const StatCard = ({ title, value, icon: Icon, color }) => {
   )
 }
 
-export default NadadorProfile
+export default MiPerfil

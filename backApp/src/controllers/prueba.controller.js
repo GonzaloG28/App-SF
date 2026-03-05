@@ -5,34 +5,35 @@ import Competencia from "../models/Competencia.js";
 const convertirTiempoANumero = (tiempo) => {
   if (!tiempo) return 0;
 
-  const tiempoLimpio = tiempo.trim();
+  // Limpiamos espacios y cambiamos comas por puntos por si acaso
+  const tiempoLimpio = tiempo.toString().trim().replace(",", ".");
+
+  let totalSegundos = 0;
 
   if (tiempoLimpio.includes(":")) {
-    const [minStr, segStr] = tiempoLimpio.split(":");
-
-    const minutos = Number(minStr);
-    const segundos = Number(segStr);
-
-    if (isNaN(minutos) || isNaN(segundos)) {
-      throw new Error("Formato de tiempo inválido");
-    }
-
-    return minutos * 60 + segundos;
+    // Formato 1:05.32
+    const [minutos, resto] = tiempoLimpio.split(":");
+    totalSegundos = Number(minutos) * 60 + Number(resto);
+  } else {
+    // Formato 28.45
+    totalSegundos = Number(tiempoLimpio);
   }
 
-  const soloSegundos = Number(tiempoLimpio);
-
-  if (isNaN(soloSegundos)) {
-    throw new Error("Formato de tiempo inválido");
+  if (isNaN(totalSegundos)) {
+    console.error("Fallo al convertir tiempo:", tiempoLimpio);
+    throw new Error("Formato de tiempo inválido. Use 1:05.32 o 28.45");
   }
 
-  return soloSegundos;
+  return totalSegundos;
 };
+
+
 
 export const crearPrueba = async (req, res) => {
   try {
     const { competenciaId } = req.params;
-    const { estilo, distancia, tiempo, parciales } = req.body;
+    // ERROR AQUÍ: Faltaba extraer 'fecha' del body
+    const { estilo, distancia, tiempo, parciales, fecha } = req.body; 
 
     const competencia = await Competencia.findById(competenciaId);
     if (!competencia) {
@@ -46,15 +47,22 @@ export const crearPrueba = async (req, res) => {
       estilo,
       distancia,
       tiempo,
-      tiempoNumerico,
-      parciales
+      tiempoNumerico, // Ahora sí se guardará en el modelo
+      parciales,
+      fecha // Ahora sí está definida porque la extrajimos del body
     });
 
-    await nuevaPrueba.save();
+    const pruebaGuardada = await nuevaPrueba.save();
 
-    res.status(201).json(nuevaPrueba);
+    // VITAL: Si tu modelo de Competencia tiene un array de pruebas, hay que pushearla
+    await Competencia.findByIdAndUpdate(competenciaId, {
+      $push: { pruebas: pruebaGuardada._id }
+    });
+
+    res.status(201).json(pruebaGuardada);
 
   } catch (error) {
+    console.error("Error en crearPrueba:", error); // Para que veas el error real en tu consola
     res.status(500).json({ message: error.message });
   }
 };
@@ -162,5 +170,41 @@ export const rankingIndividual = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const eliminarPrueba = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Buscar y eliminar la prueba por su ID
+    const pruebaEliminada = await Prueba.findByIdAndDelete(id);
+
+    if (!pruebaEliminada) {
+      return res.status(404).json({ message: "Prueba no encontrada" });
+    }
+
+    // 2. Limpiar la referencia en la Competencia (Altamente recomendado)
+    // Asumiendo que tu modelo 'Prueba' guarda el ID de la 'competencia'
+    // y tu modelo 'Competencia' tiene un array [{ type: ObjectId, ref: 'Prueba' }]
+    if (pruebaEliminada.competencia) {
+      await Competencia.findByIdAndUpdate(
+        pruebaEliminada.competencia,
+        { $pull: { pruebas: id } }, // $pull saca el ID del array
+        { new: true }
+      );
+    }
+
+    res.status(200).json({ 
+      message: "Prueba eliminada exitosamente",
+      pruebaId: id 
+    });
+
+  } catch (error) {
+    console.error("Error al eliminar la prueba:", error);
+    res.status(500).json({ 
+      message: "Error en el servidor al intentar eliminar la prueba",
+      error: error.message 
+    });
   }
 };

@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken"
 
 export const registerProfesor = async (req, res) =>{
     try{
-        const {nombre, apellido, correo, password} = req.body
+        const {nombre, correo, password} = req.body
 
         const existeUsuario = await User.findOne({correo})
         if (existeUsuario){
@@ -17,7 +17,6 @@ export const registerProfesor = async (req, res) =>{
 
         const nuevoUsuario = new User({
             nombre,
-            apellido,
             correo,
             password: passwordHash,
             rol: "profesor"
@@ -68,3 +67,22 @@ export const loginUser = async (req, res) => {
         res.status(500).json({message: "Error en el servidor", error: error.message})
     }
 }
+
+export const cambiarPassword = async (req, res) => {
+    try {
+        const { passwordNueva } = req.body;
+        const userId = req.user._id; 
+
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(passwordNueva, salt);
+
+        await User.findByIdAndUpdate(userId, {
+            password: passwordHash,
+            debeCambiarPassword: false
+        });
+
+        res.json({ message: "Contraseña actualizada correctamente" });
+    } catch (error) {
+        res.status(500).json({ message: "Error al cambiar la contraseña", error: error.message });
+    }
+};

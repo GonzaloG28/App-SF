@@ -38,7 +38,6 @@ export const crearNadador = async (req, res) => {
         // Crear usuario nadador
         const nuevoUser = await User.create([{
             nombre,
-            apellido,
             correo,
             password: passwordHash,
             rol: "nadador",
@@ -47,6 +46,7 @@ export const crearNadador = async (req, res) => {
 
         await Nadador.create([{
             user: nuevoUser[0]._id,
+            apellido,
             fechaNacimiento,
             peso,
             altura,
@@ -69,6 +69,23 @@ export const crearNadador = async (req, res) => {
             });
     }
 };
+
+export const obtenerMiPerfil = async (req, res) => {
+    try {
+        // req.user._id viene del verificarToken
+        const nadador = await Nadador.findOne({ user: req.user._id })
+            .populate("user", "nombre correo rol");
+
+        if (!nadador) {
+            return res.status(404).json({ message: "Perfil no encontrado" });
+        }
+
+        res.status(200).json(nadador);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener perfil", error: error.message });
+    }
+};
+
 
 export const actualizarNadadorProfesor = async (req, res) => {
     try {

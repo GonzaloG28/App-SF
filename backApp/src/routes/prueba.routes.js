@@ -1,5 +1,5 @@
 import express from "express";
-import { crearPrueba, listarPruebasPorCompetencia, obtenerPruebasDisponibles, rankingIndividual } from "../controllers/prueba.controller.js";
+import { crearPrueba, listarPruebasPorCompetencia, obtenerPruebasDisponibles, rankingIndividual, eliminarPrueba } from "../controllers/prueba.controller.js";
 
 import { verificarRol } from "../middleware/roleMiddleware.js";
 import { verificarToken } from "../middleware/authMiddleware.js";
@@ -30,6 +30,8 @@ router.get(
   "/:competenciaId", verificarToken,
   listarPruebasPorCompetencia
 );
+
+router.delete("/:id",verificarToken, verificarRol("profesor"), eliminarPrueba);
 
 
 export default router;

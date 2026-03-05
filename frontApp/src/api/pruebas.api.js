@@ -16,3 +16,6 @@ export const getRankingIndividual = (nadadorId, { estilo, distancia, orden = "as
 // Obtener pruebas disponibles para un nadador
 export const getPruebasDisponibles = (nadadorId) =>
   api.get(`/pruebas/disponibles/${nadadorId}`);
+
+export const deletePrueba = (pruebaId) => 
+  api.delete(`/pruebas/${pruebaId}`);
