@@ -27,7 +27,11 @@ connectDB()
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //middlewares globales
-app.use(cors())
+app.use(cors({
+    origin: ["https://app-nsf.vercel.app/", "http://localhost:5173"], 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+}))
 app.use(express.json())
 
 //rutas oficiales
