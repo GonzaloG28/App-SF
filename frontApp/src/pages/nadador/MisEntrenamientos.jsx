@@ -4,7 +4,7 @@ import api from "../../api/axios";
 
 const MisEntrenamientos = () => {
   // Base URL para los archivos (Ajusta el puerto si es necesario)
-  const API_URL = "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const { data: entrenamientos, isLoading } = useQuery({
     queryKey: ["misEntrenamientos"],

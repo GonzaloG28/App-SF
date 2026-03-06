@@ -1,14 +1,14 @@
 import { useState, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
-import { AuthContext } from "../../context/authContext";
+import { useAuth } from "../../context/AuthContext";
 import { 
   Trophy, Filter, Waves, Timer, 
   Search, Loader2, Award, Calendar, Star 
 } from "lucide-react";
 
 const MisTiempos = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   
   // Estado de filtros
   const [filtros, setFiltros] = useState({
