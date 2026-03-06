@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AutHContext";
 import { 
   Trophy, Filter, Waves, Timer, 
   Search, Loader2, Award, Calendar, Star 
