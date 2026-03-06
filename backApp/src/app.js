@@ -27,11 +27,26 @@ connectDB()
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //middlewares globales
+const allowedOrigins = [
+  'https://app-sf-drab.vercel.app', // Tu URL de Vercel que aparece en el error
+  'http://localhost:5173'           // Para que puedas seguir probando localmente
+];
+
 app.use(cors({
-    origin: ["https://app-nsf.vercel.app/", "http://localhost:5173"], 
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-}))
+  origin: function (origin, callback) {
+    // Permitir peticiones sin origen (como herramientas de mobile o curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por CORS: Origen no permitido'));
+    }
+  },
+  credentials: true, // Importante si manejas cookies o tokens en el header
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json())
 
 //rutas oficiales
