@@ -1,53 +1,29 @@
-import api from "./axios"; // Importas tu configuración base
+import api from "./axios";
+
+export const enviarEntrenamiento = (formData) => 
+    api.post("/entrenamiento/enviar", formData);
 
 /**
- * PROFESOR: Enviar un nuevo entrenamiento a uno o varios nadadores
- * @param {FormData} formData - Objeto FormData con titulo, tipo, contenido, notas, destinatarios y archivo
+ * PROFESOR: Obtener reporte de quién ha completado qué.
  */
-export const enviarEntrenamiento = async (formData) => {
-    try {
-        const { data } = await api.post("/entrenamiento/enviar", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-        return data;
-    } catch (error) {
-        throw error.response?.data || error.message;
-    }
-};
+export const getReporteProfesor = () => 
+    api.get("/entrenamiento/reporte-profesor");
 
 /**
- * NADADOR: Obtener la lista de entrenamientos asignados al usuario logueado
+ * NADADOR: Obtener la lista de entrenamientos asignados.
  */
-export const getMisEntrenamientos = async () => {
-    try {
-        const { data } = await api.get("/entrenamiento/mis-entrenamientos");
-        return data;
-    } catch (error) {
-        throw error.response?.data || error.message;
-    }
-};
+export const getMisEntrenamientos = () => 
+    api.get("/entrenamiento/mis-entrenamientos");
 
 /**
- * OPCIONAL: Si necesitas obtener los nadadores para el selector del profesor
+ * NADADOR: Marcar un entrenamiento específico como completado.
+ * Esta función activa la ruta router.patch('/:id/completar', ...)
  */
-export const getNadadoresParaEntrenamiento = async () => {
-    try {
-        const { data } = await api.get("/nadadores"); // Ajusta a tu ruta de nadadores
-        return data;
-    } catch (error) {
-        throw error.response?.data || error.message;
-    }
-};
+export const completarEntrenamiento = (id) => 
+    api.patch(`/entrenamiento/${id}/completar`);
 
-export const getReporteProfesor = () => api.get("/entrenamiento/reporte-profesor");
-
-export const eliminarEntrenamiento = async (id) => {
-    try {
-        const { data } = await api.delete(`/entrenamiento/${id}`);
-        return data;
-    } catch (error) {
-        throw error.response?.data || error.message;
-    }
-};
+/**
+ * PROFESOR: Eliminar un entrenamiento del sistema.
+ */
+export const eliminarEntrenamiento = (id) => 
+    api.delete(`/entrenamiento/${id}`);

@@ -8,7 +8,6 @@ import {
   Trophy, 
   Search, 
   Calendar, 
-  Filter, 
   ArrowLeft, 
   Plus, 
   Loader2, 
@@ -16,7 +15,8 @@ import {
   SortAsc, 
   SortDesc,
   ChevronRight,
-  XCircle
+  XCircle,
+  TrendingUp
 } from "lucide-react"
 
 const CompetenciasList = () => {
@@ -25,153 +25,180 @@ const CompetenciasList = () => {
   const [searchFecha, setSearchFecha] = useState(null)
   const [orden, setOrden] = useState("desc")
 
+  // 1. QUERY CON PREFETCH LOGIC (Opcional pero recomendado)
   const { data, isLoading, isError } = useQuery({
     queryKey: ["competencias", id],
     queryFn: () => getCompetenciasPorNadador(id),
+    staleTime: 1000 * 60 * 5, // 5 minutos de validez
   })
 
   const competencias = data?.data || []
 
+  // 2. FILTRADO Y ORDENAMIENTO MEMOIZADO (Alta Eficiencia)
   const competenciasProcesadas = useMemo(() => {
-    let lista = [...competencias]
-    if (searchNombre) {
-      lista = lista.filter((c) => c.nombre.toLowerCase().includes(searchNombre.toLowerCase()))
-    }
-    if (searchFecha) {
-      const fechaSeleccionada = searchFecha.toISOString().split("T")[0]
-      lista = lista.filter((c) => new Date(c.fecha).toISOString().split("T")[0] === fechaSeleccionada)
-    }
-    lista.sort((a, b) => {
-      const fechaA = new Date(a.fecha); const fechaB = new Date(b.fecha)
-      return orden === "desc" ? fechaB - fechaA : fechaA - fechaB
-    })
-    return lista
+    return [...competencias]
+      .filter((c) => {
+        const matchesNombre = c.nombre.toLowerCase().includes(searchNombre.toLowerCase())
+        const matchesFecha = !searchFecha || 
+          new Date(c.fecha).toDateString() === searchFecha.toDateString()
+        return matchesNombre && matchesFecha
+      })
+      .sort((a, b) => {
+        const diff = new Date(a.fecha) - new Date(b.fecha)
+        return orden === "desc" ? -diff : diff
+      })
   }, [competencias, searchNombre, searchFecha, orden])
 
+  // 3. IDENTIFICACIÓN DE EVENTO RECIENTE
   const destacada = useMemo(() => {
     if (!competencias.length) return null
     return [...competencias].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0]
   }, [competencias])
 
+  if (isLoading) return (
+    <div className="py-40 flex flex-col items-center justify-center text-slate-400">
+      <div className="relative mb-6">
+        <Loader2 size={50} className="animate-spin text-blue-600" />
+        <Trophy size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-200" />
+      </div>
+      <p className="text-[10px] font-black uppercase tracking-[0.5em] animate-pulse">Sincronizando Cronología...</p>
+    </div>
+  )
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
+    <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
       
-      {/* HEADER & VOLVER */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <Link to={`/profesor/nadador/${id}`} className="flex items-center gap-2 text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-4 transition-colors">
-            <ArrowLeft size={14} /> Volver al Perfil del Atleta
+      {/* HEADER DE SECCIÓN */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white/50 p-2 rounded-[3rem]">
+        <div className="pl-4">
+          <Link to={`/profesor/nadador/${id}`} className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-4 transition-all hover:-translate-x-1">
+            <ArrowLeft size={14} /> Ficha del Atleta
           </Link>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tighter italic">
-            Historial de <span className="text-blue-600">Torneos</span>
+          <h2 className="text-5xl font-black text-slate-900 tracking-tighter italic leading-none">
+            Bitácora de <span className="text-blue-600">Torneos</span>
           </h2>
         </div>
 
         <Link
           to={`/profesor/nadador/${id}/competencias/nuevo`}
-          className="flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 group"
+          className="flex items-center justify-center gap-3 bg-[#0f172a] hover:bg-blue-600 text-white px-10 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest transition-all shadow-2xl shadow-slate-900/20 group active:scale-95"
         >
-          <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+          <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
           Registrar Competencia
         </Link>
       </div>
 
-      {/* TARJETA DESTACADA: ÚLTIMO EVENTO */}
+      {/* HIGHLIGHT: ÚLTIMA PARTICIPACIÓN */}
       {destacada && !searchNombre && !searchFecha && (
-        <div className="relative overflow-hidden bg-[#0f172a] rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] -mr-32 -mt-32"></div>
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-3">
-              <span className="bg-blue-600/30 text-blue-300 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/30">
-                Evento más reciente
-              </span>
-              <h3 className="text-3xl font-black italic tracking-tight">{destacada.nombre}</h3>
-              <div className="flex items-center gap-4 text-slate-400 text-sm font-bold">
-                <span className="flex items-center gap-2"><Calendar size={16} className="text-blue-500" /> {new Date(destacada.fecha).toLocaleDateString()}</span>
-                <span className="flex items-center gap-2"><Waves size={16} className="text-blue-500" /> Piscina {destacada.piscina}m</span>
+        <div className="group relative overflow-hidden bg-[#0f172a] rounded-[3.5rem] p-10 md:p-14 text-white shadow-2xl transition-all duration-500 hover:shadow-blue-900/20">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] -mr-40 -mt-40 group-hover:bg-blue-600/20 transition-colors"></div>
+          
+          <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+            <div className="space-y-5">
+              <div className="flex items-center gap-3">
+                <span className="bg-blue-500 text-white px-4 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em]">
+                  Última Actuación
+                </span>
+                <TrendingUp size={16} className="text-emerald-400 animate-bounce" />
+              </div>
+              <h3 className="text-4xl md:text-5xl font-black italic tracking-tighter leading-tight max-w-xl">
+                {destacada.nombre}
+              </h3>
+              <div className="flex flex-wrap items-center gap-6 text-slate-400 text-xs font-bold uppercase tracking-widest">
+                <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                  <Calendar size={16} className="text-blue-400" /> 
+                  {new Date(destacada.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </span>
+                <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                  <Waves size={16} className="text-blue-400" /> 
+                  Piscina {destacada.piscina}m
+                </span>
               </div>
             </div>
-            <Link to={`/profesor/competencia/${destacada._id}/pruebas`} state={{ nadadorId: id }} className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-lg">
-              Ver Resultados
+            <Link 
+              to={`/profesor/competencia/${destacada._id}/pruebas`} 
+              state={{ nadadorId: id }} 
+              className="w-full lg:w-auto bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all text-center shadow-xl shadow-black/20"
+            >
+              Analizar Resultados
             </Link>
           </div>
         </div>
       )}
 
-      {/* BARRA DE HERRAMIENTAS / FILTROS */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-3 flex flex-col md:flex-row items-center gap-3">
-        <div className="flex-1 w-full relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+      {/* FILTROS DINÁMICOS */}
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-4 flex flex-col lg:flex-row items-center gap-4">
+        <div className="flex-1 w-full relative group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
           <input
             type="text"
-            placeholder="Buscar torneo..."
+            placeholder="Filtrar por nombre del torneo..."
             value={searchNombre}
             onChange={(e) => setSearchNombre(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 placeholder:text-slate-300"
+            className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-transparent rounded-2xl text-sm font-bold text-slate-700 focus:bg-white focus:border-blue-100 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
           />
         </div>
         
-        <div className="w-px h-8 bg-slate-100 hidden md:block"></div>
+        <div className="hidden lg:block w-px h-10 bg-slate-100"></div>
 
-        <div className="flex items-center px-2 w-full md:w-auto">
-          <Calendar size={18} className="text-slate-300 mr-2" />
+        <div className="flex items-center w-full lg:w-auto bg-slate-50 lg:bg-transparent rounded-2xl px-4 lg:px-0">
+          <Calendar size={20} className="text-slate-300 mr-3 ml-2 lg:ml-0" />
           <DatePicker
             selected={searchFecha}
             onChange={(date) => setSearchFecha(date)}
             maxDate={new Date()}
-            placeholderText="Filtrar fecha"
-            dateFormat="dd/MM/yyyy"
-            className="bg-transparent border-none py-3 text-sm font-black text-slate-500 focus:ring-0 cursor-pointer w-full"
+            placeholderText="Cualquier fecha"
+            dateFormat="dd / MM / yyyy"
+            showYearDropdown
+            dropdownMode="select"
+            className="bg-transparent border-none py-4 text-sm font-black text-slate-500 focus:ring-0 cursor-pointer w-full"
           />
         </div>
 
-        <div className="w-px h-8 bg-slate-100 hidden md:block"></div>
+        <div className="hidden lg:block w-px h-10 bg-slate-100"></div>
 
-        <div className="flex items-center px-2 w-full md:w-auto">
-          {orden === "desc" ? <SortDesc size={18} className="text-blue-600 mr-2" /> : <SortAsc size={18} className="text-blue-600 mr-2" />}
+        <div className="flex items-center w-full lg:w-auto bg-slate-50 lg:bg-transparent rounded-2xl px-4 lg:px-0">
+          {orden === "desc" ? <SortDesc size={20} className="text-blue-600 mr-3 ml-2 lg:ml-0" /> : <SortAsc size={20} className="text-blue-600 mr-3 ml-2 lg:ml-0" />}
           <select
             value={orden}
             onChange={(e) => setOrden(e.target.value)}
-            className="bg-transparent border-none py-3 text-sm font-black text-slate-500 focus:ring-0 cursor-pointer uppercase"
+            className="bg-transparent border-none py-4 text-[10px] font-black text-slate-500 focus:ring-0 cursor-pointer uppercase tracking-widest w-full"
           >
-            <option value="desc">Recientes</option>
-            <option value="asc">Antiguos</option>
+            <option value="desc">Más Recientes</option>
+            <option value="asc">Más Antiguos</option>
           </select>
         </div>
 
         {(searchNombre || searchFecha) && (
-          <button onClick={() => { setSearchNombre(""); setSearchFecha(null) }} className="p-3 text-red-400 hover:bg-red-50 rounded-xl transition-colors">
-            <XCircle size={20} />
+          <button 
+            onClick={() => { setSearchNombre(""); setSearchFecha(null) }} 
+            className="flex items-center justify-center gap-2 w-full lg:w-auto p-4 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-colors font-black text-[10px] uppercase tracking-widest"
+          >
+            <XCircle size={18} /> Limpiar
           </button>
         )}
       </div>
 
-      {/* LISTADO DE COMPETENCIAS */}
-      {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-300">
-          <Loader2 size={40} className="animate-spin mb-4 text-blue-100" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em]">Consultando historial</p>
-        </div>
-      ) : isError ? (
-        <div className="bg-red-50 p-10 rounded-[2.5rem] border border-red-100 text-center">
-          <p className="text-red-800 font-bold">Error al sincronizar datos</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {competenciasProcesadas.map((c) => (
-            <div key={c._id} className="group bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-6 w-full md:w-auto">
-                <div className="w-14 h-14 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                  <Trophy size={24} />
+      {/* FEED DE COMPETENCIAS */}
+      <div className="grid grid-cols-1 gap-5">
+        {competenciasProcesadas.length > 0 ? (
+          competenciasProcesadas.map((c) => (
+            <div key={c._id} className="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col md:flex-row justify-between items-center gap-8 hover:-translate-y-1">
+              <div className="flex items-center gap-8 w-full md:w-auto">
+                <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-[1.5rem] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:rotate-6 transition-all duration-500 shadow-inner">
+                  <Trophy size={28} />
                 </div>
-                <div>
-                  <h3 className="text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors leading-tight">
+                <div className="space-y-1">
+                  <h3 className="text-xl font-black text-slate-800 group-hover:text-blue-600 transition-colors tracking-tight italic">
                     {c.nombre}
                   </h3>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{new Date(c.fecha).toLocaleDateString()}</span>
-                    <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Piscina {c.piscina}m</span>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded">
+                       {new Date(c.fecha).toLocaleDateString()}
+                    </span>
+                    <span className="text-[10px] font-black text-blue-500/50 uppercase tracking-widest flex items-center gap-1.5">
+                      <Waves size={12} /> Piscina {c.piscina}m
+                    </span>
                   </div>
                 </div>
               </div>
@@ -179,21 +206,22 @@ const CompetenciasList = () => {
               <Link
                 to={`/profesor/competencia/${c._id}/pruebas`}
                 state={{ nadadorId: id }}
-                className="w-full md:w-auto flex items-center justify-center gap-2 bg-slate-50 text-slate-400 group-hover:bg-[#0f172a] group-hover:text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all"
+                className="w-full md:w-auto flex items-center justify-center gap-3 bg-slate-900 text-white px-8 py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-blue-600 shadow-xl shadow-slate-900/10 active:scale-95"
               >
                 Analizar Pruebas
-                <ChevronRight size={16} />
+                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
-          ))}
-
-          {competenciasProcesadas.length === 0 && (
-            <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-              <p className="text-slate-400 font-bold text-sm">No se encontraron torneos en este periodo.</p>
+          ))
+        ) : (
+          <div className="text-center py-32 bg-slate-50 rounded-[4rem] border-4 border-dashed border-slate-100 flex flex-col items-center">
+            <div className="p-6 bg-white rounded-full shadow-sm mb-6 text-slate-200">
+               <Trophy size={48} />
             </div>
-          )}
-        </div>
-      )}
+            <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">No se registran eventos bajo este criterio</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

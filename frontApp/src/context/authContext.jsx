@@ -1,8 +1,15 @@
-import { createContext, useState, useEffect } from "react"
+import { createContext, useState, useEffect, useContext } from "react"
 import { loginRequest } from "../api/auth.api"
 import { useNavigate } from "react-router-dom"
 
 export const AuthContext = createContext()
+
+// Hook personalizado para usar el contexto fácilmente
+export const useAuth = () => {
+    const context = useContext(AuthContext)
+    if (!context) throw new Error("useAuth debe usarse dentro de un AuthProvider")
+    return context
+}
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
@@ -11,56 +18,58 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate()
 
     useEffect(() => {
-        const token = localStorage.getItem("token")
-        const rol = localStorage.getItem("rol")
-        // Recuperamos el flag del almacenamiento local
-        const debeCambiar = localStorage.getItem("debeCambiarPassword") === "true"
+        const checkLogin = () => {
+            const token = localStorage.getItem("token");
+            const rol = localStorage.getItem("rol");
+            const correo = localStorage.getItem("correo"); // <-- Recuperamos
+            const nombre = localStorage.getItem("nombre"); // <-- Recuperamos
+            const debeCambiar = localStorage.getItem("debeCambiarPassword") === "true";
 
-        if (token && rol) {
-            setUser({ token, rol, debeCambiarPassword: debeCambiar })
-            setIsAuthenticated(true)
+            if (token && rol) {
+                setUser({ token, rol, correo, nombre, debeCambiarPassword: debeCambiar });
+                setIsAuthenticated(true);
+            } else {
+                setUser(null);
+                setIsAuthenticated(false);
+            }
+            setLoading(false);
         }
-
-        setLoading(false)
+        checkLogin()
     }, [])
 
     const login = async (data) => {
         try {
-            const res = await loginRequest(data)
+            const res = await loginRequest(data);
+            // Capturamos nombre y correo de la respuesta del backend
+            const { token, rol, correo, nombre, debeCambiarPassword } = res.data;
 
-            // Desestructuramos el flag que viene desde tu controlador de User del backend
-            const { token, rol, debeCambiarPassword } = res.data
+            localStorage.setItem("token", token);
+            localStorage.setItem("rol", rol);
+            localStorage.setItem("correo", correo); // Guardamos para persistencia
+            localStorage.setItem("nombre", nombre);
+            localStorage.setItem("debeCambiarPassword", debeCambiarPassword);
 
-            localStorage.setItem("token", token)
-            localStorage.setItem("rol", rol)
-            // Guardamos el flag como string en localStorage
-            localStorage.setItem("debeCambiarPassword", debeCambiarPassword)
+            // Actualizamos el estado global
+            setUser({ token, rol, correo, nombre, debeCambiarPassword });
+            setIsAuthenticated(true);
 
-            setUser({ token, rol, debeCambiarPassword })
-            setIsAuthenticated(true)
-
-            // Retornamos el flag para que el componente Login también pueda usarlo si lo necesita
-            return { success: true, debeCambiarPassword }
-
+            return { success: true, rol, debeCambiarPassword };
         } catch (error) {
+            console.error("Login Error:", error);
             return {
                 success: false,
-                message: error.response?.data?.message || "Error al iniciar sesión",
+                message: error.message || "Error al iniciar sesión",
             }
         }
     }
 
     const logout = () => {
-        localStorage.removeItem("token")
-        localStorage.removeItem("rol")
-        localStorage.removeItem("debeCambiarPassword") // Limpiamos al salir
-
+        localStorage.clear() // Limpia todo para evitar residuos de sesión
         setUser(null)
         setIsAuthenticated(false)
         navigate("/login")
     }
 
-    // Función extra para actualizar el estado una vez que el nadador cambie su clave
     const passwordCambiadoExitosamente = () => {
         localStorage.setItem("debeCambiarPassword", "false")
         setUser(prev => ({ ...prev, debeCambiarPassword: false }))
@@ -74,7 +83,7 @@ export const AuthProvider = ({ children }) => {
                 login,
                 logout,
                 loading,
-                passwordCambiadoExitosamente // La exponemos para usarla en el Dashboard
+                passwordCambiadoExitosamente
             }}
         >
             {children}

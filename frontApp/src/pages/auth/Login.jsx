@@ -1,10 +1,10 @@
-import { useState, useContext } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { AuthContext } from "../../context/authContext"
-import { Lock, Mail, Eye, EyeOff, Loader2, ShieldCheck, ChevronRight } from "lucide-react"
+import { useAuth } from "../../context/AuthContext" // Usamos el hook optimizado
+import { Lock, Mail, Eye, EyeOff, Loader2, ShieldCheck, ChevronRight, AlertCircle } from "lucide-react"
 
 const Login = () => {
-  const { login } = useContext(AuthContext)
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState({ correo: "", password: "" })
@@ -21,39 +21,29 @@ const Login = () => {
     setError("")
     setLoading(true)
 
-    const result = await login(formData) // <-- Aquí recibes la respuesta del backend
+    // El Context ahora maneja internamente el localStorage
+    const result = await login(formData) 
 
     if (result.success) {
-      // 1. EXTRAER EL ROL Y EL FLAG DEL RESULTADO O DEL LOCALSTORAGE
-      // Si tu login() en el Context ya guarda el rol en localStorage, 
-      // asegúrate de que también guarde 'debeCambiarPassword'.
-      
-      const rol = localStorage.getItem("rol")
-      
-      // ESTA ES LA LÍNEA CLAVE AÑADIR:
-      // Guardamos el estado de la contraseña para que el Dashboard lo lea al cargar
-      if (result.debeCambiarPassword !== undefined) {
-        localStorage.setItem("debeCambiarPassword", result.debeCambiarPassword);
-      }
-
-      // 2. NAVEGACIÓN BASADA EN ROL
-      if (rol === "nadador") {
-        navigate("/nadador")
-      } else if (rol === "profesor") {
-        navigate("/profesor")
+      // Redirección inmediata según el rol retornado por la API
+      if (result.rol === "nadador") {
+        navigate("/nadador/dashboard")
+      } else if (result.rol === "profesor") {
+        navigate("/profesor/nadadores")
       } else {
         navigate("/")
       }
     } else {
+      // Si el error es por el arranque de Render, podrías personalizar este mensaje
       setError(result.message || "Credenciales incorrectas")
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f172a] relative overflow-hidden px-6">
       
-      {/* Fondo con profundidad (Efecto Agua Profunda) */}
+      {/* Fondo con profundidad */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-15%] left-[-5%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-15%] right-[-5%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]"></div>
@@ -62,14 +52,13 @@ const Login = () => {
       <div className="w-full max-w-md z-10">
         
         {/* IDENTIDAD APPÑSF */}
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-10 animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/20 mb-6 rotate-3">
             <ShieldCheck size={40} className="text-white" strokeWidth={1.5} />
           </div>
           <h1 className="text-4xl font-black text-white tracking-tighter italic">
             App<span className="text-blue-500 text-5xl">ÑSF</span>
           </h1>
-          <div className="h-1 w-12 bg-blue-600 rounded-full mt-2"></div>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-4">
             Management System
           </p>
@@ -80,7 +69,7 @@ const Login = () => {
           
           <div className="mb-8">
             <h2 className="text-xl font-bold text-slate-800">Acceso Privado</h2>
-            <p className="text-slate-400 text-xs font-medium">Ingresa tus credenciales</p>
+            <p className="text-slate-400 text-xs font-medium">Ingresa tus credenciales para continuar</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -96,10 +85,12 @@ const Login = () => {
                   type="email"
                   name="correo"
                   required
+                  autoComplete="email"
                   placeholder="ejemplo@appnsf.com"
                   value={formData.correo}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition-all disabled:opacity-50"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -115,10 +106,12 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   required
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition-all"
+                  className="w-full pl-11 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition-all disabled:opacity-50"
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -130,22 +123,25 @@ const Login = () => {
               </div>
             </div>
 
-            {/* MENSAJE DE ERROR */}
+            {/* MENSAJE DE ERROR MEJORADO */}
             {error && (
               <div className="bg-red-50 text-red-600 text-[11px] font-bold p-4 rounded-2xl border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
+                <AlertCircle size={16} />
                 {error}
               </div>
             )}
 
-            {/* BOTÓN DE ACCESO */}
+            {/* BOTÓN DE ACCESO CON FEEDBACK PARA RENDER */}
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-[#0f172a] hover:bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm transition-all duration-300 shadow-xl shadow-blue-900/20 disabled:opacity-70 flex items-center justify-center gap-2 group mt-4"
             >
               {loading ? (
-                <Loader2 size={20} className="animate-spin" />
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  <span>CONECTANDO CON SERVIDOR...</span>
+                </>
               ) : (
                 <>
                   AUTENTICAR
@@ -160,9 +156,7 @@ const Login = () => {
               Restricted Access • AppÑSF Security
             </p>
           </div>
-
         </div>
-
       </div>
     </div>
   )

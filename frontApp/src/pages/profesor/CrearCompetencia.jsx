@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCompetencia } from "../../api/competencias.api";
-import DatePicker from "react-datepicker";
-import { registerLocale } from "react-datepicker";
+import DatePicker, { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
 import { 
@@ -13,7 +12,8 @@ import {
   ArrowLeft, 
   Plus, 
   Loader2,
-  AlertCircle 
+  AlertCircle,
+  Zap
 } from "lucide-react";
 
 registerLocale("es", es);
@@ -21,6 +21,7 @@ registerLocale("es", es);
 const CrearCompetencia = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient()
   const [form, setForm] = useState({
     nombre: "",
     fecha: null,
@@ -28,159 +29,182 @@ const CrearCompetencia = () => {
   });
   const [errors, setErrors] = useState({});
 
+  // 1. MUTACIÓN CON FEEDBACK INSTANTÁNEO
   const mutation = useMutation({
     mutationFn: (data) => createCompetencia(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["competencias", id] });
       navigate(`/profesor/nadador/${id}/competencias`);
     },
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    // Limpieza de error en tiempo real
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
+  // 2. VALIDACIÓN DE NEGOCIO
   const handleSubmit = (e) => {
     e.preventDefault();
-
     const newErrors = {};
-    if (!form.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
-    if (!form.fecha) newErrors.fecha = "La fecha es obligatoria";
+    if (!form.nombre.trim()) newErrors.nombre = "Define el nombre del torneo";
+    if (!form.fecha) newErrors.fecha = "Selecciona una fecha válida";
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    const dataToSend = { ...form, fecha: form.fecha.toISOString() };
+    const dataToSend = { 
+      ...form, 
+      fecha: form.fecha.toISOString(),
+      piscina: Number(form.piscina) 
+    };
     mutation.mutate(dataToSend);
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4 animate-in fade-in duration-500">
-      <div className="bg-white w-full max-w-lg rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
+    <div className="min-h-[85vh] flex items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-500">
+      <div className="bg-white w-full max-w-xl rounded-[3.5rem] border border-slate-100 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.08)] overflow-hidden">
         
-        {/* HEADER DECORATIVO */}
-        <div className="bg-[#0f172a] p-8 text-white relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
+        {/* HEADER DE ALTA PRESIÓN (Estética Dark Mode) */}
+        <div className="bg-[#0f172a] p-10 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full blur-[60px] -mr-20 -mt-20 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] -ml-16 -mb-16"></div>
+          
           <button 
             onClick={() => navigate(-1)}
-            className="mb-6 flex items-center gap-2 text-blue-400 hover:text-blue-300 font-bold text-xs uppercase tracking-widest transition-colors"
+            className="mb-8 flex items-center gap-2 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] transition-all group"
           >
-            <ArrowLeft size={16} /> Volver
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+            Volver al Historial
           </button>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Trophy size={24} />
+
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-16 h-16 bg-blue-600 rounded-[1.8rem] flex items-center justify-center shadow-2xl shadow-blue-500/40 rotate-3 group-hover:rotate-0 transition-transform">
+              <Trophy size={32} className="text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-black tracking-tight italic">Nuevo Torneo</h2>
-              <p className="text-blue-100/60 text-[10px] font-black uppercase tracking-[0.2em]">Registro de Competencia</p>
+              <h2 className="text-3xl font-black tracking-tighter italic leading-none">Nueva <span className="text-blue-500 text-4xl block not-italic">Competencia</span></h2>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.25em] mt-2 flex items-center gap-2">
+                <Zap size={12} className="text-emerald-400" /> Registro Oficial AppÑSF
+              </p>
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-10 space-y-8">
           
-          {/* NOMBRE DEL EVENTO */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Trophy size={12} className="text-blue-600" /> Nombre del Evento
-            </label>
-            <input
-              type="text"
-              name="nombre"
-              placeholder="Ej: Copa Estadio Italiano 2024"
-              value={form.nombre}
-              onChange={handleChange}
-              className={`w-full px-5 py-4 bg-slate-50 border rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all placeholder:text-slate-300 ${
-                errors.nombre ? "border-red-500 bg-red-50/50" : "border-slate-100"
-              }`}
-            />
-            {errors.nombre && (
-              <p className="text-[10px] text-red-500 font-bold italic ml-1">{errors.nombre}</p>
-            )}
+          {/* CAMPO: NOMBRE */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center px-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                Nombre del Evento
+              </label>
+              {errors.nombre && <span className="text-[9px] text-red-500 font-bold uppercase animate-bounce italic">{errors.nombre}</span>}
+            </div>
+            <div className="relative">
+              <Trophy className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-200" size={18} />
+              <input
+                type="text"
+                name="nombre"
+                placeholder="Ej: Nacional de Verano 2026"
+                value={form.nombre}
+                onChange={handleChange}
+                className={`w-full pl-14 pr-6 py-5 bg-slate-50 border rounded-3xl text-sm font-bold focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all placeholder:text-slate-300 ${
+                  errors.nombre ? "border-red-200 bg-red-50/30" : "border-slate-100"
+                }`}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* FECHA */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                <Calendar size={12} className="text-blue-600" /> Fecha del Evento
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* CAMPO: FECHA */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                Fecha
               </label>
               <div className="relative group">
+                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-200 group-focus-within:text-blue-600 z-10 transition-colors" size={18} />
                 <DatePicker
                   selected={form.fecha}
                   onChange={(date) => setForm({ ...form, fecha: date })}
                   locale="es"
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Seleccionar fecha"
-                      
-                  // CONFIGURACIÓN DE AÑO FÁCIL
-                  showYearDropdown           // Activa el menú desplegable de años
-                  scrollableYearDropdown     // Permite hacer scroll en la lista de años
-                  yearDropdownItemNumber={50} // Muestra 50 años hacia atrás y adelante
-                  showMonthDropdown          // También activamos meses para mayor rapidez
-                  dropdownMode="select"      // Cambia el estilo a un "select" nativo más cómodo
-                      
-                  maxDate={new Date()}       // Evita seleccionar fechas futuras si es necesario
-                      
-                  className={`w-full px-5 py-4 bg-slate-50 border rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all ${
-                    errors.fecha ? "border-red-500 bg-red-50/50" : "border-slate-100"
+                  dateFormat="dd / MM / yyyy"
+                  placeholderText="00 / 00 / 0000"
+                  showYearDropdown
+                  dropdownMode="select"
+                  maxDate={new Date()}
+                  className={`w-full pl-14 pr-6 py-5 bg-slate-50 border rounded-3xl text-sm font-bold focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all ${
+                    errors.fecha ? "border-red-200 bg-red-50/30" : "border-slate-100"
                   }`}
-                  popperClassName="shadow-2xl rounded-3xl border-none" // Estilo al calendario flotante
                 />
               </div>
-              {errors.fecha && (
-                <p className="text-[10px] text-red-500 font-bold italic ml-1">{errors.fecha}</p>
-              )}
+              {errors.fecha && <p className="text-[9px] text-red-500 font-bold uppercase italic ml-1">{errors.fecha}</p>}
             </div>
 
-            {/* TAMAÑO PISCINA */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                <Waves size={12} className="text-blue-600" /> Piscina
+            {/* CAMPO: PISCINA */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                Longitud
               </label>
-              <select
-                name="piscina"
-                value={form.piscina}
-                onChange={handleChange}
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-slate-700 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all cursor-pointer appearance-none"
-              >
-                <option value={25}>25 Metros (Corta)</option>
-                <option value={50}>50 Metros (Larga)</option>
-              </select>
+              <div className="relative">
+                <Waves className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-200" size={18} />
+                <select
+                  name="piscina"
+                  value={form.piscina}
+                  onChange={handleChange}
+                  className="w-full pl-14 pr-6 py-5 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black text-slate-700 focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all cursor-pointer appearance-none shadow-inner"
+                >
+                  <option value={25}>25m (Corta)</option>
+                  <option value={50}>50m (Larga)</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* MENSAJE DE ERROR DE API */}
+          {/* ESTADO DE ERROR SERVIDOR */}
           {mutation.isError && (
-            <div className="bg-red-50 p-4 rounded-2xl flex items-center gap-3 text-red-600 animate-shake">
-              <AlertCircle size={18} />
-              <p className="text-xs font-bold uppercase tracking-tight">Error al sincronizar con el servidor</p>
+            <div className="bg-red-50 p-5 rounded-3xl flex items-center gap-4 text-red-600 animate-shake border border-red-100">
+              <div className="bg-white p-2 rounded-xl shadow-sm"><AlertCircle size={20} /></div>
+              <p className="text-[10px] font-black uppercase tracking-tight leading-none">Error de enlace: El servidor no respondió a la solicitud.</p>
             </div>
           )}
 
-          {/* BOTÓN SUBMIT */}
+          {/* BOTÓN DE ACCIÓN */}
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[1.8rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-blue-200 disabled:opacity-50 disabled:shadow-none group"
+            className={`w-full flex items-center justify-center gap-4 py-6 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] transition-all shadow-2xl active:scale-95 disabled:opacity-50 group ${
+              mutation.isPending ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+            }`}
           >
             {mutation.isPending ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={24} className="animate-spin" />
             ) : (
               <>
-                <Plus size={20} className="group-hover:rotate-90 transition-transform" />
-                Registrar Competencia
+                Confirmar Registro
+                <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
               </>
             )}
           </button>
         </form>
 
-        <div className="p-6 bg-slate-50 text-center">
-          <p className="text-[10px] text-slate-400 font-bold leading-relaxed uppercase tracking-tighter">
-            * Al crear el evento, podrás añadir marcas y tiempos <br /> específicos para cada prueba.
-          </p>
+        {/* PIE DE PÁGINA INFORMATIVO */}
+        <div className="p-8 bg-slate-50/80 border-t border-slate-100 flex items-start gap-4">
+          <div className="bg-white p-3 rounded-2xl text-blue-500 shadow-sm border border-slate-100">
+             <AlertCircle size={20} />
+          </div>
+          <div>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+              Próximo paso: <span className="text-slate-600 font-black">Asignación de Pruebas</span>
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              Una vez creado el torneo, podrás cargar las pruebas y parciales de cada especialidad.
+            </p>
+          </div>
         </div>
       </div>
     </div>

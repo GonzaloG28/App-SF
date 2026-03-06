@@ -5,7 +5,7 @@ import { getPruebasDisponibles, getRankingIndividual } from "../api/pruebas.api"
 import { 
   Trophy, Filter, Calendar, Timer, 
   ChevronLeft, Award, Waves, Search,
-  Loader2, Star
+  Loader2, Star, AlertCircle
 } from "lucide-react";
 
 const RankingNadador = () => {
@@ -18,21 +18,49 @@ const RankingNadador = () => {
     orden: "asc"
   });
 
+  // 1. OBTENCIÓN DE PRUEBAS DISPONIBLES (Cacheado)
   const { data: disponibles } = useQuery({
     queryKey: ["pruebas-disponibles", id],
-    queryFn: () => getPruebasDisponibles(id).then(res => res.data),
+    queryFn: async () => {
+      const res = await getPruebasDisponibles(id);
+      return res.data;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 60, // 1 hora de cache, rara vez cambian las pruebas disponibles
   });
 
-  const { data: ranking, isLoading } = useQuery({
+  // 2. OBTENCIÓN DEL RANKING CON FILTROS
+  const { data: ranking, isLoading, isError, isFetching } = useQuery({
     queryKey: ["ranking", id, filtros],
-    queryFn: () => getRankingIndividual(id, filtros).then(res => res.data),
+    queryFn: async () => {
+      const res = await getRankingIndividual(id, filtros);
+      return res.data;
+    },
     enabled: !!id,
+    staleTime: 1000 * 60 * 2, // 2 minutos de data fresca
+    keepPreviousData: true, // ¡CLAVE! Evita que la tabla desaparezca al cambiar filtros
   });
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFiltros(prev => ({ ...prev, [name]: value }));
+    // Convierte a número si es distancia o piscina para enviar el tipo correcto a la API
+    const parsedValue = (name === "distancia" || name === "piscina") ? Number(value) : value;
+    setFiltros(prev => ({ ...prev, [name]: parsedValue }));
   };
+
+  // VISTA DE ERROR DEL SERVIDOR
+  if (isError) {
+    return (
+      <div className="max-w-6xl mx-auto flex flex-col items-center justify-center py-32 text-red-500 space-y-4">
+        <AlertCircle size={48} />
+        <h2 className="text-2xl font-black italic tracking-tighter">Error de conexión</h2>
+        <p className="text-sm font-medium">No pudimos cargar el ranking de este nadador.</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-red-50 rounded-xl text-xs font-bold uppercase hover:bg-red-100 transition-colors">
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
@@ -132,7 +160,8 @@ const RankingNadador = () => {
       </div>
 
       {/* TABLA DE RESULTADOS */}
-      <div className="bg-white rounded-[3rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+      {/* Añadimos opacidad condicional (isFetching) para dar feedback visual sin quitar la tabla */}
+      <div className={`bg-white rounded-[3rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100 transition-opacity duration-300 ${isFetching && !isLoading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         {isLoading ? (
           <div className="p-32 text-center">
              <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={40} />
@@ -183,7 +212,7 @@ const RankingNadador = () => {
                     <td className="px-8 py-8">
                       <div className="space-y-1">
                         <p className="font-black text-slate-800 text-lg italic tracking-tight uppercase group-hover:text-blue-600 transition-colors">
-                          {prueba.competencia?.nombre}
+                          {prueba.competencia?.nombre || "Control Interno"}
                         </p>
                         <div className="flex items-center gap-2 text-slate-400">
                           <Star size={12} className={prueba.esRecordPersonal ? 'text-amber-400' : 'text-slate-300'} />
@@ -197,7 +226,7 @@ const RankingNadador = () => {
                     <td className="pr-12 py-8 text-right">
                       <div className="inline-flex items-center gap-3 px-5 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-600 font-black text-[11px] tabular-nums group-hover:border-blue-100 transition-all">
                         <Calendar size={14} className="text-blue-500" />
-                        {new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : "---"}
                       </div>
                     </td>
                   </tr>
