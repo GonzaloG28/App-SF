@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "../../api/axios";
-import { useAuth } from "../../context/AutHContext";
+import { useAuth } from "../../context/AuthContext";
 import { 
   Lock, Activity, ChevronRight, Save, 
   Loader2, Star, Hash, Trophy, Ruler, Weight,

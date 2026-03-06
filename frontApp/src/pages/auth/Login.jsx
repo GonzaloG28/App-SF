@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAuth } from "../../context/AutHContext" // Usamos el hook optimizado
+import { useAuth } from "../../context/AuthContext" // Usamos el hook optimizado
 import { Lock, Mail, Eye, EyeOff, Loader2, ShieldCheck, ChevronRight, AlertCircle } from "lucide-react"
 
 const Login = () => {

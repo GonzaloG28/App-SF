@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom"
 import { useContext, useState, useEffect } from "react"
-import { useAuth } from "../context/AutHContext"
+import { useAuth } from "../context/AuthContext"
 import { 
   LayoutDashboard, 
   Calendar, 
