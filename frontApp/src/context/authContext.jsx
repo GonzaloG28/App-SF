@@ -21,8 +21,8 @@ export const AuthProvider = ({ children }) => {
         const checkLogin = () => {
             const token = localStorage.getItem("token");
             const rol = localStorage.getItem("rol");
-            const correo = localStorage.getItem("correo"); // <-- Recuperamos
-            const nombre = localStorage.getItem("nombre"); // <-- Recuperamos
+            const correo = localStorage.getItem("correo"); 
+            const nombre = localStorage.getItem("nombre"); 
             const debeCambiar = localStorage.getItem("debeCambiarPassword") === "true";
 
             if (token && rol) {
