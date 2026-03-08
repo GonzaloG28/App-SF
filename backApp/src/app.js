@@ -37,7 +37,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // Verificamos si el origen está en la lista o si termina en vercel.app (para subdominios de rama)
-    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
+    const isAllowed = allowedOrigins.includes(origin)
 
     if (isAllowed) {
       callback(null, true);
