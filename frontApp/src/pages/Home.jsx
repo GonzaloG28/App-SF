@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Activity, Trophy, Timer, ChevronRight, Waves, ShieldCheck } from "lucide-react";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext";
 
 const Home = () => {
   const { user, logout } = useAuth();

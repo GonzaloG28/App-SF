@@ -160,7 +160,7 @@ const NadadorForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         
-        {/* SECCIÓN 1: IDENTIFICACIÓN KRÍTICA */}
+        {/* SECCIÓN 1: IDENTIFICACIÓN CRÍTICA */}
         <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative">
           <div className="absolute top-10 right-10 opacity-5 text-slate-900"><Fingerprint size={80} /></div>
           <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mb-12 flex items-center gap-2">
