@@ -155,7 +155,7 @@ const ProfesorLayout = () => {
         <div className="mt-1.5 flex items-center">
           <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-500/10 text-[9px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/20">
             <span className="w-1 h-1 bg-blue-400 rounded-full mr-1.5 animate-pulse" />
-            Senior Coach
+            Coach
           </span>
         </div>
       </div>
@@ -255,13 +255,7 @@ const ProfesorLayout = () => {
             </button>
             
             <div className="h-8 w-[1px] bg-slate-100 mx-1 hidden sm:block" />
-            
-            <button className="flex items-center gap-3 p-1.5 pl-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-all group">
-               <span className="text-[10px] font-black text-slate-500 uppercase hidden md:block">Perfil</span>
-               <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                  <User size={16} />
-               </div>
-            </button>
+      
           </div>
         </header>
 

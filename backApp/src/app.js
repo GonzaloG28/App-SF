@@ -44,7 +44,7 @@ app.use(cors({
     }
   },
   credentials: true, // Importante si manejas cookies o tokens en el header
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json())

@@ -12,6 +12,21 @@ import {
 
 registerLocale("es", es)
 
+const formatRut = (value) => {
+  // Limpiar puntos y guion
+  const clean = value.replace(/[^0-9kK]/g, "");
+  if (clean.length <= 1) return clean;
+  
+  // Extraer cuerpo y dígito verificador
+  const dv = clean.slice(-1);
+  let body = clean.slice(0, -1);
+  
+  // Añadir puntos
+  body = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  
+  return `${body}-${dv}`;
+};
+
 const NadadorForm = () => {
   const { id } = useParams()
   const isEdit = !!id
@@ -97,6 +112,14 @@ const NadadorForm = () => {
     mutation.mutate(dataToSend)
   }
 
+  const handleRutChange = (e) => {
+    const formatted = formatRut(e.target.value);
+    // Limitar largo máximo estándar de RUT chileno formateado
+    if (formatted.length <= 12) {
+      setForm({ ...form, rut: formatted });
+    }
+  };
+
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center py-40 text-slate-400">
       <Loader2 size={40} className="animate-spin text-blue-600 mb-4" />
@@ -149,15 +172,20 @@ const NadadorForm = () => {
               label="RUT Institucional" 
               name="rut" 
               icon={Fingerprint} 
-              form={form} setForm={setForm} errors={errors} 
+              form={form} 
+              errors={errors} 
               placeholder="12.345.678-9"
+              onChange={handleRutChange}
+              disabled={isEdit} 
             />
             <CustomInput 
               label="Correo Electrónico" 
               name="correo" 
               type="email" 
               icon={Mail} 
-              form={form} setForm={setForm} errors={errors} 
+              form={form} 
+              setForm={setForm} 
+              errors={errors} 
               placeholder="atleta@club.cl" 
             />
           </div>
@@ -213,7 +241,7 @@ const NadadorForm = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-4 pt-6">
           <div className="flex items-center gap-3 text-slate-400">
              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-             <p className="text-[10px] font-bold uppercase tracking-widest">Sincronización de Ranking en tiempo real</p>
+             <p className="text-[10px] font-bold uppercase tracking-widest">Sincronización de perfil en tiempo real</p>
           </div>
           
           <div className="flex gap-4 w-full md:w-auto">
@@ -239,31 +267,36 @@ const NadadorForm = () => {
   )
 }
 
-// Sub-componente Input con estética refinada
-const CustomInput = ({ label, name, type = "text", icon: Icon, form, setForm, errors, placeholder, description }) => (
-  <div className="flex flex-col space-y-4">
-    <div className="flex justify-between items-end px-2">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</label>
-      {description && <span className="text-[9px] text-blue-500 font-black uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded">{description}</span>}
-    </div>
-    <div className="relative group">
-      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-blue-600 transition-colors">
-        <Icon size={20} />
+    // Sub-componente Input con estética refinada
+    const CustomInput = ({ 
+      label, name, type = "text", icon: Icon, form, setForm, errors, 
+      placeholder, description, disabled, onChange 
+    }) => (
+      <div className={`flex flex-col space-y-4 ${disabled ? 'opacity-60' : ''}`}>
+        <div className="flex justify-between items-end px-2">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            {label} {disabled && "(No editable)"}
+          </label>
+        </div>
+        <div className="relative group">
+          <div className={`absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none ${disabled ? 'text-slate-200' : 'text-slate-300'}`}>
+            <Icon size={20} />
+          </div>
+          <input
+            type={type}
+            placeholder={placeholder}
+            value={form[name]}
+            disabled={disabled}
+            onChange={onChange || ((e) => setForm({ ...form, [name]: e.target.value }))}
+            className={`w-full pl-14 pr-6 py-5 rounded-[1.8rem] text-sm font-bold outline-none transition-all 
+              ${disabled 
+                ? "bg-slate-100 border-slate-100 text-slate-400 cursor-not-allowed" 
+                : "bg-slate-50 border-slate-100 focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600"
+              } ${errors[name] ? "border-red-500" : ""}`}
+          />
+        </div>
+        {errors[name] && <span className="text-[10px] text-red-500 font-black italic ml-2">{errors[name]}</span>}
       </div>
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={form[name]}
-        onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-        className={`w-full pl-14 pr-6 py-5 bg-slate-50 border rounded-[1.8rem] text-sm font-bold focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all placeholder:text-slate-300 ${errors[name] ? "border-red-500 bg-red-50/20" : "border-slate-100"}`}
-      />
-    </div>
-    {errors[name] && (
-      <span className="text-[10px] text-red-500 font-black italic ml-2 animate-in fade-in slide-in-from-left-2">
-        {errors[name]}
-      </span>
-    )}
-  </div>
-)
+    )
 
 export default NadadorForm

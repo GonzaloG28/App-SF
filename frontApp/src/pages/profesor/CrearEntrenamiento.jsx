@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { enviarEntrenamiento } from "../../api/entrenamientos.api"; 
 import api from "../../api/axios";
+import { enviarEntrenamiento } from "../../api/entrenamientos.api";
 import { 
   Send, FileText, Type, Link as LinkIcon, 
   Users, Search, CheckCircle2, 
@@ -9,319 +9,251 @@ import {
   X, Zap, Info, Filter
 } from "lucide-react";
 
+// --- COMPONENTE HIJO OPTIMIZADO ---
+const NadadorRow = memo(({ n, isSelected, onToggle }) => (
+  <div 
+    onClick={() => onToggle(n._id)}
+    className={`group flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
+      isSelected ? "border-blue-500 bg-blue-500/10" : "border-white/5 bg-white/5 hover:bg-white/10"
+    }`}
+  >
+    <div className="flex items-center gap-3">
+      <div className="shrink-0">
+        {isSelected ? <CheckCircle2 size={20} className="text-blue-500" /> : <Circle size={20} className="text-white/10 group-hover:text-white/30" />}
+      </div>
+      <div className="min-w-0">
+        <p className={`text-xs font-black uppercase truncate ${isSelected ? "text-white" : "text-slate-400"}`}>
+          {n.user.nombre}
+        </p>
+        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">{n.categoria || "S/N"}</p>
+      </div>
+    </div>
+    <ChevronRight size={14} className={isSelected ? "text-blue-500" : "text-white/5"} />
+  </div>
+));
+
 const CrearEntrenamiento = () => {
   const queryClient = useQueryClient();
-  
-  // ESTADOS DEL FORMULARIO
   const [tipoCarga, setTipoCarga] = useState("texto");
-  const [titulo, setTitulo] = useState("");
-  const [contenido, setContenido] = useState("");
-  const [notas, setNotas] = useState("");
+  const [form, setForm] = useState({ titulo: "", contenido: "", notas: "" });
   const [archivo, setArchivo] = useState(null);
-  
-  // ESTADOS DE SELECCIÓN Y FILTRO
   const [search, setSearch] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [seleccionados, setSeleccionados] = useState([]);
 
-  // 1. OBTENCIÓN DE DATOS
   const { data: nadadores, isLoading } = useQuery({
     queryKey: ["nadadores-entrenamiento"],
     queryFn: async () => {
       const res = await api.get("/nadadores");
       return res.data;
-    }
+    },
+    staleTime: 1000 * 60 * 5, // Cache por 5 min para evitar recargas constantes
   });
 
-  // 2. LÓGICA DE FILTRADO OPTIMIZADA (useMemo)
   const nadadoresFiltrados = useMemo(() => {
-    return nadadores?.filter(n => {
-      const cumpleNombre = n.user.nombre.toLowerCase().includes(search.toLowerCase());
-      const cumpleCat = categoriaFiltro === "Todas" || n.categoria === categoriaFiltro;
-      return cumpleNombre && cumpleCat;
-    }) || [];
+    if (!nadadores) return [];
+    const term = search.toLowerCase();
+    return nadadores.filter(n => 
+      n.user.nombre.toLowerCase().includes(term) && 
+      (categoriaFiltro === "Todas" || n.categoria === categoriaFiltro)
+    );
   }, [nadadores, search, categoriaFiltro]);
 
-  const toggleNadador = (id) => {
-    setSeleccionados(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
+  const toggleNadador = useCallback((id) => {
+    setSeleccionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  }, []);
 
   const seleccionarTodosFiltrados = () => {
-    const idsFiltrados = nadadoresFiltrados.map(n => n._id);
-    // Si todos los filtrados ya están, los deseleccionamos. Si no, los sumamos.
-    const todosSeleccionados = idsFiltrados.every(id => seleccionados.includes(id));
-    
-    if (todosSeleccionados) {
-      setSeleccionados(prev => prev.filter(id => !idsFiltrados.includes(id)));
-    } else {
-      setSeleccionados(prev => [...new Set([...prev, ...idsFiltrados])]);
-    }
+    const ids = nadadoresFiltrados.map(n => n._id);
+    const todosEnListaEstan = ids.every(id => seleccionados.includes(id));
+    setSeleccionados(prev => todosEnListaEstan ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])]);
   };
 
-  // 3. MUTACIÓN
   const mutation = useMutation({
     mutationFn: enviarEntrenamiento,
     onSuccess: () => {
-      setTitulo(""); setContenido(""); setNotas(""); setArchivo(null); setSeleccionados([]);
+      setForm({ titulo: "", contenido: "", notas: "" });
+      setArchivo(null);
+      setSeleccionados([]);
       queryClient.invalidateQueries(["reporteEntrenamientos"]);
-      // Aquí idealmente dispararías un Toast
     },
   });
 
   const handleEnviar = () => {
-    if (!titulo.trim()) return;
-    if (seleccionados.length === 0) return;
-    
+    if (!form.titulo.trim() || seleccionados.length === 0) return;
     const formData = new FormData();
-    formData.append("titulo", titulo);
+    Object.entries(form).forEach(([key, val]) => formData.append(key, val));
     formData.append("tipo", tipoCarga);
-    formData.append("contenido", contenido);
-    formData.append("notas", notas);
     formData.append("destinatarios", JSON.stringify(seleccionados));
-
-    if (tipoCarga === "archivo" && archivo) {
-      formData.append("archivo", archivo);
-    }
-
+    if (tipoCarga === "archivo" && archivo) formData.append("archivo", archivo);
     mutation.mutate(formData);
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 p-6 pb-20 animate-in fade-in duration-700">
+    <div className="max-w-[1400px] mx-auto p-4 md:p-10 space-y-8 animate-in fade-in duration-500 pb-32 md:pb-10">
       
-      {/* HEADER DE ACCIÓN */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/40 p-2 rounded-[3rem]">
-        <div className="pl-6">
-          <div className="flex items-center gap-2 mb-1">
-             <Zap size={14} className="text-blue-600 fill-blue-600" />
-             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Distrubución Técnica</p>
+      {/* HEADER DINÁMICO */}
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-blue-600 p-1.5 rounded-lg"><Zap size={12} className="text-white fill-white" /></div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Panel de Control Docente</p>
           </div>
-          <h1 className="text-5xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">
-            Training <span className="text-blue-600">Builder</span>
+          <h1 className="text-4xl md:text-6xl font-black text-slate-900 italic tracking-tighter uppercase">
+            TRAINING <span className="text-blue-600">BUILDER</span>
           </h1>
         </div>
         
         <button 
           onClick={handleEnviar}
-          disabled={mutation.isPending || !titulo || seleccionados.length === 0}
-          className="group relative flex items-center gap-4 bg-blue-600 hover:bg-slate-900 text-white px-12 py-6 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl shadow-blue-200 disabled:opacity-30 disabled:grayscale active:scale-95"
+          disabled={mutation.isPending || !form.titulo || seleccionados.length === 0}
+          className="w-full lg:w-auto flex items-center justify-center gap-4 bg-slate-900 hover:bg-blue-600 text-white px-10 py-5 rounded-3xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl disabled:opacity-20 active:scale-95"
         >
-          {mutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+          {mutation.isPending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
           Publicar Rutina
         </button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
         
-        {/* COLUMNA IZQUIERDA: CONFIGURACIÓN DE CARGA */}
-        <div className="lg:col-span-7 space-y-8">
-          <section className="bg-white rounded-[3.5rem] border border-slate-100 p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] space-y-8">
+        {/* BLOQUE DE CARGA (IZQUIERDA) */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 p-6 md:p-12 shadow-sm">
             
-            {/* SELECTOR DE TIPO */}
-            <div className="flex gap-4 p-2 bg-slate-50 rounded-[2rem] border border-slate-100">
+            {/* SELECTOR DE MODO */}
+            <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-50 rounded-[2rem] mb-10">
               {[
-                { id: "texto", icon: Type, label: "Escrito" },
-                { id: "archivo", icon: FileText, label: "Adjunto" },
-                { id: "link", icon: LinkIcon, label: "Enlace" }
-              ].map(tipo => (
+                { id: "texto", icon: Type, label: "Texto" },
+                { id: "archivo", icon: FileText, label: "PDF/Img" },
+                { id: "link", icon: LinkIcon, label: "Link" }
+              ].map(t => (
                 <button
-                  key={tipo.id}
-                  onClick={() => { setTipoCarga(tipo.id); setContenido(""); }}
-                  className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                    tipoCarga === tipo.id 
-                    ? "bg-white text-blue-600 shadow-xl shadow-blue-500/10 scale-[1.02]" 
-                    : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                  key={t.id}
+                  onClick={() => setTipoCarga(t.id)}
+                  className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[9px] uppercase tracking-tighter transition-all ${
+                    tipoCarga === t.id ? "bg-white text-blue-600 shadow-md" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  <tipo.icon size={18} /> {tipo.label}
+                  <t.icon size={16} /> {t.label}
                 </button>
               ))}
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-4">Título de la Sesión</label>
+              <div className="group">
                 <input 
                   type="text" 
-                  placeholder="Ej: Resistencia de Base II - Mariposa" 
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-blue-600/20 focus:bg-white rounded-3xl p-6 font-black text-slate-800 placeholder:text-slate-300 outline-none transition-all text-lg shadow-inner"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Título de la sesión..." 
+                  className="w-full bg-slate-50 border-none rounded-2xl p-6 font-black text-slate-800 text-xl outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-inner"
+                  value={form.titulo}
+                  onChange={e => setForm({...form, titulo: e.target.value})}
                 />
               </div>
 
-              {/* ÁREAS DINÁMICAS SEGÚN TIPO */}
-              <div className="animate-in slide-in-from-bottom-4 duration-500">
+              {/* INPUTS DINÁMICOS */}
+              <div className="min-h-[300px]">
                 {tipoCarga === "texto" && (
                   <textarea 
-                    placeholder="Escribe la rutina detallada aquí (Series, Metros, Descansos)..."
-                    className="w-full bg-slate-50 border-2 border-transparent focus:border-blue-600/20 focus:bg-white rounded-[2.5rem] p-8 font-medium text-slate-600 h-80 outline-none transition-all shadow-inner leading-relaxed"
-                    value={contenido}
-                    onChange={(e) => setContenido(e.target.value)}
+                    placeholder="Detalla las series, metros y pausas..."
+                    className="w-full bg-slate-50 rounded-[2rem] p-8 font-medium text-slate-600 h-80 outline-none focus:bg-white border-2 border-transparent focus:border-blue-50 transition-all leading-relaxed shadow-inner"
+                    value={form.contenido}
+                    onChange={e => setForm({...form, contenido: e.target.value})}
                   />
                 )}
 
                 {tipoCarga === "link" && (
-                  <div className="space-y-4 bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100">
-                    <div className="flex items-center gap-3 text-blue-600 mb-2">
-                        <LinkIcon size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Enlace de Referencia</span>
+                  <div className="bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100 animate-in zoom-in-95">
+                    <div className="flex items-center gap-2 text-blue-600 mb-4 font-black text-[10px] uppercase">
+                      <LinkIcon size={14} /> URL del entrenamiento
                     </div>
                     <input 
                       type="url" 
-                      placeholder="https://youtube.com/watch?v=..." 
-                      className="w-full bg-white border-2 border-blue-100 rounded-2xl p-6 font-bold text-blue-600 placeholder:text-blue-200 outline-none focus:ring-4 focus:ring-blue-500/5 shadow-sm"
-                      value={contenido}
-                      onChange={(e) => setContenido(e.target.value)}
+                      placeholder="https://..." 
+                      className="w-full bg-white rounded-xl p-5 font-bold text-blue-600 outline-none shadow-sm"
+                      value={form.contenido}
+                      onChange={e => setForm({...form, contenido: e.target.value})}
                     />
                   </div>
                 )}
 
                 {tipoCarga === "archivo" && (
-                  <div className="group border-4 border-dashed border-slate-100 rounded-[3rem] p-16 text-center hover:border-blue-200 hover:bg-blue-50/30 transition-all relative">
-                    <input 
-                      type="file" 
-                      className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                      onChange={(e) => setArchivo(e.target.files[0])}
-                    />
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform group-hover:bg-blue-600 group-hover:text-white">
-                        <UploadCloud size={32} />
-                      </div>
-                      <div>
-                        <p className="font-black text-sm text-slate-800 uppercase tracking-tight">
-                            {archivo ? archivo.name : "Soltar archivo aquí"}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">PDF, PNG o JPG (Máx 10MB)</p>
-                      </div>
-                      {archivo && (
-                        <button 
-                          onClick={(e) => { e.preventDefault(); setArchivo(null); }}
-                          className="relative z-20 flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                        >
-                          <X size={14} /> Eliminar
-                        </button>
-                      )}
-                    </div>
+                  <div className="relative group border-4 border-dashed border-slate-100 rounded-[2.5rem] p-12 text-center hover:border-blue-200 transition-all">
+                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setArchivo(e.target.files[0])} />
+                    <UploadCloud size={40} className="mx-auto text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
+                    <p className="font-black text-xs uppercase text-slate-800 truncate">
+                      {archivo ? archivo.name : "Subir Planificación"}
+                    </p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">PDF o Imagen (Máx 10MB)</p>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-2 pt-4">
-                <div className="flex items-center gap-2 ml-4 text-slate-400">
-                    <Info size={12} />
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em]">Observaciones Internas</label>
+              <div className="pt-4 border-t border-slate-50">
+                <div className="flex items-center gap-2 mb-2 text-slate-400">
+                  <Info size={12} />
+                  <span className="text-[9px] font-black uppercase">Notas técnicas</span>
                 </div>
                 <textarea 
-                  placeholder="Instrucciones especiales para el atleta..."
-                  className="w-full bg-white border border-slate-100 rounded-2xl p-6 text-xs font-bold text-slate-500 min-h-[100px] outline-none focus:ring-4 focus:ring-slate-50"
-                  value={notas}
-                  onChange={(e) => setNotas(e.target.value)}
+                  placeholder="Consejos adicionales..."
+                  className="w-full bg-transparent p-2 text-xs font-bold text-slate-500 h-20 outline-none resize-none"
+                  value={form.notas}
+                  onChange={e => setForm({...form, notas: e.target.value})}
                 />
               </div>
             </div>
-          </section>
+          </div>
         </div>
 
-        {/* COLUMNA DERECHA: DISTRIBUCIÓN */}
+        {/* BLOQUE DESTINATARIOS (DERECHA) */}
         <div className="lg:col-span-5">
-          <section className="bg-slate-900 rounded-[3.5rem] p-10 shadow-2xl flex flex-col h-[850px] sticky top-10">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4 text-white">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20">
-                    <Users size={22} />
-                </div>
-                <div>
-                    <h3 className="font-black italic uppercase text-lg leading-none">Destinatarios</h3>
-                    <p className="text-[9px] text-blue-400 font-black tracking-widest uppercase mt-1">Selección de Atletas</p>
-                </div>
-              </div>
-              <div className="bg-white/10 px-4 py-2 rounded-xl border border-white/10">
-                <span className="text-white font-black text-xl leading-none">{seleccionados.length}</span>
+          <aside className="bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 shadow-2xl flex flex-col h-[600px] lg:h-[800px] lg:sticky lg:top-8 overflow-hidden">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white"><Users size={20} /></div>
+                <h3 className="text-white font-black uppercase text-sm tracking-tighter italic">Atletas <span className="text-blue-500">({seleccionados.length})</span></h3>
               </div>
             </div>
 
-            <div className="space-y-4 mb-8">
-              <div className="relative group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={18} />
+            <div className="space-y-4 mb-6">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                 <input 
                   type="text" 
-                  placeholder="Filtrar por nombre..." 
-                  className="w-full pl-14 pr-6 py-5 bg-white/5 border-none rounded-2xl text-white text-xs font-bold placeholder:text-slate-600 focus:ring-2 focus:ring-blue-500/30 outline-none transition-all"
+                  placeholder="Buscar nadador..." 
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border-none rounded-2xl text-white text-[11px] font-bold placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={e => setSearch(e.target.value)}
                 />
               </div>
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {["Todas", "Infantil", "Juvenil", "Mayores"].map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoriaFiltro(cat)}
-                    className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase whitespace-nowrap transition-all border ${
-                        categoriaFiltro === cat 
-                        ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                        : "bg-transparent border-white/10 text-slate-500 hover:text-white hover:border-white/20"
-                    }`}
-                  >
-                    {cat}
+                {["Todas", "Infantil", "Juvenil", "Mayores"].map(c => (
+                  <button key={c} onClick={() => setCategoriaFiltro(c)} 
+                    className={`shrink-0 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all ${categoriaFiltro === c ? "bg-blue-600 text-white" : "bg-white/5 text-slate-500 hover:text-white"}`}>
+                    {c}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-              <button 
-                onClick={seleccionarTodosFiltrados}
-                className="w-full py-4 border border-dashed border-white/10 text-[10px] font-black text-blue-400 uppercase hover:bg-white/5 rounded-2xl mb-4 transition-all flex items-center justify-center gap-3"
-              >
-                <Filter size={14} />
-                {nadadoresFiltrados.every(n => seleccionados.includes(n._id)) ? "Deseleccionar filtrados" : "Seleccionar todos los filtrados"}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+              <button onClick={seleccionarTodosFiltrados} className="w-full py-3 border border-dashed border-white/10 text-[9px] font-black text-blue-400 uppercase hover:bg-blue-600 hover:text-white rounded-xl mb-4 transition-all">
+                {nadadoresFiltrados.every(n => seleccionados.includes(n._id)) ? "Deseleccionar Todos" : "Seleccionar Filtrados"}
               </button>
               
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 opacity-20">
-                    <Loader2 className="animate-spin text-white mb-4" size={40} />
-                    <p className="text-[10px] text-white font-black uppercase tracking-widest">Cargando Atletas...</p>
-                </div>
+                <div className="py-20 text-center"><Loader2 className="animate-spin text-white/10 mx-auto" size={30} /></div>
               ) : (
                 nadadoresFiltrados.map(n => (
-                  <div 
-                    key={n._id}
-                    onClick={() => toggleNadador(n._id)}
-                    className={`group flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${
-                        seleccionados.includes(n._id) 
-                        ? "border-blue-500 bg-blue-500/10" 
-                        : "border-white/5 bg-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`transition-transform duration-300 ${seleccionados.includes(n._id) ? "scale-110" : ""}`}>
-                        {seleccionados.includes(n._id) 
-                            ? <CheckCircle2 size={24} className="text-blue-500" /> 
-                            : <Circle size={24} className="text-white/10 group-hover:text-white/30" />
-                        }
-                      </div>
-                      <div>
-                        <p className={`text-sm font-black uppercase tracking-tight transition-colors ${seleccionados.includes(n._id) ? "text-white" : "text-slate-400"}`}>
-                            {n.user.nombre}
-                        </p>
-                        <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{n.categoria || "N/A"}</p>
-                      </div>
-                    </div>
-                    <ChevronRight size={16} className={`transition-all ${seleccionados.includes(n._id) ? "text-blue-500 translate-x-1" : "text-white/10"}`} />
-                  </div>
+                  <NadadorRow 
+                    key={n._id} 
+                    n={n} 
+                    isSelected={seleccionados.includes(n._id)} 
+                    onToggle={toggleNadador} 
+                  />
                 ))
               )}
             </div>
-
-            <div className="mt-8 pt-8 border-t border-white/5 text-center">
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">
-                    Se enviará a <span className="text-blue-500 font-black">{seleccionados.length}</span> nadadores seleccionados
-                </p>
-            </div>
-          </section>
+          </aside>
         </div>
       </div>
     </div>

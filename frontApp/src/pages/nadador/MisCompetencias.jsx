@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { getCompetenciasPorNadador } from "../../api/competencias.api";
@@ -8,7 +8,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { 
   Trophy, Search, Calendar, Waves, Timer, 
   ChevronDown, Loader2, XCircle, SortAsc, 
-  SortDesc, TrendingUp, Award, Clock
+  SortDesc, MapPin, Zap, ChevronRight
 } from "lucide-react";
 
 const MisCompetencias = () => {
@@ -17,7 +17,6 @@ const MisCompetencias = () => {
   const [searchFecha, setSearchFecha] = useState(null);
   const [orden, setOrden] = useState("desc");
 
-  // 1. Obtener Perfil del Nadador
   const { data: perfil } = useQuery({
     queryKey: ["miPerfil"],
     queryFn: async () => {
@@ -26,7 +25,6 @@ const MisCompetencias = () => {
     }
   });
 
-  // 2. Obtener Competencias del Nadador
   const { data: respCompetencias, isLoading: loadingComp } = useQuery({
     queryKey: ["misCompetencias", perfil?._id],
     queryFn: () => getCompetenciasPorNadador(perfil._id),
@@ -35,16 +33,6 @@ const MisCompetencias = () => {
 
   const competencias = respCompetencias?.data || [];
 
-  // 3. Obtener Pruebas (solo cuando se expande una competencia)
-  const { data: respPruebas, isLoading: loadingPruebas } = useQuery({
-    queryKey: ["pruebasDetalle", expandedComp],
-    queryFn: () => getPruebasPorCompetencia(expandedComp),
-    enabled: !!expandedComp,
-  });
-
-  const pruebas = respPruebas?.data?.pruebas || [];
-
-  // Lógica de filtrado y orden (igual a la del profesor)
   const competenciasProcesadas = useMemo(() => {
     let lista = [...competencias];
     if (searchNombre) {
@@ -62,171 +50,211 @@ const MisCompetencias = () => {
   }, [competencias, searchNombre, searchFecha, orden]);
 
   if (loadingComp) return (
-    <div className="flex flex-col items-center justify-center py-40">
-      <Loader2 size={40} className="animate-spin text-blue-600 mb-4" />
-      <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Sincronizando Historial...</p>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] animate-pulse">
+      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Sincronizando Marcas...</p>
     </div>
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       
       {/* HEADER */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Mi Trayectoria</p>
-          <h2 className="text-5xl font-black text-slate-900 tracking-tighter italic">
-            MIS <span className="text-blue-600">COMPETENCIAS</span>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="h-0.5 w-6 bg-blue-600 rounded-full" />
+            <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em]">Historial de Tiempos</p>
+          </div>
+          <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">
+            Mis <span className="text-blue-600">Marcas</span>
           </h2>
         </div>
-      </header>
+        <div className="bg-white px-6 py-4 rounded-3xl border border-slate-100 shadow-sm self-start sm:self-auto min-w-[140px]">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center sm:text-left">Competencias</p>
+          <p className="text-3xl font-black text-slate-900 italic text-center sm:text-left">{competencias.length}</p>
+        </div>
+      </div>
 
-      {/* TOOLBAR DE FILTROS (Estilo Profesor) */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-3 flex flex-col md:flex-row items-center gap-3">
-        <div className="flex-1 w-full relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+      {/* TOOLBAR RESPONSIVO */}
+      <div className="bg-white/90 backdrop-blur-xl sticky top-4 z-40 rounded-[2rem] md:rounded-[3rem] shadow-xl shadow-slate-200/40 border border-slate-100 p-2 flex flex-col lg:flex-row items-center gap-2">
+        <div className="flex-1 w-full relative group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={18} />
           <input
             type="text"
-            placeholder="Buscar competencia..."
+            placeholder="Buscar evento..."
             value={searchNombre}
             onChange={(e) => setSearchNombre(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 placeholder:text-slate-300"
+            className="w-full pl-12 pr-4 py-3 md:py-4 bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-tight"
           />
         </div>
         
-        <div className="w-px h-8 bg-slate-100 hidden md:block"></div>
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto p-1 sm:p-0">
+          <div className="flex items-center bg-slate-50 rounded-2xl px-4 py-1 w-full sm:w-auto border border-transparent focus-within:border-blue-100">
+            <Calendar size={16} className="text-slate-400 shrink-0" />
+            <DatePicker
+              selected={searchFecha}
+              onChange={(date) => setSearchFecha(date)}
+              placeholderText="FECHA"
+              dateFormat="dd/MM/yyyy"
+              maxDate={new Date()}
+              showYearDropdown
+              dropdownMode="select"
+              className="bg-transparent border-none py-2 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer w-full sm:w-24 uppercase"
+            />
+          </div>
 
-        <div className="flex items-center px-2 w-full md:w-auto">
-          <Calendar size={18} className="text-slate-300 mr-2" />
-          <DatePicker
-            selected={searchFecha}
-            onChange={(date) => setSearchFecha(date)}
-            placeholderText="Filtrar fecha"
-            dateFormat="dd/MM/yyyy"
-            className="bg-transparent border-none py-3 text-sm font-black text-slate-500 focus:ring-0 cursor-pointer w-full"
-          />
+          <div className="flex items-center bg-slate-50 rounded-2xl px-4 py-1 w-full sm:w-auto border border-transparent focus-within:border-blue-100">
+            {orden === "desc" ? <SortDesc size={16} className="text-blue-600 shrink-0" /> : <SortAsc size={16} className="text-blue-600 shrink-0" />}
+            <select
+              value={orden}
+              onChange={(e) => setOrden(e.target.value)}
+              className="bg-transparent border-none py-2 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase w-full sm:w-auto"
+            >
+              <option value="desc">MÁS RECIENTES</option>
+              <option value="asc">MÁS ANTIGUAS</option>
+            </select>
+          </div>
+
+          {(searchNombre || searchFecha) && (
+            <button 
+              onClick={() => { setSearchNombre(""); setSearchFecha(null) }} 
+              className="w-full sm:w-auto p-2.5 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all flex justify-center items-center gap-2 sm:gap-0"
+            >
+              <XCircle size={18} />
+              <span className="sm:hidden text-[10px] font-black uppercase">Limpiar</span>
+            </button>
+          )}
         </div>
+      </div>
 
-        <div className="w-px h-8 bg-slate-100 hidden md:block"></div>
-
-        <div className="flex items-center px-2 w-full md:w-auto">
-          {orden === "desc" ? <SortDesc size={18} className="text-blue-600 mr-2" /> : <SortAsc size={18} className="text-blue-600 mr-2" />}
-          <select
-            value={orden}
-            onChange={(e) => setOrden(e.target.value)}
-            className="bg-transparent border-none py-3 text-sm font-black text-slate-500 focus:ring-0 cursor-pointer uppercase"
-          >
-            <option value="desc">Más Recientes</option>
-            <option value="asc">Más Antiguas</option>
-          </select>
-        </div>
-
-        {(searchNombre || searchFecha) && (
-          <button onClick={() => { setSearchNombre(""); setSearchFecha(null) }} className="p-3 text-red-400 hover:bg-red-50 rounded-xl transition-colors">
-            <XCircle size={20} />
-          </button>
+      {/* LISTADO */}
+      <div className="grid grid-cols-1 gap-4 md:gap-6">
+        {competenciasProcesadas.length > 0 ? (
+          competenciasProcesadas.map((c) => (
+            <CompetenciaAcordeon 
+              key={c._id} 
+              competencia={c} 
+              isExpanded={expandedComp === c._id}
+              onToggle={() => setExpandedComp(expandedComp === c._id ? null : c._id)}
+              perfilId={perfil?._id}
+            />
+          ))
+        ) : (
+          <div className="py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200 mx-2">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-200">
+              <Search size={32} />
+            </div>
+            <p className="text-slate-400 font-black text-xs uppercase tracking-[0.2em]">Sin resultados para la búsqueda</p>
+          </div>
         )}
       </div>
+    </div>
+  );
+};
 
-      {/* LISTADO TIPO ACORDEÓN */}
-      <div className="grid grid-cols-1 gap-4">
-        {competenciasProcesadas.map((c) => (
-          <div key={c._id} className={`group bg-white rounded-[2.5rem] border transition-all duration-500 overflow-hidden ${expandedComp === c._id ? 'border-blue-200 shadow-xl shadow-blue-900/5' : 'border-slate-100 shadow-sm'}`}>
-            
-            {/* CABECERA CLICKABLE */}
-            <div 
-              onClick={() => setExpandedComp(expandedComp === c._id ? null : c._id)}
-              className="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 cursor-pointer hover:bg-slate-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-6 w-full md:w-auto">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${expandedComp === c._id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-300 group-hover:text-blue-600'}`}>
-                  <Trophy size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-800 leading-tight italic uppercase">{c.nombre}</h3>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{new Date(c.fecha).toLocaleDateString()}</span>
-                    <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Piscina {c.piscina}m</span>
-                  </div>
-                </div>
-              </div>
+const CompetenciaAcordeon = ({ competencia, isExpanded, onToggle, perfilId }) => {
+  const { data: respPruebas, isLoading: loadingPruebas } = useQuery({
+    queryKey: ["pruebasDetalle", competencia._id],
+    queryFn: () => getPruebasPorCompetencia(competencia._id),
+    enabled: isExpanded,
+  });
 
-              <div className="flex items-center gap-4 w-full md:w-auto justify-between">
-                <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase bg-slate-50 px-4 py-2 rounded-xl">
-                  <Clock size={14} /> {c.lugar}
-                </div>
-                <div className={`p-2 rounded-full transition-all ${expandedComp === c._id ? 'bg-blue-600 text-white rotate-180' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-50'}`}>
-                  <ChevronDown size={20} />
-                </div>
-              </div>
-            </div>
+  const pruebas = respPruebas?.data?.pruebas || [];
 
-            {/* CONTENIDO EXPANDIDO: PRUEBAS Y PARCIALES */}
-            {expandedComp === c._id && (
-              <div className="px-6 md:px-8 pb-8 animate-in slide-in-from-top-4 duration-500">
-                <div className="h-px bg-slate-100 mb-8" />
-                
-                {loadingPruebas ? (
-                    <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
-                    ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {pruebas
-                        .filter(p => {
-                            // Obtenemos el ID del nadador de la prueba (ya sea objeto o string)
-                            const pruebaNadadorId = p.nadador?._id || p.nadador;
-                            // Obtenemos tu ID de perfil
-                            const miId = perfil?._id;
-        
-                            // Si no hay ID en la prueba, la mostramos por si acaso (evita que se pierdan datos)
-                            if (!pruebaNadadorId) return true;
-        
-                            return pruebaNadadorId === miId;
-                        })
-                        .map((p) => (
-                            <div key={p._id} className="bg-[#f8fafc] rounded-3xl p-6 border border-slate-100 hover:border-blue-200 transition-colors group/card">
-                            {/* Contenido de la prueba (Distancia, Estilo, Tiempo, Parciales) que ya teníamos */}
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Prueba Realizada</p>
-                                <h4 className="text-2xl font-black text-slate-800 italic uppercase">{p.distancia}m {p.estilo}</h4>
-                                </div>
-                                <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1 tracking-tighter">Tiempo Oficial</p>
-                                <p className="text-3xl font-black text-slate-900 tabular-nums tracking-tighter">{p.tiempo}</p>
-                                </div>
-                            </div>
-
-                            {/* PARCIALES (Asegúrate de que el nombre de la propiedad coincida con tu API) */}
-                            <div className="space-y-3">
-                                {p.parciales && p.parciales.length > 0 ? (
-                                    p.parciales.map((par, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <span className="text-[9px] font-black text-slate-300 w-10">
-                                        {/* Si el profesor usa nroParcial lo usamos, si no, usamos el index */}
-                                        {par.nroParcial ? par.nroParcial * 50 : (idx + 1) * 50}m
-                                        </span>
-                                        <div className="flex-1 h-8 bg-white rounded-lg flex items-center justify-between px-4 border border-slate-200/50">
-                                        <span className="text-[10px] font-bold text-slate-400 italic">Lap {idx + 1}</span>
-                                        <span className="text-[10px] font-black text-blue-600 tabular-nums">{par.tiempo || par}</span>
-                                        </div>
-                                    </div>
-                                    ))
-                                ) : (
-                                    <div className="py-3 border border-dashed border-slate-200 rounded-xl text-center">
-                                    <p className="text-[9px] text-slate-300 font-bold uppercase italic">Sin parciales registrados</p>
-                                    </div>
-                                )}
-                            </div>
-                            </div>
-                        ))}
-                    </div>
-                    )}
-              </div>
-            )}
+  return (
+    <div className={`group bg-white rounded-[2rem] md:rounded-[3rem] border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-blue-200 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm'}`}>
+      <div 
+        onClick={onToggle}
+        className="p-5 md:p-8 lg:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer"
+      >
+        <div className="flex items-center gap-5 w-full md:w-auto">
+          <div className={`shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg ${isExpanded ? 'bg-blue-600 text-white rotate-3 scale-110' : 'bg-slate-900 text-white'}`}>
+            <Trophy size={24} className="md:size-7" />
           </div>
-        ))}
+          <div className="min-w-0">
+            <h3 className="text-xl md:text-2xl font-black text-slate-900 leading-tight italic uppercase tracking-tighter truncate">
+              {competencia.nombre}
+            </h3>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+              <span className="flex items-center gap-1 text-[9px] md:text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                <Calendar size={10} /> {new Date(competencia.fecha).toLocaleDateString()}
+              </span>
+              <span className="flex items-center gap-1 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <Waves size={10} /> {competencia.piscina}M
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between w-full md:w-auto md:gap-4 border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0">
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl text-slate-500 text-[9px] font-black uppercase border border-slate-100 max-w-[180px] truncate">
+            <MapPin size={12} className="text-blue-500 shrink-0" /> {competencia.lugar}
+          </div>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isExpanded ? 'bg-blue-600 text-white rotate-180' : 'bg-slate-100 text-slate-400'}`}>
+            <ChevronDown size={18} />
+          </div>
+        </div>
       </div>
+
+      {isExpanded && (
+        <div className="px-5 md:px-10 pb-8 animate-in slide-in-from-top-4 duration-500">
+          <div className="h-px bg-slate-100 mb-8" />
+          
+          {loadingPruebas ? (
+            <div className="py-12 flex flex-col items-center gap-3">
+              <Loader2 className="animate-spin text-blue-600" size={24} />
+              <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Obteniendo Tiempos...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              {pruebas
+                .filter(p => (p.nadador?._id || p.nadador) === perfilId)
+                .map((p) => (
+                  <div key={p._id} className="bg-slate-50/50 rounded-[2rem] p-6 md:p-8 border border-slate-100 hover:border-blue-100 hover:bg-white transition-all shadow-sm">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                           <Zap size={12} className="text-amber-500 fill-amber-500 shrink-0" />
+                           <span className="text-[9px] font-black text-blue-600 uppercase tracking-[0.15em]">Official Mark</span>
+                        </div>
+                        <h4 className="text-2xl md:text-3xl font-black text-slate-900 italic uppercase tracking-tighter leading-none truncate">
+                          {p.distancia}m <span className="text-blue-600">{p.estilo}</span>
+                        </h4>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">FINAL</p>
+                        <p className="text-3xl md:text-4xl font-black text-slate-900 tabular-nums italic leading-none">{p.tiempo}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-slate-400 mb-2">
+                        <Timer size={12} />
+                        <span className="text-[9px] font-black uppercase tracking-widest">Parciales</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {p.parciales?.length > 0 ? (
+                          p.parciales.map((par, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <span className="text-[9px] font-black text-slate-300 w-8">{(idx + 1) * 50}M</span>
+                              <div className="flex-1 h-10 bg-white rounded-xl flex items-center justify-between px-4 border border-slate-100">
+                                <span className="text-[9px] font-black text-slate-400 italic">LAP {idx + 1}</span>
+                                <span className="text-[11px] md:text-xs font-black text-blue-600 tabular-nums">{par.tiempo || par}</span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-[9px] text-slate-300 font-bold italic py-2">Sin parciales registrados</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

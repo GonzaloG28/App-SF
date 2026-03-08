@@ -19,14 +19,23 @@ api.interceptors.request.use(
 )
 
 api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem("token");
-            // Opcional: window.location.href = "/login";
-        }
-        return Promise.reject(error.response?.data || error.message);
+  (response) => {
+    return response; // Si todo va bien, deja pasar la respuesta
+  },
+  (error) => {
+    // Si el error es 401 (No autorizado / Token expirado)
+    if (error.response && error.response.status === 401) {
+      console.warn("Sesión expirada. Limpiando credenciales...");
+      
+      // Limpiamos el almacenamiento
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      
+      // Redirigimos al login limpiamente (evita el bug visual)
+      window.location.href = "/login";
     }
+    return Promise.reject(error);
+  }
 );
 
 

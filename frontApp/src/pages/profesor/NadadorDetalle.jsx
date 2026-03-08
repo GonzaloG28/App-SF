@@ -1,32 +1,22 @@
+import { useMemo } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { getNadadorById } from "../../api/profesor.api"
 import { 
-  User, 
-  ArrowLeft, 
-  Trophy, 
-  BarChart3, 
-  Calendar, 
-  Weight, 
-  Ruler, 
-  Fingerprint, 
-  Waves, 
-  Loader2, 
-  ExternalLink,
-  ShieldCheck,
-  RefreshCcw
+  ArrowLeft, Trophy, BarChart3, Calendar, Weight, 
+  Ruler, Fingerprint, Waves, Loader2, ExternalLink,
+  ShieldCheck, RefreshCcw
 } from "lucide-react"
 
 const NadadorProfile = () => {
   const { id } = useParams()
 
-  // 1. OBTENCIÓN DE DATOS CON CACHÉ INTELIGENTE
   const {
     data: nadador,
     isLoading,
     isError,
     error,
-    isFetching // Para saber si se está actualizando en segundo plano
+    isFetching
   } = useQuery({
     queryKey: ["nadador", id],
     queryFn: async () => {
@@ -34,182 +24,161 @@ const NadadorProfile = () => {
       return res.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 10, // Los datos biométricos no cambian tan seguido (10 min de frescura)
-    cacheTime: 1000 * 60 * 30, // Mantener en memoria 30 min
+    staleTime: 1000 * 60 * 10, 
+    cacheTime: 1000 * 60 * 30,
   })
 
-  // LOADER DE ESTADO INICIAL
+  // Memoizar la fecha para no recalcular en cada pequeño re-render
+  const fechaFormateada = useMemo(() => {
+    if (!nadador?.fechaNacimiento) return "No registrado";
+    return new Date(nadador.fechaNacimiento).toLocaleDateString('es-ES', {
+      year: 'numeric', month: 'short', day: '2-digit'
+    });
+  }, [nadador?.fechaNacimiento]);
+
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-slate-400">
-        <div className="relative">
-          <Loader2 size={48} className="animate-spin text-blue-600 mb-4" />
-          <Waves className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-100 -z-10 animate-pulse" size={80} />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400">
+        <div className="relative flex items-center justify-center">
+          <Loader2 size={48} className="animate-spin text-blue-600 z-10" />
+          <Waves className="absolute text-blue-50 animate-pulse scale-150" size={80} />
         </div>
-        <p className="font-black text-[10px] uppercase tracking-[0.4em] mt-8">Sincronizando Expediente...</p>
+        <p className="font-black text-[10px] uppercase tracking-[0.4em] mt-10 animate-pulse">
+          Sincronizando Expediente...
+        </p>
       </div>
     )
   }
 
-  // MANEJO DE ERRORES
-  if (isError) {
+  if (isError || !nadador) {
     return (
-      <div className="max-w-2xl mx-auto mt-20 bg-white border border-red-100 p-12 rounded-[3rem] text-center shadow-xl shadow-red-900/5">
-        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <ShieldCheck size={40} />
+      <div className="max-w-2xl mx-auto mt-10 bg-white border border-red-100 p-8 md:p-12 rounded-[2.5rem] text-center shadow-xl shadow-red-900/5 animate-in zoom-in duration-300">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ShieldCheck size={32} />
         </div>
-        <h2 className="text-slate-900 text-2xl font-black mb-2 italic tracking-tighter">ERROR DE ACCESO</h2>
-        <p className="text-slate-500 text-sm font-medium mb-8">
+        <h2 className="text-slate-900 text-xl font-black mb-2 uppercase tracking-tighter">Fallo de Autenticidad</h2>
+        <p className="text-slate-500 text-sm mb-8">
           {error?.response?.status === 404 
-            ? "El nadador solicitado no existe en la base de datos." 
-            : "No se pudo establecer conexión con el servidor de registros."}
+            ? "El registro del nadador no existe o fue removido." 
+            : "Error de comunicación con el servidor central."}
         </p>
         <Link 
           to="/profesor/nadadores" 
-          className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all inline-block"
+          className="bg-[#0f172a] hover:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all inline-block shadow-lg"
         >
-          Regresar al Equipo
+          Regresar a la Lista
         </Link>
       </div>
     )
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12 px-4 md:px-0">
       
-      {/* NAVEGACIÓN SUPERIOR */}
+      {/* NAVEGACIÓN Y STATUS */}
       <div className="flex items-center justify-between">
         <Link 
           to="/profesor/nadadores" 
-          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 font-bold text-xs uppercase tracking-widest transition-colors group"
+          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase tracking-widest transition-colors group"
         >
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          Volver al Equipo
+          <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+          Panel Central
         </Link>
         
-        {/* Indicador de actualización en segundo plano */}
         {isFetching ? (
-          <div className="flex items-center gap-2 text-blue-400 animate-pulse">
+          <div className="flex items-center gap-2 text-blue-500 bg-blue-50 px-3 py-1 rounded-lg">
             <RefreshCcw size={12} className="animate-spin" />
-            <span className="text-[10px] font-black uppercase tracking-tighter">Actualizando...</span>
+            <span className="text-[9px] font-black uppercase">Actualizando</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100">
             <ShieldCheck size={12} />
-            Perfil Verificado ÑSF
+            Registro ÑSF
           </div>
         )}
       </div>
 
-      {/* HEADER DE IDENTIDAD (DARK MODE STYLE) */}
-      <div className="bg-[#0f172a] rounded-[3.5rem] p-8 md:p-14 text-white shadow-2xl relative overflow-hidden group">
-        {/* Decoración de fondo interactiva */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] -mr-32 -mt-32 group-hover:bg-blue-600/20 transition-colors duration-700"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[80px] -ml-32 -mb-32"></div>
+      {/* HEADER TIPO TARJETA DEPORTIVA */}
+      <div className="bg-[#0f172a] rounded-[2.5rem] md:rounded-[3.5rem] p-8 md:p-14 text-white shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] -mr-20 -mt-20 pointer-events-none group-hover:bg-blue-600/20 transition-colors" />
         
-        <div className="relative flex flex-col md:flex-row items-center gap-10">
-          {/* Avatar Pro con Inicial */}
-          <div className="w-36 h-36 rounded-[3rem] bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center text-6xl font-black shadow-2xl border-4 border-white/10 transform transition-transform group-hover:scale-105 duration-500">
-            {nadador.user?.nombre?.charAt(0)}
+        <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center text-5xl md:text-6xl font-black shadow-2xl border-4 border-white/5 transform transition-transform group-hover:scale-105 duration-500 shrink-0 uppercase">
+            {nadador.user?.nombre?.charAt(0) || "N"}
           </div>
 
-          <div className="text-center md:text-left space-y-4">
-            <div className="inline-block bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+          <div className="text-center md:text-left">
+            <div className="inline-block bg-blue-500/20 border border-blue-500/30 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-4">
               {nadador.categoria || 'Nivel Club'}
             </div>
-            <h1 className="text-5xl md:text-6xl font-black tracking-tighter italic leading-none">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter italic leading-none mb-4">
               {nadador.user?.nombre} <span className="text-blue-500">{nadador.apellido}</span>
             </h1>
-            <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-2">
-              <span className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                <Fingerprint size={16} className="text-blue-500" /> {nadador.rut}
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6">
+              <span className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                <Fingerprint size={14} className="text-blue-500" /> {nadador.rut || 'No registra'}
               </span>
-              <span className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                <Calendar size={16} className="text-blue-500" /> {nadador.edad} años
+              <span className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                <Calendar size={14} className="text-blue-500" /> {nadador.edad || '--'} Años
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* GRID DE MÉTRICAS BIOMÉTRICAS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Calendar} title="Fecha Nacimiento" value={nadador.fechaNacimiento ? new Date(nadador.fechaNacimiento).toLocaleDateString('es-ES', {year: 'numeric', month: 'short', day: '2-digit'}) : "No reg."} color="blue" />
-        <StatCard icon={Weight} title="Peso Corporal" value={`${nadador.peso || '--'} kg`} color="indigo" />
+      {/* MÉTRICAS BIOMÉTRICAS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <StatCard icon={Calendar} title="Nacimiento" value={fechaFormateada} color="blue" />
+        <StatCard icon={Weight} title="Peso Corp." value={`${nadador.peso || '--'} kg`} color="indigo" />
         <StatCard icon={Ruler} title="Estatura" value={`${nadador.altura || '--'} cm`} color="emerald" />
-        <StatCard icon={Trophy} title="Estado Plantel" value="ACTIVO" color="amber" />
+        <StatCard icon={Trophy} title="Plantel" value="ACTIVO" color="amber" />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
         
-        {/* ESPECIALIDADES */}
-        <div className="lg:col-span-2 bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                <Waves size={20} />
-              </div>
-              <h3 className="font-black text-slate-800 uppercase tracking-tight text-lg">Pruebas de Especialidad</h3>
+        {/* LISTADO DE ESPECIALIDADES */}
+        <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+              <Waves size={20} />
             </div>
-
-            <div className="flex flex-wrap gap-4">
-              {nadador.pruebasEspecialidad?.length > 0 ? (
-                nadador.pruebasEspecialidad.map((prueba, index) => (
-                  <div
-                    key={index}
-                    className="bg-white border-2 border-slate-50 text-slate-600 px-6 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 hover:shadow-lg hover:shadow-blue-900/5 transition-all cursor-default"
-                  >
-                    {prueba}
-                  </div>
-                ))
-              ) : (
-                <div className="w-full py-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                  <p className="text-slate-400 text-sm font-bold italic">Sin especialidades registradas.</p>
-                </div>
-              )}
-            </div>
+            <h3 className="font-black text-slate-800 uppercase tracking-tight text-lg">Pruebas de Especialidad</h3>
           </div>
-          
-          <div className="mt-12 pt-8 border-t border-slate-50">
-             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Última actualización: {new Date().toLocaleDateString()}</p>
+
+          <div className="flex flex-wrap gap-3">
+            {nadador.pruebasEspecialidad?.length > 0 ? (
+              nadador.pruebasEspecialidad.map((prueba, index) => (
+                <div
+                  key={index}
+                  className="bg-slate-50 border border-slate-100 text-slate-600 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:bg-white hover:text-blue-600 transition-all cursor-default shadow-sm"
+                >
+                  {prueba}
+                </div>
+              ))
+            ) : (
+              <div className="w-full py-8 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+                <p className="text-slate-400 text-xs font-bold italic">Sin especialidades registradas.</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* ACCIONES RÁPIDAS / NAVEGACIÓN */}
+        {/* ACCIONES SECUNDARIAS */}
         <div className="space-y-4">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-6">Análisis de Datos</h3>
-          
-          <Link
+          <ActionLink 
             to={`/profesor/nadador/${id}/competencias`}
-            className="group flex items-center justify-between bg-white hover:bg-blue-600 p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-500 hover:scale-[1.02]"
-          >
-            <div className="flex items-center gap-5">
-              <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-white/20 group-hover:text-white transition-colors">
-                <Trophy size={24} />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-black text-slate-800 group-hover:text-white text-md uppercase tracking-tight">Competencias</span>
-                <span className="text-[9px] font-bold text-slate-400 group-hover:text-blue-100 uppercase tracking-widest">Historial completo</span>
-              </div>
-            </div>
-            <ExternalLink size={20} className="text-slate-300 group-hover:text-white transition-colors" />
-          </Link>
-
-          <Link
+            icon={Trophy}
+            title="Competencias"
+            subtitle="Historial de Marcas"
+            color="blue"
+          />
+          <ActionLink 
             to={`/profesor/nadador/${id}/ranking`}
-            className="group flex items-center justify-between bg-white hover:bg-amber-500 p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-500 hover:scale-[1.02]"
-          >
-            <div className="flex items-center gap-5">
-              <div className="p-4 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-white/20 group-hover:text-white transition-colors">
-                <BarChart3 size={24} />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-black text-slate-800 group-hover:text-white text-md uppercase tracking-tight">Ranking Pruebas</span>
-                <span className="text-[9px] font-bold text-slate-400 group-hover:text-amber-100 uppercase tracking-widest">Mejores Marcas</span>
-              </div>
-            </div>
-            <ExternalLink size={20} className="text-slate-300 group-hover:text-white transition-colors" />
-          </Link>
+            icon={BarChart3}
+            title="Ranking Pruebas"
+            subtitle="Mejores Tiempos"
+            color="amber"
+          />
         </div>
 
       </div>
@@ -217,7 +186,7 @@ const NadadorProfile = () => {
   )
 }
 
-// Componente StatCard con hover mejorado
+// Sub-componentes para mayor limpieza y performance
 const StatCard = ({ title, value, icon: Icon, color }) => {
   const themes = {
     blue: "text-blue-600 bg-blue-50",
@@ -227,14 +196,39 @@ const StatCard = ({ title, value, icon: Icon, color }) => {
   }
   
   return (
-    <div className="group bg-white rounded-[2.5rem] p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1">
-      <div className={`w-12 h-12 ${themes[color]} rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:rotate-12`}>
-        <Icon size={24} />
+    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300">
+      <div className={`w-10 h-10 ${themes[color]} rounded-xl flex items-center justify-center mb-4`}>
+        <Icon size={20} />
       </div>
-      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] mb-1">{title}</p>
-      <p className="text-2xl font-black text-slate-800 tabular-nums">{value}</p>
+      <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">{title}</p>
+      <p className="text-lg md:text-xl font-black text-slate-800 tabular-nums truncate">{value}</p>
     </div>
   )
 }
 
-export default NadadorProfile
+const ActionLink = ({ to, icon: Icon, title, subtitle, color }) => {
+  const colors = {
+    blue: "hover:bg-blue-600 group-hover:bg-blue-50",
+    amber: "hover:bg-amber-500 group-hover:bg-amber-50"
+  }
+  
+  return (
+    <Link
+      to={to}
+      className={`group flex items-center justify-between bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-500 ${color === 'blue' ? 'hover:bg-blue-600' : 'hover:bg-amber-500'}`}
+    >
+      <div className="flex items-center gap-4">
+        <div className={`p-3 rounded-xl transition-colors ${color === 'blue' ? 'bg-blue-50 text-blue-600 group-hover:bg-white/20 group-hover:text-white' : 'bg-amber-50 text-amber-600 group-hover:bg-white/20 group-hover:text-white'}`}>
+          <Icon size={22} />
+        </div>
+        <div className="flex flex-col">
+          <span className="font-black text-slate-800 group-hover:text-white text-sm uppercase tracking-tight">{title}</span>
+          <span className="text-[9px] font-bold text-slate-400 group-hover:text-white/70 uppercase tracking-widest">{subtitle}</span>
+        </div>
+      </div>
+      <ExternalLink size={18} className="text-slate-300 group-hover:text-white transition-colors shrink-0" />
+    </Link>
+  )
+}
+
+export default NadadorProfile;

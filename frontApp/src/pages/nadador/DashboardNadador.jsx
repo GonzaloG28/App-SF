@@ -1,237 +1,235 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import { 
   Lock, Activity, ChevronRight, Save, 
-  Loader2, Star, Hash, Trophy, Ruler, Weight,
-  Zap, ArrowUpRight
+  Star, Hash, Trophy, Ruler, Weight,
+  Zap, ArrowUpRight, CheckCircle2, AlertCircle
 } from "lucide-react";
 
+// --- COMPONENTE: MODAL DE SEGURIDAD (Optimizado para no re-renderizar el dashboard) ---
+const PasswordUpdateModal = memo(({ isOpen, perfil, onCarreraExitosamente }) => {
+  const [passwords, setPasswords] = useState({ new: "", confirm: "" });
+  const [error, setError] = useState("");
+  const { passwordCambiadoExitosamente } = useAuth();
+
+  const mutation = useMutation({
+    mutationFn: (pass) => api.put("/users/cambiar-password", { passwordNueva: pass }),
+    onSuccess: () => {
+      passwordCambiadoExitosamente();
+      onCarreraExitosamente();
+    },
+    onError: () => setError("Error al actualizar. Intenta de nuevo.")
+  });
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (passwords.new !== passwords.confirm) return setError("Las contraseñas no coinciden");
+    mutation.mutate(passwords.new);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl animate-in fade-in duration-500" />
+      <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-600" />
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+            <Lock size={28} strokeWidth={2.5} />
+          </div>
+          <h2 className="text-3xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">
+            Protocolo de <span className="text-blue-600">Seguridad</span>
+          </h2>
+          <p className="text-slate-500 text-sm mt-3 mb-8 font-medium">
+            Atleta <span className="font-bold text-slate-800">{perfil?.user?.nombre}</span>, activa tu cifrado personal para acceder a la telemetría.
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input 
+            type="password" 
+            placeholder="Nueva Contraseña"
+            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 ring-blue-500/20 outline-none transition-all font-bold"
+            onChange={e => setPasswords({...passwords, new: e.target.value})}
+            required
+          />
+          <input 
+            type="password" 
+            placeholder="Confirmar Identidad"
+            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 ring-blue-500/20 outline-none transition-all font-bold"
+            onChange={e => setPasswords({...passwords, confirm: e.target.value})}
+            required
+          />
+          {error && <p className="text-red-500 text-[10px] font-black uppercase text-center">{error}</p>}
+          <button 
+            disabled={mutation.isPending}
+            className="w-full bg-[#0f172a] hover:bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex justify-center items-center gap-3 active:scale-95 disabled:opacity-50 shadow-lg shadow-blue-900/20"
+          >
+            {mutation.isPending ? "Procesando..." : "Sincronizar Acceso"}
+            <CheckCircle2 size={18} />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+});
+
+// --- COMPONENTE PRINCIPAL ---
 const DashboardNadador = () => {
-  const { user, passwordCambiadoExitosamente } = useAuth();
-  const [showModal, setShowModal] = useState(localStorage.getItem("debeCambiarPassword") === "true");
-  const [passwordNueva, setPasswordNueva] = useState("");
-  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(localStorage.getItem("debeCambiarPassword") === "true");
 
   const { data: perfil, isLoading } = useQuery({
     queryKey: ["miPerfil"],
-    queryFn: async () => {
-      const res = await api.get("/nadadores/perfil"); 
-      return res.data;
-    },
+    queryFn: async () => (await api.get("/nadadores/perfil")).data,
     enabled: !!user,
   });
 
-  const mutation = useMutation({
-    mutationFn: async (pass) => api.put("/users/cambiar-password", { passwordNueva: pass }),
-    onSuccess: () => {
-      passwordCambiadoExitosamente();
-      setShowModal(false);
-    }
-  });
-
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    if (passwordNueva !== confirmarPassword) return alert("Las contraseñas no coinciden");
-    mutation.mutate(passwordNueva);
-  };
-
-  if (isLoading) return (
-    <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
-      <div className="relative">
-        <Loader2 className="animate-spin text-blue-600 relative z-10" size={48} strokeWidth={3} />
-        <div className="absolute inset-0 blur-2xl bg-blue-500/20 animate-pulse" />
-      </div>
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Sincronizando Perfil</p>
-    </div>
-  );
+  if (isLoading) return <DashboardSkeleton />;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 pb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 pt-6">
       
-      {/* MODAL DE SEGURIDAD REDISEÑADO */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] border border-slate-100 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600" />
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-              <Lock size={30} strokeWidth={2.5} />
-            </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">Seguridad</h2>
-            <p className="text-slate-500 text-sm mb-8 mt-2 leading-relaxed font-medium">
-              Hola <span className="text-blue-600 font-black">{perfil?.user?.nombre}</span>, para proteger tus datos de rendimiento, actualiza tu contraseña inicial.
-            </p>
-            
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <input 
-                  type="password" 
-                  placeholder="Nueva Contraseña"
-                  value={passwordNueva}
-                  onChange={(e) => setPasswordNueva(e.target.value)}
-                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white transition-all font-bold placeholder:text-slate-300"
-                  required
-                />
-              </div>
-              <input 
-                type="password" 
-                placeholder="Confirmar Contraseña"
-                value={confirmarPassword}
-                onChange={(e) => setConfirmarPassword(e.target.value)}
-                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white transition-all font-bold placeholder:text-slate-300"
-                required
-              />
-              <button 
-                disabled={mutation.isPending}
-                className="w-full bg-[#0f172a] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all flex justify-center items-center gap-3 active:scale-95 disabled:opacity-50"
-              >
-                {mutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                Actualizar Acceso
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      <PasswordUpdateModal 
+        isOpen={isModalOpen} 
+        perfil={perfil} 
+        onCarreraExitosamente={() => setIsModalOpen(false)} 
+      />
 
-      {/* DASHBOARD CONTENT */}
-      <div className={`transition-all duration-700 ${showModal ? "opacity-10 pointer-events-none blur-xl scale-95" : "opacity-100"}`}>
+      <div className={`transition-all duration-700 ease-out ${isModalOpen ? "blur-2xl opacity-20 scale-95" : "opacity-100"}`}>
         
-        {/* HERO SECTION */}
-        <header className="flex flex-col lg:flex-row justify-between items-end gap-6 border-b border-slate-100 pb-10">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-lg shadow-lg shadow-blue-500/20">
-                Performance Dashboard
-              </span>
-              <div className="h-[1px] w-12 bg-slate-200" />
+        {/* HERO: ESTILO ATLETA ELITE */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12">
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Athlete Profile // Ver. 2026</span>
             </div>
-            <h1 className="text-6xl md:text-7xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-slate-900 italic tracking-[ -0.05em] uppercase leading-[0.85]">
               {perfil?.user?.nombre} <br />
-              <span className="text-blue-600 not-italic">{perfil?.apellido}</span>
+              <span className="text-blue-600 not-italic select-none">{perfil?.apellido}</span>
             </h1>
           </div>
           
-          <div className="flex items-center gap-4 bg-white p-2 pr-6 rounded-3xl border border-slate-100 shadow-sm">
-            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
-              <Hash size={20} strokeWidth={3} />
+          <div className="flex items-center gap-6 p-1.5 bg-white rounded-[2rem] border border-slate-100 shadow-sm pr-8">
+            <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-blue-400 shadow-xl">
+              <Activity size={24} />
             </div>
             <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Identificación ID</p>
-              <p className="text-sm font-black text-slate-700 tracking-tight">{perfil?.rut}</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Sistema</p>
+              <p className="text-sm font-black text-slate-800 tracking-tighter">OPTIMAL_PERFORMANCE</p>
             </div>
           </div>
         </header>
 
-        {/* BENTO GRID LAYOUT */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-10">
+        {/* BENTO GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* CARD: MÉTRICAS FÍSICAS */}
-          <div className="md:col-span-4 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 group">
-            <div className="flex items-center justify-between mb-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Activity size={20} strokeWidth={2.5} />
-                </div>
-                <h3 className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-400">Biomecánica</h3>
+          {/* MÉTRICAS BIOMÉTRICAS */}
+          <div className="lg:col-span-4 space-y-6">
+            <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                  <Zap size={14} className="text-blue-600" /> Biometría
+                </h3>
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">LIVE</span>
               </div>
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <MetricBox label="Estatura" value={perfil?.altura} unit="M" icon={Ruler} />
+                <MetricBox label="Peso" value={perfil?.peso} unit="KG" icon={Weight} />
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-slate-100">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Especialidades</p>
+                <div className="flex flex-wrap gap-2">
+                  {perfil?.pruebasEspecialidad?.map((p, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-700 text-[10px] font-black rounded-lg border border-slate-100 uppercase italic group-hover:border-blue-200 transition-colors">
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* QUICK STAT (ID CARD) */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-900/20">
+              <Hash className="text-white/20 mb-4" size={24} />
+              <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest">Identificación Atleta</p>
+              <p className="text-2xl font-black italic tracking-tighter mt-1">{perfil?.rut}</p>
             </div>
+          </div>
+
+          {/* MAIN CTA: TIEMPOS Y PROGRESIÓN */}
+          <div className="lg:col-span-8 bg-[#0f172a] rounded-[3rem] relative overflow-hidden p-8 md:p-14 group min-h-[450px] flex flex-col">
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] -mr-64 -mt-64 animate-pulse" />
             
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] relative overflow-hidden group/item">
-                <div className="relative z-10">
-                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1 flex items-center gap-2">
-                    <Ruler size={12} /> Estatura
-                  </p>
-                  <p className="text-4xl font-black text-slate-800 italic">
-                    {perfil?.altura}<span className="text-blue-600 text-sm ml-1">M</span>
-                  </p>
-                </div>
-                <ArrowUpRight className="absolute top-4 right-4 text-slate-200 group-hover/item:text-blue-500 transition-colors" size={24} />
+            <div className="relative z-10 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
+                <Trophy size={14} className="text-amber-400" />
+                <span className="text-[9px] font-black text-white uppercase tracking-widest">New Records Detected</span>
               </div>
-
-              <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] relative overflow-hidden group/item">
-                <div className="relative z-10">
-                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1 flex items-center gap-2">
-                    <Weight size={12} /> Masa Corporal
-                  </p>
-                  <p className="text-4xl font-black text-slate-800 italic">
-                    {perfil?.peso}<span className="text-blue-600 text-sm ml-1">KG</span>
-                  </p>
-                </div>
-                <ArrowUpRight className="absolute top-4 right-4 text-slate-200 group-hover/item:text-blue-500 transition-colors" size={24} />
-              </div>
+              
+              <h2 className="text-5xl md:text-7xl font-black text-white italic leading-[0.9] tracking-tighter">
+                SUPERA TUS <br />
+                <span className="text-blue-500 uppercase not-italic">LÍMITES.</span>
+              </h2>
+              <p className="text-slate-400 text-lg font-medium max-w-md leading-relaxed">
+                Tu historial de marcas ha sido actualizado. Analiza tu curva de rendimiento y ajusta tu técnica.
+              </p>
             </div>
 
-            <div className="mt-8 pt-8 border-t border-slate-100">
-              <div className="flex items-center gap-2 mb-4">
-                <Star size={14} className="text-amber-400 fill-amber-400" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Core Specialty</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {perfil?.pruebasEspecialidad?.map((prueba, index) => (
-                  <span key={index} className="px-4 py-2 bg-[#0f172a] text-white text-[9px] font-black rounded-xl uppercase tracking-wider hover:bg-blue-600 transition-colors cursor-default">
-                    {prueba}
-                  </span>
+            <div className="relative z-10 mt-auto flex flex-col sm:flex-row items-center gap-6">
+              <Link 
+                to="/nadador/mis-tiempos" 
+                className="w-full sm:w-auto px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 shadow-2xl shadow-blue-900/40"
+              >
+                Ver Telemetría <ArrowUpRight size={20} />
+              </Link>
+              
+              <div className="flex -space-x-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-12 h-12 rounded-2xl border-4 border-[#0f172a] bg-slate-800 flex items-center justify-center text-blue-400 group-hover:translate-x-1 transition-transform">
+                    <Star size={16} fill="currentColor" />
+                  </div>
                 ))}
               </div>
             </div>
+            
+            <Trophy className="absolute bottom-[-10%] right-[-5%] text-white/[0.02] w-96 h-96 -rotate-12 pointer-events-none" />
           </div>
 
-          {/* CARD: CTA HISTORIAL (DARK) */}
-          <div className="md:col-span-8 bg-[#0f172a] rounded-[3.5rem] relative overflow-hidden flex flex-col p-12 group">
-            {/* Elementos decorativos de fondo */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] -mr-48 -mt-48 animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[80px] -ml-20 -mb-20" />
-            
-            <div className="relative z-10 flex flex-col h-full justify-between">
-              <div>
-                <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-600/20 border border-blue-500/30 rounded-2xl mb-8">
-                  <Zap size={18} className="text-blue-400 fill-blue-400" />
-                  <span className="text-[10px] font-black text-blue-100 uppercase tracking-[0.2em]">Data Analytics ready</span>
-                </div>
-                
-                <h2 className="text-5xl md:text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-6 max-w-xl">
-                  DOMINA TUS <br />
-                  <span className="text-blue-500">PROPIAS MARCAS.</span>
-                </h2>
-                <p className="text-slate-400 text-lg font-medium max-w-sm leading-relaxed mb-10">
-                  Hemos procesado tus últimos tiempos en piscina. Tu progresión visual está disponible ahora.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-4 mt-auto">
-                <Link 
-                  to="/nadador/mis-tiempos" 
-                  className="group/btn relative px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-[11px] uppercase tracking-widest overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-black/20"
-                >
-                  <span className="relative z-10 flex items-center gap-3">
-                    Analizar Progresión <ChevronRight size={18} strokeWidth={3} />
-                  </span>
-                </Link>
-                
-                <div className="flex -space-x-3">
-                   {[1,2,3].map(i => (
-                     <div key={i} className="w-12 h-12 rounded-2xl border-4 border-[#0f172a] bg-slate-800 flex items-center justify-center text-blue-400">
-                        <Trophy size={16} />
-                     </div>
-                   ))}
-                   <div className="w-12 h-12 rounded-2xl border-4 border-[#0f172a] bg-blue-600 flex items-center justify-center text-white text-[10px] font-black">
-                     +12
-                   </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Marca de agua / Icono gigante al fondo */}
-            <Trophy className="absolute -bottom-10 -right-10 text-white/[0.03] w-80 h-80 rotate-12 pointer-events-none" strokeWidth={1} />
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
+// --- SUB-COMPONENTES DE UI ---
+
+const MetricBox = ({ label, value, unit, icon: Icon }) => (
+  <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 hover:border-blue-200 transition-colors group/item relative">
+    <Icon className="text-slate-300 mb-3 group-hover/item:text-blue-500 transition-colors" size={18} />
+    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">{label}</p>
+    <p className="text-3xl font-black text-slate-800 italic leading-none">
+      {value}<span className="text-blue-600 text-xs ml-1 uppercase">{unit}</span>
+    </p>
+  </div>
+);
+
+const DashboardSkeleton = () => (
+  <div className="max-w-7xl mx-auto px-8 py-12 animate-pulse space-y-12">
+    <div className="h-32 bg-slate-200 rounded-[3rem] w-3/4" />
+    <div className="grid grid-cols-12 gap-6">
+      <div className="col-span-4 h-[400px] bg-slate-200 rounded-[3rem]" />
+      <div className="col-span-8 h-[400px] bg-slate-200 rounded-[3rem]" />
+    </div>
+  </div>
+);
 
 export default DashboardNadador;
