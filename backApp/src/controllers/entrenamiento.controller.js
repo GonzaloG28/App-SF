@@ -11,9 +11,9 @@ export const crearEntrenamiento = async (req, res) => {
       tipo,
       contenido,
       notasProfesor: notas,
-      destinatarios: JSON.parse(destinatarios), // Array de IDs
-      profesor: req.user._id, // <-- Usamos req.user._id tal como lo guarda tu middleware
-      archivoUrl: req.file ? req.file.path.replace(/\\/g, "/") : null // Guardamos la ruta del archivo si existe
+      destinatarios: typeof destinatarios === 'string' ? JSON.parse(destinatarios) : destinatarios,
+      profesor: req.user._id,
+      archivoUrl: req.file ? req.file.path : null 
     });
 
     await nuevoEntrenamiento.save();
