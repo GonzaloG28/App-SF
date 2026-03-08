@@ -3,9 +3,12 @@ import multer from 'multer';
 import multerStorageCloudinary from 'multer-storage-cloudinary';
 import envs from '../utils/envs.utils.js';
 
-const { CloudinaryStorage } = multerStorageCloudinary;
+// --- EXTRACCIÓN MANUAL DEL CONSTRUCTOR ---
+// En ESM, a veces la clase viene en .CloudinaryStorage, otras en .default
+const CloudinaryStorage = multerStorageCloudinary.CloudinaryStorage || 
+                          multerStorageCloudinary.default?.CloudinaryStorage || 
+                          multerStorageCloudinary;
 
-// Configuración de credenciales
 cloudinary.config({
   cloud_name: envs.CLOUDINARY_CLOUD_NAME,
   api_key: envs.CLOUDINARY_API_KEY,
@@ -13,18 +16,15 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  // SOLUCIÓN AL ERROR 'uploader': 
-  // La librería espera un objeto que tenga la propiedad .v2
-  cloudinary: { v2: cloudinary }, 
+  cloudinary: cloudinary,
   params: async (req, file) => {
     const isPDF = file.mimetype === 'application/pdf';
     return {
       folder: 'club-natacion/entrenamientos',
-      // 'raw' es indispensable para que Cloudinary acepte PDFs sin errores
-      resource_type: isPDF ? 'raw' : 'image', 
+      // 'raw' es vital para PDFs, 'image' para el resto
+      resource_type: isPDF ? 'raw' : 'image',
       public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
-      // Si es PDF, forzamos la extensión
-      format: isPDF ? 'pdf' : undefined, 
+      format: isPDF ? 'pdf' : undefined,
     };
   },
 });
