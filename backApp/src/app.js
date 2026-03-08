@@ -1,77 +1,80 @@
-import express from "express"
-import cors from "cors"
+import express from "express";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import envs from "./utils/envs.utils.js"
-import connectDB from "./config/db.js"
+import envs from "./utils/envs.utils.js";
+import connectDB from "./config/db.js";
 
-import nadadorRoutes from "./routes/nadador.routes.js"
+import nadadorRoutes from "./routes/nadador.routes.js";
 import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/user.routes.js"
+import userRoutes from "./routes/user.routes.js";
 import competenciaRoutes from "./routes/competencia.routes.js";
 import pruebaRoutes from "./routes/prueba.routes.js";
-import entrenamientoRoutes from "./routes/entrenamiento.routes.js"
+import entrenamientoRoutes from "./routes/entrenamiento.routes.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express()
+const app = express();
 
 // Conexión a DB
-connectDB()
+connectDB();
 
-// Servir archivos estáticos (IMPORTANTE: Verifica que la carpeta 'uploads' exista en Render)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Middlewares globales
+// --- CONFIGURACIÓN DE CORS ---
 const allowedOrigins = [
   'https://app-sf-drab.vercel.app', 
   'http://localhost:5173',
-  'http://localhost:3000' // Opcional: por si pruebas otros puertos
+  'http://127.0.0.1:5173' // Importante para navegadores que usan IP en vez de localhost
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir peticiones sin origen (como Postman o Insomnia)
+    // Permitir peticiones sin origen (Postman, etc.)
     if (!origin) return callback(null, true);
     
-    // Verificamos si el origen está en la lista o si termina en vercel.app (para subdominios de rama)
-    const isAllowed = allowedOrigins.includes(origin)
-
-    if (isAllowed) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      // Log para debuggear en Render si alguien es bloqueado
+      console.log("CORS Bloqueó a:", origin);
       callback(new Error('Bloqueado por CORS: Origen no permitido'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // PATCH incluido para completar entrenamiento
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-app.use(express.json())
+// Responder a peticiones OPTIONS de forma global
+app.options('*', cors());
 
-// Rutas oficiales
-app.use("/api/auth", authRoutes)
-app.use("/api/nadadores", nadadorRoutes)
+// --- MIDDLEWARES DE PARSEO ---
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true })); // Necesario para procesar FormData pesados
+
+// --- RUTAS ---
+app.use("/api/auth", authRoutes);
+app.use("/api/nadadores", nadadorRoutes);
 app.use("/api/competencias", competenciaRoutes);
 app.use("/api/pruebas", pruebaRoutes);
-app.use("/api/users", userRoutes)
-app.use("/api/entrenamiento", entrenamientoRoutes)
+app.use("/api/users", userRoutes);
+app.use("/api/entrenamiento", entrenamientoRoutes);
 
-// Ruta de prueba/salud (Health Check)
+// Health Check
 app.get("/", (req, res) => {
-    res.json({ status: "ok", message: "API Club Natacion funcionando" })
-})
-
-// Manejo de errores global (Evita que el servidor se caiga por un error no capturado)
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Algo salió mal en el servidor' });
+    res.json({ status: "ok", message: "API Club Natacion - Cloud Ready" });
 });
 
-const PORT = envs.PORT || 5000
-app.listen(PORT, '0.0.0.0', () => { // '0.0.0.0' ayuda a la visibilidad en ciertos entornos PaaS
-    console.log(`Servidor corriendo en puerto ${PORT}`)
-})
+// --- MANEJO DE ERRORES ---
+app.use((err, req, res, next) => {
+  // Si el error es de CORS, lo manejamos específicamente
+  if (err.message === 'Bloqueado por CORS: Origen no permitido') {
+    return res.status(403).json({ message: err.message });
+  }
+  
+  console.error(err.stack);
+  res.status(500).json({ message: 'Algo salió mal en el servidor', error: err.message });
+});
+
+const PORT = envs.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
+});

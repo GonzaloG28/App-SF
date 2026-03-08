@@ -80,14 +80,27 @@ const CrearEntrenamiento = () => {
   });
 
   const handleEnviar = () => {
-    if (!form.titulo.trim() || seleccionados.length === 0) return;
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, val]) => formData.append(key, val));
-    formData.append("tipo", tipoCarga);
-    formData.append("destinatarios", JSON.stringify(seleccionados));
-    if (tipoCarga === "archivo" && archivo) formData.append("archivo", archivo);
-    mutation.mutate(formData);
-  };
+  if (!form.titulo.trim() || seleccionados.length === 0) return;
+  
+  const formData = new FormData();
+  
+  // Agregamos los campos básicos
+  formData.append("titulo", form.titulo);
+  formData.append("notas", form.notas);
+  formData.append("tipo", tipoCarga);
+  formData.append("destinatarios", JSON.stringify(seleccionados));
+
+  // Manejo inteligente del contenido según el tipo
+  if (tipoCarga === "archivo") {
+    if (archivo) {
+      formData.append("archivo", archivo);
+    }
+  } else {
+    formData.append("contenido", form.contenido);
+  }
+
+  mutation.mutate(formData);
+};
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-10 space-y-8 animate-in fade-in duration-500 pb-32 md:pb-10">
