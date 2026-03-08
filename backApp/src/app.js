@@ -44,7 +44,7 @@ app.use(cors({
 }));
 
 // Responder a peticiones OPTIONS de forma global
-app.options('*', cors());
+app.options('(.*)', cors());
 
 // --- MIDDLEWARES DE PARSEO ---
 app.use(express.json({ limit: '10mb' }));
