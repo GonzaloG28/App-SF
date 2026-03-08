@@ -3,6 +3,7 @@ import Nadador from "../models/Nadadores.js";
 
 // CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
 export const crearEntrenamiento = async (req, res) => {
+  console.log("3. 💾 Entrando al controlador. Datos:", req.body);
   try {
     const { titulo, tipo, contenido, notas, destinatarios } = req.body;
     

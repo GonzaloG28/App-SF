@@ -17,15 +17,11 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
-    const isPDF = file.mimetype === 'application/pdf';
-    return {
-      folder: 'club-natacion/entrenamientos',
-      // 'raw' es vital para PDFs, 'image' para el resto
-      resource_type: isPDF ? 'raw' : 'image',
-      public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
-      format: isPDF ? 'pdf' : undefined,
-    };
+  params: {
+    folder: 'club-natacion/entrenamientos',
+    // La magia está aquí: 'auto' permite PDFs, PNGs, JPGs sin que se cuelgue
+    resource_type: 'auto', 
+    public_id: (req, file) => `${Date.now()}-${file.originalname.split('.')[0]}`,
   },
 });
 
