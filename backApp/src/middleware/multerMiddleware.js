@@ -3,8 +3,12 @@ import multer from 'multer';
 import multerStorageCloudinary from 'multer-storage-cloudinary';
 import envs from '../utils/envs.utils.js';
 
-// Técnica de extracción de clase compatible con Node v24+
-const CloudinaryStorage = multerStorageCloudinary.CloudinaryStorage || multerStorageCloudinary;
+// --- LÓGICA DE EXTRACCIÓN PARA NODE v24 ---
+// Intentamos extraer la clase de las 3 formas posibles en las que puede venir
+const CloudinaryStorage = 
+  multerStorageCloudinary.CloudinaryStorage || 
+  multerStorageCloudinary.default?.CloudinaryStorage || 
+  multerStorageCloudinary;
 
 cloudinary.config({
   cloud_name: envs.CLOUDINARY_CLOUD_NAME,
@@ -12,8 +16,9 @@ cloudinary.config({
   api_secret: envs.CLOUDINARY_API_SECRET
 });
 
+// Usamos el objeto v2 de cloudinary para que la librería no se pierda
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary: cloudinary, 
   params: {
     folder: 'club-natacion/entrenamientos',
     allowed_formats: ['jpg', 'png', 'pdf'],
