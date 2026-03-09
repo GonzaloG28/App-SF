@@ -1,27 +1,51 @@
 import Entrenamiento from "../models/Entrenamiento.js";
 import Nadador from "../models/Nadadores.js";
+import { uploadToFirebase } from '../middleware/multerMiddleware.js';
+
+// CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
+import Entrenamiento from "../models/Entrenamiento.js";
+import Nadador from "../models/Nadadores.js";
+import { uploadToFirebase } from '../middleware/multerMiddleware.js';
 
 // CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
 export const crearEntrenamiento = async (req, res) => {
-  console.log("3. 💾 Entrando al controlador. Datos:", req.body);
+  
   try {
     const { titulo, tipo, contenido, notas, destinatarios } = req.body;
     
+    // 1. Inicializamos la URL como null
+    let archivoUrl = null;
+
+    // 2. Si hay un archivo, lo subimos a Firebase y esperamos la URL
+    if (req.file) {
+      console.log("Subiendo archivo a Firebase...");
+      archivoUrl = await uploadToFirebase(req.file);
+    }
+
+    // 3. Creamos el entrenamiento usando la nueva URL de Firebase
     const nuevoEntrenamiento = new Entrenamiento({
       titulo,
       tipo,
       contenido,
       notasProfesor: notas,
+      // Manejamos si destinatarios llega como string (por FormData) o como objeto
       destinatarios: typeof destinatarios === 'string' ? JSON.parse(destinatarios) : destinatarios,
       profesor: req.user._id,
-      archivoUrl: req.file ? req.file.path : null 
+      archivoUrl: archivoUrl // URL generada por Firebase
     });
 
     await nuevoEntrenamiento.save();
-    res.status(201).json({ message: "Entrenamiento enviado correctamente" });
+    res.status(201).json({ 
+      message: "Entrenamiento enviado correctamente",
+      url: archivoUrl 
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al crear entrenamiento", error });
+    console.error("Error en crearEntrenamiento:", error);
+    res.status(500).json({ 
+      message: "Error al crear entrenamiento", 
+      error: error.message 
+    });
   }
 };
 

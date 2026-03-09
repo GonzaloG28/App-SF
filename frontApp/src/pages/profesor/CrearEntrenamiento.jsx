@@ -40,6 +40,7 @@ const CrearEntrenamiento = () => {
   const [search, setSearch] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [seleccionados, setSeleccionados] = useState([]);
+  const [notificacion, setNotificacion] = useState({ visible: false, mensaje: "", tipo: "success" });
 
   const { data: nadadores, isLoading } = useQuery({
     queryKey: ["nadadores-entrenamiento"],
@@ -70,14 +71,33 @@ const CrearEntrenamiento = () => {
   };
 
   const mutation = useMutation({
-    mutationFn: enviarEntrenamiento,
-    onSuccess: () => {
-      setForm({ titulo: "", contenido: "", notas: "" });
-      setArchivo(null);
-      setSeleccionados([]);
-      queryClient.invalidateQueries(["reporteEntrenamientos"]);
-    },
-  });
+  mutationFn: enviarEntrenamiento,
+  onSuccess: () => {
+    // Feedback visual positivo
+    setNotificacion({ 
+      visible: true, 
+      mensaje: "¡Rutina publicada con éxito!", 
+      tipo: "success" 
+    });
+    
+    // Limpiar formulario
+    setForm({ titulo: "", contenido: "", notas: "" });
+    setArchivo(null);
+    setSeleccionados([]);
+    queryClient.invalidateQueries(["reporteEntrenamientos"]);
+
+    // Ocultar notificación tras 4 segundos
+    setTimeout(() => setNotificacion({ ...notificacion, visible: false }), 4000);
+  },
+  onError: (error) => {
+    setNotificacion({ 
+      visible: true, 
+      mensaje: "Error al subir: " + (error.response?.data?.message || "Servidor no responde"), 
+      tipo: "error" 
+    });
+    setTimeout(() => setNotificacion({ ...notificacion, visible: false }), 5000);
+  }
+});
 
   const handleEnviar = () => {
   if (!form.titulo.trim() || seleccionados.length === 0) return;
@@ -104,6 +124,34 @@ const CrearEntrenamiento = () => {
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-10 space-y-8 animate-in fade-in duration-500 pb-32 md:pb-10">
+
+      {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
+      {notificacion.visible && (
+        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-10 fade-in duration-300 ${
+          notificacion.tipo === "success" 
+            ? "bg-slate-900 border-blue-500/30 text-white" 
+            : "bg-red-950 border-red-500/30 text-red-200"
+        }`}>
+          {notificacion.tipo === "success" ? (
+            <div className="bg-blue-600 p-1.5 rounded-lg">
+              <CheckCircle2 size={16} className="text-white" />
+            </div>
+          ) : (
+            <div className="bg-red-600 p-1.5 rounded-lg">
+              <X size={16} className="text-white" />
+            </div>
+          )}
+          <p className="font-black uppercase text-[10px] tracking-widest">
+            {notificacion.mensaje}
+          </p>
+          <button 
+            onClick={() => setNotificacion({ ...notificacion, visible: false })}
+            className="ml-4 hover:rotate-90 transition-transform"
+          >
+            <X size={14} className="opacity-50" />
+          </button>
+        </div>
+      )}
       
       {/* HEADER DINÁMICO */}
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
