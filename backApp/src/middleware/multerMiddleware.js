@@ -11,11 +11,11 @@ if (!admin.apps.length) {
       // Esta línea es vital para que Render lea bien los saltos de línea de la clave
       privateKey: envs.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     }),
-    storageBucket: "app-nsf.firebasestorage.app" 
+    storageBucket: envs.FIREBASE_STORAGE_BUCKET
   });
 }
 
-const bucket = admin.storage().bucket();
+const bucket = admin.storage().bucket(envs.FIREBASE_STORAGE_BUCKET);
 
 // --- CONFIGURACIÓN DE MULTER (MEMORIA) ---
 // No guardamos en disco para evitar errores de permisos en Render
