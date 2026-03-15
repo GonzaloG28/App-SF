@@ -1,28 +1,49 @@
-import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
-import multerStorageCloudinary from 'multer-storage-cloudinary';
+import admin from 'firebase-admin';
 import envs from '../utils/envs.utils.js';
 
-// --- EXTRACCIÓN MANUAL DEL CONSTRUCTOR ---
-// En ESM, a veces la clase viene en .CloudinaryStorage, otras en .default
-const CloudinaryStorage = multerStorageCloudinary.CloudinaryStorage || 
-                          multerStorageCloudinary.default?.CloudinaryStorage || 
-                          multerStorageCloudinary;
+// --- CONFIGURACIÓN DE FIREBASE ---
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: envs.FIREBASE_PROJECT_ID,
+      clientEmail: envs.FIREBASE_CLIENT_EMAIL,
+      // Esta línea es vital para que Render lea bien los saltos de línea de la clave
+      privateKey: envs.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+    storageBucket: "app-nsf.firebasestorage.app" 
+  });
+}
 
-cloudinary.config({
-  cloud_name: envs.CLOUDINARY_CLOUD_NAME,
-  api_key: envs.CLOUDINARY_API_KEY,
-  api_secret: envs.CLOUDINARY_API_SECRET
+const bucket = admin.storage().bucket();
+
+// --- CONFIGURACIÓN DE MULTER (MEMORIA) ---
+// No guardamos en disco para evitar errores de permisos en Render
+const storage = multer.memoryStorage();
+export const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // Límite de 10MB
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'club-natacion/entrenamientos',
-    // La magia está aquí: 'auto' permite PDFs, PNGs, JPGs sin que se cuelgue
-    resource_type: 'auto', 
-    public_id: (req, file) => `${Date.now()}-${file.originalname.split('.')[0]}`,
-  },
-});
+// --- FUNCIÓN HELPER PARA SUBIR ---
+export const uploadToFirebase = async (file) => {
+  if (!file) return null;
 
-export const upload = multer({ storage });
+  const fileName = `entrenamientos/${Date.now()}-${file.originalname}`;
+  const fileUpload = bucket.file(fileName);
+
+  const stream = fileUpload.createWriteStream({
+    metadata: { contentType: file.mimetype }
+  });
+
+  return new Promise((resolve, reject) => {
+    stream.on('error', (error) => reject(error));
+    stream.on('finish', async () => {
+      // Hace el archivo público para que el link funcione en el frontend
+      await fileUpload.makePublic();
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+      resolve(publicUrl);
+    });
+    stream.end(file.buffer);
+  });
+};

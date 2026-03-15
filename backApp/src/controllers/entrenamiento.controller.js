@@ -1,11 +1,7 @@
 import Entrenamiento from "../models/Entrenamiento.js";
 import Nadador from "../models/Nadadores.js";
 import { uploadToFirebase } from '../middleware/multerMiddleware.js';
-
-// CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
-import Entrenamiento from "../models/Entrenamiento.js";
-import Nadador from "../models/Nadadores.js";
-import { uploadToFirebase } from '../middleware/multerMiddleware.js';
+import admin from 'firebase-admin';
 
 // CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
 export const crearEntrenamiento = async (req, res) => {
@@ -165,7 +161,7 @@ export const eliminarEntrenamiento = async (req, res) => {
     const { id } = req.params;
     const profesorId = req.user._id || req.user.id;
 
-    // Buscamos el entrenamiento y verificamos que pertenezca al profesor
+    // 1. Buscamos el entrenamiento y verificamos propiedad
     const entrenamiento = await Entrenamiento.findOne({ _id: id, profesor: profesorId });
 
     if (!entrenamiento) {
@@ -174,10 +170,31 @@ export const eliminarEntrenamiento = async (req, res) => {
       });
     }
 
+    // 2. Si el entrenamiento tiene un archivo adjunto, lo borramos de Firebase
+    if (entrenamiento.archivoUrl) {
+      try {
+        // La URL de Firebase suele ser: https://storage.googleapis.com/[BUCKET]/entrenamientos/[NOMBRE]
+        // Extraemos la ruta relativa del archivo
+        const urlParts = entrenamiento.archivoUrl.split('/');
+        const fileNameWithFolder = `entrenamientos/${urlParts[urlParts.length - 1]}`;
+        
+        const bucket = admin.storage().bucket();
+        const file = bucket.file(fileNameWithFolder);
+        
+        await file.delete();
+        console.log("✅ Archivo eliminado de Firebase Storage:", fileNameWithFolder);
+      } catch (fbError) {
+        // Si el archivo no existe en Firebase, registramos el error pero seguimos para borrar de la DB
+        console.error("⚠️ Error al borrar archivo de Firebase (posiblemente ya no existe):", fbError.message);
+      }
+    }
+
+    // 3. Finalmente borramos de MongoDB
     await Entrenamiento.findByIdAndDelete(id);
 
-    res.json({ message: "Entrenamiento eliminado correctamente" });
+    res.json({ message: "Entrenamiento y archivos eliminados correctamente" });
   } catch (error) {
+    console.error("Error al eliminar:", error);
     res.status(500).json({ message: "Error al eliminar el entrenamiento" });
   }
 };

@@ -86,12 +86,17 @@ const GestionEntrenamientos = () => {
   });
 
   const mutationEliminar = useMutation({
-    mutationFn: eliminarEntrenamiento,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["reporteEntrenamientos"]);
-      // Aquí podrías integrar una librería de notificaciones como 'sonner'
-    }
-  });
+  mutationFn: eliminarEntrenamiento,
+  onSuccess: () => {
+    queryClient.invalidateQueries(["reporteEntrenamientos"]);
+    // Si tienes el estado 'setNotificacion' del paso anterior, úsalo aquí:
+    // setNotificacion({ visible: true, mensaje: "Entrenamiento y archivo eliminados", tipo: "success" });
+    alert("Entrenamiento eliminado y espacio liberado.");
+  },
+  onError: (error) => {
+    alert("Error al eliminar: " + error.message);
+  }
+});
 
   const statsGlobales = useMemo(() => {
     if (!data?.length) return { total: 0, promedioCumplimiento: 0 };
