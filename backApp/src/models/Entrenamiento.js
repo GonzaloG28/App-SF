@@ -23,7 +23,7 @@ const EntrenamientoSchema = new mongoose.Schema({
     nadador: { type: mongoose.Schema.Types.ObjectId, ref: 'Nadador' },
     fechaCompletado: { type: Date, default: Date.now }
   }],
-  fecha: { type: Date, default: Date.now }
+  fecha: { type: Date, default: Date.now},
 });
 
 export default mongoose.model('Entrenamiento', EntrenamientoSchema)

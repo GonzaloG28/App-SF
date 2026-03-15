@@ -1,7 +1,7 @@
 import Entrenamiento from "../models/Entrenamiento.js";
 import Nadador from "../models/Nadadores.js";
 import { uploadToCloudinary } from "../middleware/multerMiddleware.js";
-import admin from 'firebase-admin';
+import { v2 as cloudinary } from 'cloudinary';
 
 // CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
 export const crearEntrenamiento = async (req, res) => {
@@ -118,46 +118,48 @@ export const completarEntrenamiento = async (req, res) => {
 export const getReporteProfesor = async (req, res) => {
   try {
     const profesorId = req.user._id || req.user.id;
-    // Contamos nadadores usando el modelo correcto
-    const totalAlumnos = await Nadador.countDocuments();
 
     const entrenamientos = await Entrenamiento.find({ profesor: profesorId })
       .populate({
         path: 'completadoPor.nadador',
-        model: 'Nadador', // <--- Referencia explícita al modelo que me pasaste
+        model: 'Nadador',
         populate: {
           path: 'user',
-          model: 'User', // <--- Referencia al modelo User
+          model: 'User',
           select: 'nombre'
         }
       })
       .sort({ fecha: -1 })
       .lean();
 
-    const reporte = entrenamientos.map(ent => ({
-      _id: ent._id,
-      titulo: ent.titulo,
-      fecha: ent.fecha,
-      completados: ent.completadoPor?.length || 0,
-      totalAlumnos: totalAlumnos,
-      detallesCompletados: ent.completadoPor?.map(c => ({
-        // Agregamos el apellido también si quieres, ya que está en tu modelo
-        nombre: c.nadador?.user?.nombre 
-                ? `${c.nadador.user.nombre} ${c.nadador.apellido || ''}` 
-                : "Atleta Desconocido", 
-        hora: c.fechaCompletado
-      })) || []
-    }));
+    const reporte = entrenamientos.map(ent => {
+      // USAMOS EL CAMPO 'destinatarios' QUE DEFINISTE AL CREAR
+      // Si por algún error el array no existe, ponemos 0 para no romper el cálculo
+      const totalEsperados = ent.destinatarios?.length || 0; 
+      const totalConfirmados = ent.completadoPor?.length || 0;
+
+      return {
+        _id: ent._id,
+        titulo: ent.titulo,
+        fecha: ent.fecha,
+        completados: totalConfirmados,
+        // IMPORTANTE: Ahora el total es dinámico según lo que elegiste al crear
+        totalAlumnos: totalEsperados, 
+        detallesCompletados: ent.completadoPor?.map(c => ({
+          nombre: c.nadador?.user?.nombre 
+                  ? `${c.nadador.user.nombre} ${c.nadador.apellido || ''}` 
+                  : "Atleta Desconocido", 
+          hora: c.fechaCompletado
+        })) || []
+      };
+    });
 
     res.json(reporte);
   } catch (error) {
-    console.error("ERROR DETALLADO:", error);
+    console.error("ERROR DETALLADO EN REPORTE:", error);
     res.status(500).json({ message: "Error al obtener reporte" });
   }
 };
-
-// Asegúrate de tener esta importación al principio de tu archivo de controlador
-import { v2 as cloudinary } from 'cloudinary';
 
 export const eliminarEntrenamiento = async (req, res) => {
   try {
