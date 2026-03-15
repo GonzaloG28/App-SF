@@ -15,6 +15,7 @@ if (!admin.apps.length) {
   });
 }
 
+console.log("Intentando conectar al bucket:", envs.FIREBASE_STORAGE_BUCKET);
 const bucket = admin.storage().bucket(envs.FIREBASE_STORAGE_BUCKET);
 
 // --- CONFIGURACIÓN DE MULTER (MEMORIA) ---

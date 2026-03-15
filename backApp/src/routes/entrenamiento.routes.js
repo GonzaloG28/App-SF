@@ -15,10 +15,6 @@ router.post(
     '/enviar', 
     verificarToken, 
     verificarRol("profesor"), 
-    (req, res, next) => {
-        console.log("1. 🚀 Iniciando subida del archivo a Cloudinary...");
-        next();
-    },
     upload.single('archivo'), 
     (req, res, next) => {
         console.log("2. ✅ Archivo procesado por Multer:", req.file);
