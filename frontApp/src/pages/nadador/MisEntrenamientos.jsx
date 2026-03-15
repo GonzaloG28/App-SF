@@ -119,7 +119,10 @@ const MisEntrenamientos = () => {
                           <p className="text-xs opacity-60 font-bold italic">PDF / Imagen de rutina</p>
                         </div>
                         <a 
-                          href={ent.archivoUrl}
+                          href={ent.archivoUrl.replace(
+                            '/upload/', 
+                            `/upload/fl_attachment:entrenamiento-${new Date(ent.fecha || Date.now()).toLocaleDateString('es-ES').replace(/\//g, '-')}/`
+                          )}
                           target="_blank" 
                           rel="noreferrer"
                           className="bg-blue-600 hover:bg-white hover:text-blue-600 p-5 rounded-2xl transition-all active:scale-90"
