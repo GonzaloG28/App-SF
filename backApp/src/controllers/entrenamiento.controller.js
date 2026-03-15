@@ -1,6 +1,6 @@
 import Entrenamiento from "../models/Entrenamiento.js";
 import Nadador from "../models/Nadadores.js";
-import { uploadToFirebase } from '../middleware/multerMiddleware.js';
+import { uploadToCloudinary } from "../middleware/multerMiddleware.js";
 import admin from 'firebase-admin';
 
 // CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
@@ -15,7 +15,7 @@ export const crearEntrenamiento = async (req, res) => {
     // 2. Si hay un archivo, lo subimos a Firebase y esperamos la URL
     if (req.file) {
       console.log("Subiendo archivo a Firebase...");
-      archivoUrl = await uploadToFirebase(req.file);
+      archivoUrl = await uploadToCloudinary(req.file);
     }
 
     // 3. Creamos el entrenamiento usando la nueva URL de Firebase
@@ -156,6 +156,9 @@ export const getReporteProfesor = async (req, res) => {
   }
 };
 
+// Asegúrate de tener esta importación al principio de tu archivo de controlador
+import { v2 as cloudinary } from 'cloudinary';
+
 export const eliminarEntrenamiento = async (req, res) => {
   try {
     const { id } = req.params;
@@ -170,22 +173,27 @@ export const eliminarEntrenamiento = async (req, res) => {
       });
     }
 
-    // 2. Si el entrenamiento tiene un archivo adjunto, lo borramos de Firebase
+    // 2. Si el entrenamiento tiene un archivo adjunto, lo borramos de Cloudinary
     if (entrenamiento.archivoUrl) {
       try {
-        // La URL de Firebase suele ser: https://storage.googleapis.com/[BUCKET]/entrenamientos/[NOMBRE]
-        // Extraemos la ruta relativa del archivo
+        // Las URLs de Cloudinary tienen este formato: 
+        // https://res.cloudinary.com/demo/image/upload/v12345/entrenamientos/nombre_archivo.jpg
+        
+        // Extraemos el public_id:
+        // 1. Obtenemos la última parte (nombre_archivo.jpg)
         const urlParts = entrenamiento.archivoUrl.split('/');
-        const fileNameWithFolder = `entrenamientos/${urlParts[urlParts.length - 1]}`;
+        const lastPart = urlParts[urlParts.length - 1]; 
         
-        const bucket = admin.storage().bucket();
-        const file = bucket.file(fileNameWithFolder);
+        // 2. Quitamos la extensión (.jpg, .pdf, etc) para tener solo el ID
+        const publicId = lastPart.split('.')[0];
         
-        await file.delete();
-        console.log("✅ Archivo eliminado de Firebase Storage:", fileNameWithFolder);
-      } catch (fbError) {
-        // Si el archivo no existe en Firebase, registramos el error pero seguimos para borrar de la DB
-        console.error("⚠️ Error al borrar archivo de Firebase (posiblemente ya no existe):", fbError.message);
+        // 3. El ID completo en Cloudinary incluye la carpeta: 'entrenamientos/ID'
+        const fullPublicId = `entrenamientos/${publicId}`;
+
+        await cloudinary.uploader.destroy(fullPublicId);
+        console.log("✅ Archivo eliminado de Cloudinary:", fullPublicId);
+      } catch (cloudError) {
+        console.error("⚠️ Error al borrar en Cloudinary:", cloudError.message);
       }
     }
 
