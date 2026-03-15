@@ -119,7 +119,7 @@ const MisEntrenamientos = () => {
                           <p className="text-xs opacity-60 font-bold italic">PDF / Imagen de rutina</p>
                         </div>
                         <a 
-                          href={`${API_URL}/${ent.archivoUrl}`} 
+                          href={ent.archivoUrl}
                           target="_blank" 
                           rel="noreferrer"
                           className="bg-blue-600 hover:bg-white hover:text-blue-600 p-5 rounded-2xl transition-all active:scale-90"
