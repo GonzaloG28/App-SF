@@ -52,7 +52,7 @@ const MisCompetencias = () => {
   if (loadingComp) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] animate-pulse">
       <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Sincronizando Marcas...</p>
+      <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">Sincronizando Competencias...</p>
     </div>
   );
 
@@ -67,7 +67,7 @@ const MisCompetencias = () => {
             <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em]">Historial de Tiempos</p>
           </div>
           <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">
-            Mis <span className="text-blue-600">Marcas</span>
+            Mis <span className="text-blue-600">Competencias</span>
           </h2>
         </div>
         <div className="bg-white px-6 py-4 rounded-3xl border border-slate-100 shadow-sm self-start sm:self-auto min-w-[140px]">
@@ -188,9 +188,6 @@ const CompetenciaAcordeon = ({ competencia, isExpanded, onToggle, perfilId }) =>
         </div>
 
         <div className="flex items-center justify-between w-full md:w-auto md:gap-4 border-t md:border-t-0 pt-3 md:pt-0 mt-2 md:mt-0">
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl text-slate-500 text-[9px] font-black uppercase border border-slate-100 max-w-[180px] truncate">
-            <MapPin size={12} className="text-blue-500 shrink-0" /> {competencia.lugar}
-          </div>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isExpanded ? 'bg-blue-600 text-white rotate-180' : 'bg-slate-100 text-slate-400'}`}>
             <ChevronDown size={18} />
           </div>
@@ -208,15 +205,13 @@ const CompetenciaAcordeon = ({ competencia, isExpanded, onToggle, perfilId }) =>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              {pruebas
-                .filter(p => (p.nadador?._id || p.nadador) === perfilId)
-                .map((p) => (
+              {pruebas.map((p) => (
                   <div key={p._id} className="bg-slate-50/50 rounded-[2rem] p-6 md:p-8 border border-slate-100 hover:border-blue-100 hover:bg-white transition-all shadow-sm">
                     <div className="flex justify-between items-start mb-6">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
                            <Zap size={12} className="text-amber-500 fill-amber-500 shrink-0" />
-                           <span className="text-[9px] font-black text-blue-600 uppercase tracking-[0.15em]">Official Mark</span>
+                           <span className="text-[9px] font-black text-blue-600 uppercase tracking-[0.15em]">Marca Oficial</span>
                         </div>
                         <h4 className="text-2xl md:text-3xl font-black text-slate-900 italic uppercase tracking-tighter leading-none truncate">
                           {p.distancia}m <span className="text-blue-600">{p.estilo}</span>
@@ -240,7 +235,7 @@ const CompetenciaAcordeon = ({ competencia, isExpanded, onToggle, perfilId }) =>
                               <span className="text-[9px] font-black text-slate-300 w-8">{(idx + 1) * 50}M</span>
                               <div className="flex-1 h-10 bg-white rounded-xl flex items-center justify-between px-4 border border-slate-100">
                                 <span className="text-[9px] font-black text-slate-400 italic">LAP {idx + 1}</span>
-                                <span className="text-[11px] md:text-xs font-black text-blue-600 tabular-nums">{par.tiempo || par}</span>
+                                <span className="text-[11px] md:text-xs font-black text-blue-600 tabular-nums">{par.tiempo || par}s</span>
                               </div>
                             </div>
                           ))

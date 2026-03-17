@@ -4,7 +4,8 @@ import api from "../../api/axios";
 import { 
   Trophy, BarChart3, Calendar, Weight, 
   Ruler, Fingerprint, Waves, Loader2, 
-  ChevronRight, Target, ShieldCheck, Activity
+  ChevronRight, Target, ShieldCheck, Activity,
+  Clock, Flame, ArrowUpRight
 } from "lucide-react";
 import { memo } from "react";
 
@@ -40,9 +41,17 @@ const ActionLink = ({ to, title, icon: Icon, theme }) => {
 };
 
 const MiPerfil = () => {
+  // Query para el perfil
   const { data: nadador, isLoading, isError, error } = useQuery({
     queryKey: ["miPerfilNadador"],
     queryFn: () => api.get("/nadadores/perfil").then(res => res.data),
+  });
+
+  // Query adicional para competencias (para mostrar las próximas)
+  const { data: competencias } = useQuery({
+    queryKey: ["misCompetenciasProximas"],
+    queryFn: () => api.get("/competencias").then(res => res.data),
+    enabled: !!nadador
   });
 
   if (isLoading) return <ProfileSkeleton />;
@@ -60,6 +69,11 @@ const MiPerfil = () => {
     </div>
   );
 
+  // Filtrar competencias futuras
+  const proximasCompetencias = competencias?.filter(c => new Date(c.fecha) >= new Date())
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+    .slice(0, 2) || [];
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-10 animate-in fade-in duration-700 pb-24">
       
@@ -75,15 +89,12 @@ const MiPerfil = () => {
         </div>
       </header>
 
-      {/* HERO CARD: IDENTITY SYSTEM */}
+      {/* HERO CARD */}
       <section className="bg-[#0f172a] rounded-[3.5rem] p-1 md:p-1.5 shadow-2xl shadow-blue-900/20 relative overflow-hidden group">
         <div className="bg-slate-900 rounded-[3.3rem] p-8 md:p-12 relative overflow-hidden">
-          {/* Background Effects */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] -mr-32 -mt-32" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] -ml-24 -mb-24" />
           
           <div className="relative flex flex-col md:flex-row items-center gap-10">
-            {/* Avatar con efecto de anillo de carga */}
             <div className="relative">
               <div className="absolute inset-0 bg-blue-500 rounded-[2.8rem] blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
               <div className="w-36 h-36 rounded-[2.8rem] bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center text-6xl font-black text-white border-2 border-white/10 relative z-10 italic">
@@ -109,19 +120,60 @@ const MiPerfil = () => {
         </div>
       </section>
 
-      {/* MÉTRICAS FÍSICAS - BENTO GRID */}
+      {/* MÉTRICAS FÍSICAS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Calendar} title="Edad Cronológica" value={`${nadador.edad} AÑOS`} colorClass="text-blue-600 bg-blue-50" />
+        <StatCard icon={Calendar} title="Edad " value={`${nadador.edad} AÑOS`} colorClass="text-blue-600 bg-blue-50" />
         <StatCard icon={Weight} title="Masa Corporal" value={`${nadador.peso} KG`} colorClass="text-indigo-600 bg-indigo-50" />
-        <StatCard icon={Ruler} title="Envergadura" value={`${nadador.altura} CM`} colorClass="text-emerald-600 bg-emerald-50" />
-        <StatCard icon={Target} title="Objetivo" value="Podio" colorClass="text-amber-600 bg-amber-50" />
+        <StatCard icon={Ruler} title="Estatura" value={`${nadador.altura} CM`} colorClass="text-emerald-600 bg-emerald-50" />
+        <StatCard icon={Flame} title="Rendimiento" value="94%" colorClass="text-orange-600 bg-orange-50" />
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
-        {/* ESPECIALIDADES */}
-        <div className="lg:col-span-8 bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
+        
+        {/* SECCIÓN IZQUIERDA: COMPETENCIAS Y ESPECIALIDADES */}
+        <div className="lg:col-span-8 space-y-8">
+          
+          {/* PRÓXIMAS COMPETENCIAS (Nueva Sección) */}
+          <div className="bg-white rounded-[3rem] p-8 border border-slate-100 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200">
+                  <Trophy size={20} />
+                </div>
+                <h3 className="font-black text-slate-900 text-xl tracking-tight uppercase italic">Próximos Desafíos</h3>
+              </div>
+              <Link to="/nadador/competencias" className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Ver Calendario</Link>
+            </div>
+
+            <div className="space-y-4">
+              {proximasCompetencias.length > 0 ? (
+                proximasCompetencias.map((comp) => (
+                  <div key={comp._id} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-white hover:border-blue-200 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="hidden sm:flex w-12 h-12 bg-white rounded-xl items-center justify-center border border-slate-100 font-black text-blue-600">
+                        {new Date(comp.fecha).getDate()}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-800 uppercase text-sm tracking-tight">{comp.nombre}</h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{comp.piscina}M • {new Date(comp.fecha).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">Faltan {Math.ceil((new Date(comp.fecha) - new Date()) / (1000 * 60 * 60 * 24))} días</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center bg-slate-50 border-2 border-dashed border-slate-100 rounded-[2rem]">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">No hay eventos programados</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ESPECIALIDADES */}
+          <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-4 mb-10">
               <div className="p-3 bg-slate-900 text-white rounded-2xl">
                 <Waves size={24} />
               </div>
@@ -130,38 +182,64 @@ const MiPerfil = () => {
                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">DNA Competitivo</p>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {nadador.pruebasEspecialidad?.length > 0 ? (
-              nadador.pruebasEspecialidad.map((prueba, index) => (
-                <div key={index} className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] hover:border-blue-200 hover:bg-white transition-all group/item">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span className="text-sm font-black text-slate-700 uppercase tracking-widest group-hover/item:text-blue-600 transition-colors">
-                    {prueba}
-                  </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {nadador.pruebasEspecialidad?.length > 0 ? (
+                nadador.pruebasEspecialidad.map((prueba, index) => (
+                  <div key={index} className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] hover:border-blue-200 hover:bg-white transition-all group/item">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-sm font-black text-slate-700 uppercase tracking-widest group-hover/item:text-blue-600 transition-colors">
+                      {prueba}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 py-6 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
+                  <p className="text-slate-400 text-sm font-medium italic">Pendiente de asignación técnica.</p>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-2 py-10 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-                <p className="text-slate-400 text-sm font-medium italic">Pendiente de asignación por el Cuerpo Técnico.</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
-        {/* ACCESOS RÁPIDOS */}
-        <div className="lg:col-span-4 flex flex-col justify-center gap-5">
-          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] ml-6">Sistemas de Análisis</h3>
-          <ActionLink to="/nadador/competencias" title="Logros y Trofeos" icon={Trophy} theme="blue" />
-          <ActionLink to="/nadador/mis-tiempos" title="Análisis de Marcas" icon={BarChart3} theme="amber" />
+        {/* COLUMNA DERECHA: ACCESOS Y ENTRENAMIENTO */}
+        <div className="lg:col-span-4 space-y-8">
+          
+          <div className="bg-white rounded-[3rem] p-8 border border-slate-100 shadow-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4">
+               <Activity className="text-slate-50" size={80} />
+            </div>
+            <div className="relative">
+              <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Acciones</h3>
+              <div className="space-y-4">
+                <ActionLink to="/nadador/competencias" title="Logros y Trofeos" icon={Trophy} theme="blue" />
+                <ActionLink to="/nadador/mis-tiempos" title="Análisis de Marcas" icon={BarChart3} theme="amber" />
+                <ActionLink to="/nadador/entrenamientos" title="Plan de Trabajo" icon={Clock} theme="blue" />
+              </div>
+            </div>
+          </div>
+
+          {/* TARJETA DE ESTADO DE ENTRENAMIENTO */}
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[3rem] p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden group">
+            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+              <Target size={160} />
+            </div>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-80">Siguiente Sesión</h4>
+            <p className="text-2xl font-black italic uppercase leading-tight mb-6">Optimización de <br/> Virajes y Salidas</p>
+            <div className="flex items-center gap-2">
+              <button className="bg-white text-blue-600 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 transition-colors flex items-center gap-2">
+                Ver Detalles <ArrowUpRight size={14} />
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
   );
 };
 
-// --- HELPER COMPONENTS ---
+// ... (Badge y ProfileSkeleton se mantienen igual) ...
 
 const Badge = ({ icon: Icon, label, highlight = false }) => (
   <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border shadow-sm ${
@@ -175,7 +253,7 @@ const Badge = ({ icon: Icon, label, highlight = false }) => (
 );
 
 const ProfileSkeleton = () => (
-  <div className="max-w-5xl mx-auto px-4 py-20 space-y-12 animate-pulse">
+  <div className="max-w-6xl mx-auto px-4 py-20 space-y-12 animate-pulse">
     <div className="h-10 bg-slate-100 w-48 rounded-xl" />
     <div className="h-72 bg-slate-100 rounded-[3.5rem] w-full" />
     <div className="grid grid-cols-4 gap-6">
