@@ -3,51 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { 
   Trophy, BarChart3, Calendar, Weight, 
-  Ruler, Fingerprint, Waves, Loader2, 
-  ChevronRight, Target, ShieldCheck, Activity,
-  Clock, Flame, ArrowUpRight
+  Ruler, Fingerprint, Waves, Target, ShieldCheck,
+  Clock, Flame, ArrowUpRight, Zap, ChevronRight
 } from "lucide-react";
 import { memo } from "react";
 
-// --- SUB-COMPONENTE: TARJETA DE MÉTRICA ---
-const StatCard = memo(({ title, value, icon: Icon, colorClass }) => (
-  <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
-    <div className={`w-12 h-12 ${colorClass} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-      <Icon size={22} strokeWidth={2.5} />
-    </div>
-    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">{title}</p>
-    <p className="text-2xl font-black text-slate-900 mt-2 italic tracking-tighter">{value}</p>
-  </div>
-));
-
-// --- SUB-COMPONENTE: LINK DE ACCIÓN RÁPIDA ---
-const ActionLink = ({ to, title, icon: Icon, theme }) => {
-  const styles = {
-    blue: "hover:bg-blue-600 text-blue-600 bg-blue-50/50",
-    amber: "hover:bg-amber-500 text-amber-600 bg-amber-50/50"
-  };
-
-  return (
-    <Link to={to} className={`group flex items-center justify-between p-6 rounded-[2.2rem] border border-slate-100 shadow-sm transition-all duration-500 ${styles[theme]} hover:shadow-xl hover:-translate-y-1`}>
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-white/20 group-hover:text-white transition-colors">
-          <Icon size={20} />
-        </div>
-        <span className="font-black text-slate-800 group-hover:text-white text-sm uppercase tracking-tight transition-colors">{title}</span>
-      </div>
-      <ChevronRight size={20} className="text-slate-300 group-hover:text-white group-hover:translate-x-1 transition-all" />
-    </Link>
-  );
-};
-
 const MiPerfil = () => {
-  // Query para el perfil
   const { data: nadador, isLoading, isError, error } = useQuery({
     queryKey: ["miPerfilNadador"],
     queryFn: () => api.get("/nadadores/perfil").then(res => res.data),
   });
 
-  // Query adicional para competencias (para mostrar las próximas)
   const { data: competencias } = useQuery({
     queryKey: ["misCompetenciasProximas"],
     queryFn: () => api.get("/competencias").then(res => res.data),
@@ -56,209 +22,203 @@ const MiPerfil = () => {
 
   if (isLoading) return <ProfileSkeleton />;
 
-  if (isError) return (
-    <div className="max-w-xl mx-auto mt-20 p-10 bg-white rounded-[3rem] border-2 border-red-50 shadow-2xl text-center">
-      <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
-        <ShieldCheck size={40} />
-      </div>
-      <h2 className="text-2xl font-black text-slate-900 uppercase italic mb-2">Error de Enlace</h2>
-      <p className="text-slate-500 font-medium mb-6">{error.message || "La telemetría no está disponible."}</p>
-      <button onClick={() => window.location.reload()} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-colors">
-        Reintentar Conexión
-      </button>
-    </div>
-  );
+  if (isError) return <ErrorState error={error} />;
 
-  // Filtrar competencias futuras
   const proximasCompetencias = competencias?.filter(c => new Date(c.fecha) >= new Date())
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
     .slice(0, 2) || [];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-10 animate-in fade-in duration-700 pb-24">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-12">
       
-      {/* HEADER TÉCNICO */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* HEADER TÉCNICO COMPACTO */}
+      <header className="flex justify-between items-end border-b border-slate-100 pb-6">
         <div>
-          <h2 className="text-blue-600 font-black text-[11px] uppercase tracking-[0.5em] mb-1">Dossier de Rendimiento</h2>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Sincronizado: {new Date().toLocaleDateString()}</p>
+          <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-1 block italic">User profile</span>
+          <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Mi Perfil</h2>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-tighter">Estado: Atleta Activo</span>
+        <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-2 shadow-sm">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest italic">Cuenta Activa</span>
         </div>
       </header>
 
-      {/* HERO CARD */}
-      <section className="bg-[#0f172a] rounded-[3.5rem] p-1 md:p-1.5 shadow-2xl shadow-blue-900/20 relative overflow-hidden group">
-        <div className="bg-slate-900 rounded-[3.3rem] p-8 md:p-12 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] -mr-32 -mt-32" />
-          
-          <div className="relative flex flex-col md:flex-row items-center gap-10">
-            <div className="relative">
-              <div className="absolute inset-0 bg-blue-500 rounded-[2.8rem] blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
-              <div className="w-36 h-36 rounded-[2.8rem] bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center text-6xl font-black text-white border-2 border-white/10 relative z-10 italic">
-                {nadador.user?.nombre?.charAt(0)}
-              </div>
+      {/* HERO CARD: REDISEÑO CLARO Y COMPACTO */}
+      <section className="relative group overflow-hidden bg-white rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-10 border border-slate-100 shadow-xl shadow-blue-900/5">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[60px] -ml-10 -mb-10 pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <div className="relative shrink-0">
+            <div className="w-28 h-28 md:w-40 md:h-40 rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-5xl md:text-6xl font-black italic text-white shadow-xl shadow-blue-600/20 transform rotate-2 group-hover:rotate-0 transition-transform duration-500 uppercase">
+              {nadador.user?.nombre?.charAt(0)}
             </div>
+            <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2.5 rounded-2xl shadow-lg transform -rotate-12 group-hover:rotate-0 transition-transform duration-500">
+              <Zap size={18} fill="currentColor" className="text-emerald-400" />
+            </div>
+          </div>
 
-            <div className="text-center md:text-left flex-1">
-              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
-                <h1 className="text-5xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-none">
-                  {nadador.user?.nombre} <br />
-                  <span className="text-blue-500 not-italic uppercase">{nadador.apellido}</span>
-                </h1>
+          <div className="text-center md:text-left space-y-4 flex-1">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em]">
+                <Target size={12} /> {nadador.categoria || 'Nivel Club'}
               </div>
-              
-              <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                <Badge icon={Fingerprint} label={nadador.rut} />
-                <Badge icon={Waves} label={nadador.categoria} />
-                <Badge icon={Activity} label="Nivel Federado" highlight />
-              </div>
+              <h1 className="text-4xl md:text-6xl font-black tracking-[-0.04em] italic leading-[0.9] text-slate-900 uppercase">
+                {nadador.user?.nombre} <br />
+                <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">
+                  {nadador.apellido}
+                </span>
+              </h1>
+            </div>
+            
+            <div className="flex flex-wrap justify-center md:justify-start gap-3 pt-4 border-t border-slate-100">
+              <BadgeLight icon={Fingerprint} label={nadador.rut} />
+              <BadgeLight icon={Waves} label="Federado" highlight />
             </div>
           </div>
         </div>
       </section>
 
-      {/* MÉTRICAS FÍSICAS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Calendar} title="Edad " value={`${nadador.edad} AÑOS`} colorClass="text-blue-600 bg-blue-50" />
-        <StatCard icon={Weight} title="Masa Corporal" value={`${nadador.peso} KG`} colorClass="text-indigo-600 bg-indigo-50" />
-        <StatCard icon={Ruler} title="Estatura" value={`${nadador.altura} CM`} colorClass="text-emerald-600 bg-emerald-50" />
-        <StatCard icon={Flame} title="Rendimiento" value="94%" colorClass="text-orange-600 bg-orange-50" />
+      {/* MÉTRICAS FÍSICAS GRID */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <StatCard icon={Calendar} title="Edad" value={`${nadador.edad} Años`} colorTheme="blue" />
+        <StatCard icon={Weight} title="Masa" value={`${nadador.peso} Kg`} colorTheme="green" />
+        <StatCard icon={Ruler} title="Estatura" value={`${nadador.altura} Cm`} colorTheme="blue" />
+        <StatCard icon={Flame} title="Progreso" value="94%" colorTheme="orange" />
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
-        
-        {/* SECCIÓN IZQUIERDA: COMPETENCIAS Y ESPECIALIDADES */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* PRÓXIMAS COMPETENCIAS (Nueva Sección) */}
-          <div className="bg-white rounded-[3rem] p-8 border border-slate-100 shadow-sm">
+        <div className="lg:col-span-8">
+          <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm h-full">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200">
+                <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-100">
                   <Trophy size={20} />
                 </div>
-                <h3 className="font-black text-slate-900 text-xl tracking-tight uppercase italic">Próximos Desafíos</h3>
+                <h3 className="font-black text-slate-900 text-xl tracking-tighter uppercase italic">Próximas Pruebas</h3>
               </div>
-              <Link to="/nadador/competencias" className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Ver Calendario</Link>
+              <Link to="/nadador/competencias" className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Ver Historial</Link>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {proximasCompetencias.length > 0 ? (
                 proximasCompetencias.map((comp) => (
-                  <div key={comp._id} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-white hover:border-blue-200 transition-all group">
-                    <div className="flex items-center gap-4">
-                      <div className="hidden sm:flex w-12 h-12 bg-white rounded-xl items-center justify-center border border-slate-100 font-black text-blue-600">
-                        {new Date(comp.fecha).getDate()}
-                      </div>
-                      <div>
-                        <h4 className="font-black text-slate-800 uppercase text-sm tracking-tight">{comp.nombre}</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{comp.piscina}M • {new Date(comp.fecha).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">Faltan {Math.ceil((new Date(comp.fecha) - new Date()) / (1000 * 60 * 60 * 24))} días</span>
-                    </div>
-                  </div>
+                  <CompetitionRow key={comp._id} comp={comp} />
                 ))
               ) : (
-                <div className="py-8 text-center bg-slate-50 border-2 border-dashed border-slate-100 rounded-[2rem]">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">No hay eventos programados</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ESPECIALIDADES */}
-          <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm">
-            <div className="flex items-center gap-4 mb-10">
-              <div className="p-3 bg-slate-900 text-white rounded-2xl">
-                <Waves size={24} />
-              </div>
-              <div>
-                <h3 className="font-black text-slate-900 text-xl tracking-tight uppercase italic">Especialidades de Carrera</h3>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">DNA Competitivo</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {nadador.pruebasEspecialidad?.length > 0 ? (
-                nadador.pruebasEspecialidad.map((prueba, index) => (
-                  <div key={index} className="flex items-center gap-4 p-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] hover:border-blue-200 hover:bg-white transition-all group/item">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span className="text-sm font-black text-slate-700 uppercase tracking-widest group-hover/item:text-blue-600 transition-colors">
-                      {prueba}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-2 py-6 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-                  <p className="text-slate-400 text-sm font-medium italic">Pendiente de asignación técnica.</p>
-                </div>
+                <EmptyEvents />
               )}
             </div>
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: ACCESOS Y ENTRENAMIENTO */}
-        <div className="lg:col-span-4 space-y-8">
-          
-          <div className="bg-white rounded-[3rem] p-8 border border-slate-100 shadow-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4">
-               <Activity className="text-slate-50" size={80} />
-            </div>
-            <div className="relative">
-              <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6">Acciones</h3>
-              <div className="space-y-4">
-                <ActionLink to="/nadador/competencias" title="Logros y Trofeos" icon={Trophy} theme="blue" />
-                <ActionLink to="/nadador/mis-tiempos" title="Análisis de Marcas" icon={BarChart3} theme="amber" />
-                <ActionLink to="/nadador/entrenamientos" title="Plan de Trabajo" icon={Clock} theme="blue" />
-              </div>
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Módulos de Análisis</h3>
+            <div className="space-y-3">
+              <ActionLink to="/nadador/competencias" title="Mis Logros" icon={Trophy} />
+              <ActionLink to="/nadador/mis-tiempos" title="Estadísticas" icon={BarChart3} />
+              <ActionLink to="/nadador/entrenamientos" title="Rutinas" icon={Clock} />
             </div>
           </div>
 
-          {/* TARJETA DE ESTADO DE ENTRENAMIENTO */}
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[3rem] p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden group">
-            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
-              <Target size={160} />
-            </div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-80">Siguiente Sesión</h4>
-            <p className="text-2xl font-black italic uppercase leading-tight mb-6">Optimización de <br/> Virajes y Salidas</p>
-            <div className="flex items-center gap-2">
-              <button className="bg-white text-blue-600 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 transition-colors flex items-center gap-2">
-                Ver Detalles <ArrowUpRight size={14} />
-              </button>
-            </div>
+          <div className="bg-gradient-to-br from-blue-600 to-emerald-500 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
+            <Target className="absolute -right-6 -bottom-6 opacity-10 group-hover:rotate-12 transition-transform duration-1000" size={160} />
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-80">Objetivo Actual</h4>
+            <p className="text-2xl font-black italic uppercase leading-[0.9] mb-6">Potencia de <br/> Viraje</p>
+            <button className="w-full bg-white/20 backdrop-blur-md text-white border border-white/30 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-blue-600 transition-all flex items-center justify-center gap-2">
+              Ver Plan <ArrowUpRight size={14} />
+            </button>
           </div>
-
         </div>
       </div>
     </div>
   );
 };
 
-// ... (Badge y ProfileSkeleton se mantienen igual) ...
+// --- COMPONENTES AUXILIARES ---
 
-const Badge = ({ icon: Icon, label, highlight = false }) => (
-  <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border shadow-sm ${
+const StatCard = memo(({ title, value, icon: Icon, colorTheme }) => {
+  const themes = {
+    blue: "text-blue-600 bg-blue-50 border-blue-100",
+    green: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    orange: "text-orange-600 bg-orange-50 border-orange-100",
+  };
+  return (
+    <div className="bg-white rounded-[2.2rem] p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform border ${themes[colorTheme]}`}>
+        <Icon size={20} strokeWidth={2.5} />
+      </div>
+      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{title}</p>
+      <p className="text-xl font-black text-slate-900 italic tracking-tighter uppercase tabular-nums">{value}</p>
+    </div>
+  );
+});
+
+const ActionLink = ({ to, title, icon: Icon }) => (
+  <Link to={to} className="group flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 transition-all duration-300 hover:border-blue-200 hover:shadow-lg active:scale-[0.98]">
+    <div className="flex items-center gap-4">
+      <div className="p-2.5 bg-slate-50 text-slate-400 group-hover:bg-blue-600 group-hover:text-white rounded-xl transition-all duration-300 shadow-sm">
+        <Icon size={18} strokeWidth={2.5} />
+      </div>
+      <span className="font-black text-slate-700 text-[10px] uppercase tracking-wider">{title}</span>
+    </div>
+    <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+  </Link>
+);
+
+const BadgeLight = ({ icon: Icon, label, highlight = false }) => (
+  <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
     highlight 
-    ? "bg-blue-600 border-blue-500 text-white" 
-    : "bg-white/5 border-white/10 text-blue-100/70"
+    ? "bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm" 
+    : "bg-slate-50 border-slate-100 text-slate-400"
   }`}>
-    <Icon size={14} className={highlight ? "text-white" : "text-blue-400"} />
+    <Icon size={14} className={highlight ? "text-emerald-500" : "text-slate-400"} />
     {label}
   </div>
 );
 
-const ProfileSkeleton = () => (
-  <div className="max-w-6xl mx-auto px-4 py-20 space-y-12 animate-pulse">
-    <div className="h-10 bg-slate-100 w-48 rounded-xl" />
-    <div className="h-72 bg-slate-100 rounded-[3.5rem] w-full" />
-    <div className="grid grid-cols-4 gap-6">
-      {[1,2,3,4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-[2.5rem]" />)}
+const CompetitionRow = ({ comp }) => (
+  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-[1.8rem] border border-transparent hover:border-blue-200 hover:bg-white transition-all group">
+    <div className="flex items-center gap-4">
+      <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center border border-slate-100 font-black text-blue-600 italic shadow-sm">
+        {new Date(comp.fecha).getDate()}
+      </div>
+      <div>
+        <h4 className="font-black text-slate-800 uppercase text-xs tracking-tight">{comp.nombre}</h4>
+        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{comp.piscina}M • {new Date(comp.fecha).toLocaleDateString()}</p>
+      </div>
     </div>
+    <span className="text-[9px] font-black bg-white text-emerald-600 px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm uppercase italic">
+      Días: {Math.ceil((new Date(comp.fecha) - new Date()) / (1000 * 60 * 60 * 24))}
+    </span>
+  </div>
+);
+
+const EmptyEvents = () => (
+  <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50">
+    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest italic">Sin eventos próximos en radar</p>
+  </div>
+);
+
+const ProfileSkeleton = () => (
+  <div className="max-w-6xl mx-auto py-12 animate-pulse space-y-8">
+    <div className="h-10 bg-slate-100 w-48 rounded-2xl" />
+    <div className="h-48 bg-slate-100 rounded-[3rem] w-full" />
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1,2,3,4].map(i => <div key={i} className="h-28 bg-slate-100 rounded-[2rem]" />)}
+    </div>
+  </div>
+);
+
+const ErrorState = ({ error }) => (
+  <div className="max-w-xl mx-auto mt-20 p-12 bg-white rounded-[3.5rem] border border-red-100 text-center shadow-2xl">
+    <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-8 transform -rotate-6">
+      <ShieldCheck size={40} />
+    </div>
+    <h2 className="text-3xl font-black text-slate-900 mb-4 uppercase italic tracking-tighter">Fallo de Telemetría</h2>
+    <p className="text-slate-500 text-xs mb-10 font-bold uppercase tracking-[0.2em]">{error?.message || "Enlace de datos caído"}</p>
+    <button onClick={() => window.location.reload()} className="w-full bg-slate-900 hover:bg-blue-600 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl">Reintentar</button>
   </div>
 );
 

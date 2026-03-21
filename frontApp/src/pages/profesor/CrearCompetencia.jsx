@@ -7,35 +7,40 @@ import es from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
 import { 
   Trophy, Calendar, Waves, ArrowLeft, 
-  Plus, Loader2, AlertCircle, Zap
+  Plus, Loader2, AlertCircle, Zap, Activity
 } from "lucide-react";
 
 registerLocale("es", es);
 
-// --- SUB-COMPONENTES MEMOIZADOS PARA EVITAR RE-RENDERS ---
+// --- SUB-COMPONENTES MEMOIZADOS ---
 
 const FormHeader = memo(({ onBack }) => (
-  <div className="bg-[#0f172a] p-8 md:p-10 text-white relative overflow-hidden">
-    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full blur-[60px] -mr-20 -mt-20"></div>
+  /* Se añadió isolate y z-0 para que los brillos no tapen elementos */
+  <div className="bg-slate-900 p-8 md:p-12 text-white relative overflow-hidden isolate z-0">
+    <div className="absolute -z-10 top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none"></div>
+    <div className="absolute -z-10 bottom-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[60px] -ml-16 -mb-16 pointer-events-none"></div>
     
     <button 
       onClick={onBack}
-      className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white font-black text-[9px] uppercase tracking-[0.3em] transition-all group"
+      className="mb-8 flex items-center gap-3 text-slate-400 hover:text-blue-400 font-black text-[10px] uppercase tracking-[0.3em] transition-all group"
     >
-      <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
-      Volver
+      <div className="p-2 bg-white/5 rounded-full group-hover:bg-blue-500/10 transition-colors">
+        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+      </div>
+      Regresar
     </button>
 
-    <div className="flex items-center gap-4 md:gap-6 relative">
-      <div className="shrink-0 w-14 h-14 md:w-16 md:h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/40 rotate-3">
-        <Trophy size={28} className="text-white md:scale-110" />
+    <div className="flex items-center gap-6 relative z-10">
+      <div className="shrink-0 w-16 h-16 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-blue-500/20 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+        <Trophy size={32} className="text-white" />
       </div>
       <div>
-        <h2 className="text-2xl md:text-3xl font-black tracking-tighter italic leading-none uppercase">
-          Nueva <span className="text-blue-500 block not-italic">Competencia</span>
+        <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic leading-none uppercase">
+          NUEVA <br />
+          <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent not-italic">COMPETENCIA</span>
         </h2>
-        <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-          <Zap size={10} className="text-emerald-400 fill-emerald-400" /> Registro Oficial
+        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
+          <Activity size={12} className="text-emerald-500 animate-pulse" /> Registro de Alto Rendimiento
         </p>
       </div>
     </div>
@@ -43,16 +48,16 @@ const FormHeader = memo(({ onBack }) => (
 ));
 
 const InfoFooter = memo(() => (
-  <div className="p-6 md:p-8 bg-slate-50 border-t border-slate-100 flex items-start gap-4">
-    <div className="bg-white p-2.5 rounded-xl text-blue-500 shadow-sm border border-slate-100 shrink-0">
-      <AlertCircle size={18} />
+  <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-start gap-5">
+    <div className="bg-white p-3 rounded-2xl text-orange-500 shadow-sm border border-slate-100 shrink-0">
+      <AlertCircle size={20} />
     </div>
     <div className="min-w-0">
-      <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">
-        Siguiente fase: <span className="text-slate-600">Gestión de Pruebas</span>
+      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">
+        Próximo paso: <span className="text-blue-600">Configuración de Marcas</span>
       </p>
-      <p className="text-[10px] text-slate-400 mt-1 leading-snug">
-        Tras el registro, podrás definir las pruebas y los parciales del atleta.
+      <p className="text-[11px] text-slate-500 mt-1 leading-snug font-medium">
+        Al finalizar, el sistema te habilitará la carga de tiempos, estilos y parciales biomecánicos para este evento.
       </p>
     </div>
   </div>
@@ -74,7 +79,6 @@ const CrearCompetencia = () => {
     },
   });
 
-  // Optimización de handlers
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
@@ -89,7 +93,7 @@ const CrearCompetencia = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!form.nombre.trim()) newErrors.nombre = "Campo obligatorio";
+    if (!form.nombre.trim()) newErrors.nombre = "Nombre requerido";
     if (!form.fecha) newErrors.fecha = "Fecha requerida";
     
     if (Object.keys(newErrors).length > 0) {
@@ -105,101 +109,103 @@ const CrearCompetencia = () => {
   };
 
   return (
-    <div className="min-h-[90vh] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-500">
-      <div className="bg-white w-full max-w-xl rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
+    <div className="min-h-[95vh] flex items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in-95 duration-700 pb-20">
+      <div className="bg-white w-full max-w-2xl rounded-[3rem] md:rounded-[4rem] border border-slate-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden">
         
         <FormHeader onBack={() => navigate(-1)} />
 
-        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-6 md:space-y-8">
+        <form onSubmit={handleSubmit} className="p-8 md:p-14 space-y-8 md:space-y-10">
           
-          {/* CAMPO: NOMBRE */}
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center px-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre del Evento</label>
-              {errors.nombre && <span className="text-[9px] text-red-500 font-bold uppercase animate-pulse italic">{errors.nombre}</span>}
+          {/* CAMPO: NOMBRE (Blanco y Azul) */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center px-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Evento o Torneo</label>
+              {errors.nombre && <span className="text-[10px] text-orange-500 font-black uppercase italic animate-bounce">{errors.nombre}</span>}
             </div>
             <div className="relative group">
-              <Trophy className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
+              <Trophy className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
               <input
                 type="text"
                 name="nombre"
                 autoComplete="off"
-                placeholder="Nacional, Open, Torneo..."
+                placeholder="Ej: Nacional de Verano 2026"
                 value={form.nombre}
                 onChange={handleChange}
-                className={`w-full pl-14 pr-6 py-4 md:py-5 bg-slate-50 border rounded-2xl md:rounded-3xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 focus:bg-white focus:border-blue-600 outline-none transition-all ${
-                  errors.nombre ? "border-red-200 bg-red-50/30" : "border-slate-100"
+                className={`w-full pl-16 pr-8 py-5 md:py-6 bg-slate-50 border-2 rounded-[2rem] text-sm font-bold text-slate-700 focus:bg-white focus:ring-8 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all ${
+                  errors.nombre ? "border-orange-100 bg-orange-50/20" : "border-slate-50"
                 }`}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-10">
             {/* CAMPO: FECHA */}
-            <div className="space-y-2.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Fecha</label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Cronología</label>
               <div className="relative group custom-datepicker-container">
-                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 z-10 transition-colors pointer-events-none" size={18} />
+                <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 z-10 transition-colors pointer-events-none" size={20} />
                 <DatePicker
                   selected={form.fecha}
                   onChange={handleDateChange}
                   locale="es"
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Elija fecha"
+                  dateFormat="dd / MM / yyyy"
+                  placeholderText="Seleccionar fecha"
                   maxDate={new Date()}
                   showYearDropdown
                   dropdownMode="select"
-                  className={`w-full pl-14 pr-6 py-4 md:py-5 bg-slate-50 border rounded-2xl md:rounded-3xl text-sm font-bold focus:ring-4 focus:ring-blue-500/5 outline-none transition-all ${
-                    errors.fecha ? "border-red-200" : "border-slate-100"
+                  className={`w-full pl-16 pr-8 py-5 md:py-6 bg-slate-50 border-2 rounded-[2rem] text-sm font-bold text-slate-700 focus:bg-white focus:ring-8 focus:ring-blue-500/5 outline-none transition-all ${
+                    errors.fecha ? "border-orange-100" : "border-slate-50"
                   }`}
                   wrapperClassName="w-full"
                 />
               </div>
             </div>
 
-            {/* CAMPO: PISCINA */}
-            <div className="space-y-2.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Piscina</label>
-              <div className="relative">
-                <Waves className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+            {/* CAMPO: PISCINA (Verde) */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Tipo de Piscina</label>
+              <div className="relative group">
+                <Waves className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" size={20} />
                 <select
                   name="piscina"
                   value={form.piscina}
                   onChange={handleChange}
-                  className="w-full pl-14 pr-10 py-4 md:py-5 bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl text-sm font-black text-slate-700 outline-none appearance-none cursor-pointer focus:border-blue-600 transition-all shadow-inner"
+                  className="w-full pl-16 pr-12 py-5 md:py-6 bg-slate-50 border-2 border-slate-50 rounded-[2rem] text-sm font-black text-slate-700 outline-none appearance-none cursor-pointer focus:border-emerald-500 focus:bg-white transition-all shadow-inner"
                 >
-                  <option value={25}>Corta (25m)</option>
-                  <option value={50}>Larga (50m)</option>
+                  <option value={25}>Piscina Corta (25m)</option>
+                  <option value={50}>Piscina Olímpica (50m)</option>
                 </select>
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
-                   <Plus size={14} className="rotate-45" />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                   <Plus size={16} className="rotate-45" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ESTADO ERROR SERVIDOR */}
+          {/* ESTADO ERROR SERVIDOR (Naranja) */}
           {mutation.isError && (
-            <div className="bg-red-50 p-4 rounded-2xl flex items-center gap-3 text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-1">
-              <AlertCircle size={16} className="shrink-0" />
-              <p className="text-[10px] font-black uppercase leading-tight">Error de servidor: Intente nuevamente.</p>
+            <div className="bg-orange-50 p-5 rounded-2xl flex items-center gap-4 text-orange-600 border border-orange-100 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={20} className="shrink-0" />
+              <p className="text-[11px] font-black uppercase tracking-tight">Fallo en la conexión: El servidor no responde.</p>
             </div>
           )}
 
-          {/* BOTÓN SUBMIT */}
+          {/* BOTÓN SUBMIT (Azul a Verde) */}
           <button
             type="submit"
             disabled={mutation.isPending}
-            className={`w-full flex items-center justify-center gap-4 py-5 md:py-6 rounded-2xl md:rounded-[2rem] font-black text-[10px] md:text-[11px] uppercase tracking-[0.25em] transition-all active:scale-[0.98] disabled:opacity-50 ${
-              mutation.isPending ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 hover:bg-slate-900 text-white shadow-xl shadow-blue-500/20'
+            className={`group w-full flex items-center justify-center gap-5 py-6 md:py-7 rounded-[2.5rem] font-black text-[11px] md:text-[12px] uppercase tracking-[0.3em] transition-all duration-500 active:scale-[0.98] disabled:opacity-50 ${
+              mutation.isPending 
+                ? 'bg-slate-100 text-slate-400' 
+                : 'bg-slate-900 hover:bg-gradient-to-r hover:from-blue-600 hover:to-emerald-500 text-white shadow-2xl shadow-blue-900/10'
             }`}
           >
             {mutation.isPending ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={24} className="animate-spin" />
             ) : (
               <>
-                Guardar Competencia
-                <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+                Finalizar Registro
+                <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
               </>
             )}
           </button>

@@ -25,7 +25,7 @@ api.interceptors.response.use(
   },
   (error) => {
     // Si el error es 401 (No autorizado / Token expirado)
-    if (error.response && error.response.status === 401) {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       console.warn("Sesión expirada. Limpiando credenciales...");
       
       // Limpiamos el almacenamiento

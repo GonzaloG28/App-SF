@@ -6,29 +6,36 @@ import {
   Send, FileText, Type, Link as LinkIcon, 
   Users, Search, CheckCircle2, 
   Circle, Loader2, ChevronRight, UploadCloud,
-  X, Zap, Info, Filter
+  X, Zap, Info, Trash2
 } from "lucide-react";
 
 // --- COMPONENTE HIJO OPTIMIZADO ---
 const NadadorRow = memo(({ n, isSelected, onToggle }) => (
   <div 
     onClick={() => onToggle(n._id)}
-    className={`group flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
-      isSelected ? "border-blue-500 bg-blue-500/10" : "border-white/5 bg-white/5 hover:bg-white/10"
+    className={`group flex items-center justify-between p-3 md:p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
+      isSelected 
+        ? "border-green-500 bg-green-500/10 shadow-[0_0_15px_rgba(34,197,94,0.1)]" 
+        : "border-white/5 bg-white/5 hover:bg-white/10"
     }`}
   >
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 min-w-0"> {/* min-w-0 permite que el truncate funcione */}
       <div className="shrink-0">
-        {isSelected ? <CheckCircle2 size={20} className="text-blue-500" /> : <Circle size={20} className="text-white/10 group-hover:text-white/30" />}
+        {isSelected 
+          ? <CheckCircle2 size={18} className="text-green-500" /> 
+          : <Circle size={18} className="text-slate-600 group-hover:text-slate-400" />
+        }
       </div>
       <div className="min-w-0">
-        <p className={`text-xs font-black uppercase truncate ${isSelected ? "text-white" : "text-slate-400"}`}>
+        <p className={`text-[10px] md:text-xs font-black uppercase truncate ${isSelected ? "text-white" : "text-slate-400"}`}>
           {n.user.nombre}
         </p>
-        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">{n.categoria || "S/N"}</p>
+        <p className={`text-[8px] font-bold uppercase tracking-tighter ${isSelected ? "text-green-500/70" : "text-slate-600"}`}>
+          {n.categoria || "S/N"}
+        </p>
       </div>
     </div>
-    <ChevronRight size={14} className={isSelected ? "text-blue-500" : "text-white/5"} />
+    <ChevronRight size={14} className={`shrink-0 ${isSelected ? "text-green-500" : "text-white/5"}`} />
   </div>
 ));
 
@@ -48,7 +55,7 @@ const CrearEntrenamiento = () => {
       const res = await api.get("/nadadores");
       return res.data;
     },
-    staleTime: 1000 * 60 * 5, // Cache por 5 min para evitar recargas constantes
+    staleTime: 1000 * 60 * 5,
   });
 
   const nadadoresFiltrados = useMemo(() => {
@@ -71,166 +78,136 @@ const CrearEntrenamiento = () => {
   };
 
   const mutation = useMutation({
-  mutationFn: enviarEntrenamiento,
-  onSuccess: () => {
-    // Feedback visual positivo
-    setNotificacion({ 
-      visible: true, 
-      mensaje: "¡Rutina publicada con éxito!", 
-      tipo: "success" 
-    });
-    
-    // Limpiar formulario
-    setForm({ titulo: "", contenido: "", notas: "" });
-    setArchivo(null);
-    setSeleccionados([]);
-    queryClient.invalidateQueries(["reporteEntrenamientos"]);
-
-    // Ocultar notificación tras 4 segundos
-    setTimeout(() => setNotificacion({ ...notificacion, visible: false }), 4000);
-  },
-  onError: (error) => {
-    setNotificacion({ 
-      visible: true, 
-      mensaje: "Error al subir: " + (error.response?.data?.message || "Servidor no responde"), 
-      tipo: "error" 
-    });
-    setTimeout(() => setNotificacion({ ...notificacion, visible: false }), 5000);
-  }
-});
+    mutationFn: enviarEntrenamiento,
+    onSuccess: () => {
+      setNotificacion({ visible: true, mensaje: "¡Rutina publicada!", tipo: "success" });
+      setForm({ titulo: "", contenido: "", notas: "" });
+      setArchivo(null);
+      setSeleccionados([]);
+      queryClient.invalidateQueries(["reporteEntrenamientos"]);
+      setTimeout(() => setNotificacion({ ...notificacion, visible: false }), 4000);
+    },
+    onError: () => {
+      setNotificacion({ visible: true, mensaje: "Error al subir", tipo: "error" });
+      setTimeout(() => setNotificacion({ ...notificacion, visible: false }), 5000);
+    }
+  });
 
   const handleEnviar = () => {
-  if (!form.titulo.trim() || seleccionados.length === 0) return;
-  
-  const formData = new FormData();
-  
-  // Agregamos los campos básicos
-  formData.append("titulo", form.titulo);
-  formData.append("notas", form.notas);
-  formData.append("tipo", tipoCarga);
-  formData.append("destinatarios", JSON.stringify(seleccionados));
-
-  // Manejo inteligente del contenido según el tipo
-  if (tipoCarga === "archivo") {
-    if (archivo) {
-      formData.append("archivo", archivo);
-    }
-  } else {
-    formData.append("contenido", form.contenido);
-  }
-
-  mutation.mutate(formData);
-};
+    if (!form.titulo.trim() || seleccionados.length === 0) return;
+    const formData = new FormData();
+    formData.append("titulo", form.titulo);
+    formData.append("notas", form.notas);
+    formData.append("tipo", tipoCarga);
+    formData.append("destinatarios", JSON.stringify(seleccionados));
+    if (tipoCarga === "archivo" && archivo) formData.append("archivo", archivo);
+    else formData.append("contenido", form.contenido);
+    mutation.mutate(formData);
+  };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-10 space-y-8 animate-in fade-in duration-500 pb-32 md:pb-10">
+    <div className="w-full max-w-[1400px] mx-auto p-3 md:p-6 lg:p-10 space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-20 bg-white">
 
-      {/* NOTIFICACIÓN FLOTANTE (TOAST) */}
+      {/* TOAST RESPONSIVO */}
       {notificacion.visible && (
-        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-10 fade-in duration-300 ${
+        <div className={`fixed bottom-6 md:bottom-10 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-fit z-[100] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-5 ${
           notificacion.tipo === "success" 
-            ? "bg-slate-900 border-blue-500/30 text-white" 
-            : "bg-red-950 border-red-500/30 text-red-200"
+            ? "bg-slate-900 border-green-500/50 text-white" 
+            : "bg-slate-900 border-orange-500/50 text-white"
         }`}>
-          {notificacion.tipo === "success" ? (
-            <div className="bg-blue-600 p-1.5 rounded-lg">
-              <CheckCircle2 size={16} className="text-white" />
-            </div>
-          ) : (
-            <div className="bg-red-600 p-1.5 rounded-lg">
-              <X size={16} className="text-white" />
-            </div>
-          )}
-          <p className="font-black uppercase text-[10px] tracking-widest">
-            {notificacion.mensaje}
-          </p>
-          <button 
-            onClick={() => setNotificacion({ ...notificacion, visible: false })}
-            className="ml-4 hover:rotate-90 transition-transform"
-          >
-            <X size={14} className="opacity-50" />
-          </button>
+          <div className={notificacion.tipo === "success" ? "bg-green-600 p-1.5 rounded-lg shrink-0" : "bg-orange-600 p-1.5 rounded-lg shrink-0"}>
+            {notificacion.tipo === "success" ? <CheckCircle2 size={16} /> : <X size={16} />}
+          </div>
+          <p className="font-black uppercase text-[9px] md:text-[10px] tracking-widest">{notificacion.mensaje}</p>
         </div>
       )}
       
       {/* HEADER DINÁMICO */}
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div>
+        <div className="w-full lg:w-auto">
           <div className="flex items-center gap-2 mb-2">
-            <div className="bg-blue-600 p-1.5 rounded-lg"><Zap size={12} className="text-white fill-white" /></div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Panel de Control Docente</p>
+            <div className="bg-blue-600 p-1.5 rounded-lg shrink-0"><Zap size={12} className="text-white fill-white" /></div>
+            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Coach Workspace</p>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 italic tracking-tighter uppercase">
-            TRAINING <span className="text-blue-600">BUILDER</span>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 italic tracking-tighter uppercase leading-none break-words">
+            Training <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Builder</span>
           </h1>
         </div>
         
-        <button 
-          onClick={handleEnviar}
-          disabled={mutation.isPending || !form.titulo || seleccionados.length === 0}
-          className="w-full lg:w-auto flex items-center justify-center gap-4 bg-slate-900 hover:bg-blue-600 text-white px-10 py-5 rounded-3xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl disabled:opacity-20 active:scale-95"
-        >
-          {mutation.isPending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
-          Publicar Rutina
-        </button>
+        <div className="flex gap-2 w-full lg:w-auto">
+            <button 
+                onClick={() => {setForm({titulo:"", contenido:"", notas:""}); setSeleccionados([])}}
+                className="p-4 md:p-5 bg-orange-50 text-orange-600 rounded-2xl md:rounded-3xl hover:bg-orange-600 hover:text-white transition-all active:scale-95 shrink-0"
+            >
+                <Trash2 size={20}/>
+            </button>
+            <button 
+                onClick={handleEnviar}
+                disabled={mutation.isPending || !form.titulo || seleccionados.length === 0}
+                className="flex-1 flex items-center justify-center gap-3 bg-blue-600 hover:bg-slate-900 text-white px-6 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-3xl font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all shadow-xl disabled:opacity-20 active:scale-95"
+            >
+                {mutation.isPending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
+                <span className="hidden sm:inline">Publicar Rutina</span>
+                <span className="sm:hidden">Publicar</span>
+            </button>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
         
-        {/* BLOQUE DE CARGA (IZQUIERDA) */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 p-6 md:p-12 shadow-sm">
+        {/* BLOQUE DE CARGA */}
+        <div className="lg:col-span-7 order-2 lg:order-1 space-y-6">
+          <div className="bg-white rounded-[2rem] md:rounded-[3rem] border border-slate-100 p-5 md:p-8 lg:p-12 shadow-xl shadow-slate-200/40">
             
-            {/* SELECTOR DE MODO */}
-            <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-50 rounded-[2rem] mb-10">
+            {/* SELECTOR DE MODO (Scrollable en móviles si es necesario) */}
+            <div className="grid grid-cols-3 gap-1 md:gap-2 p-1 bg-slate-50 rounded-2xl md:rounded-[2rem] mb-6 md:mb-10 border border-slate-100">
               {[
-                { id: "texto", icon: Type, label: "Texto" },
-                { id: "archivo", icon: FileText, label: "PDF/Img" },
-                { id: "link", icon: LinkIcon, label: "Link" }
+                { id: "texto", icon: Type, label: "Manual" },
+                { id: "archivo", icon: FileText, label: "Digital" },
+                { id: "link", icon: LinkIcon, label: "Enlace" }
               ].map(t => (
                 <button
                   key={t.id}
                   onClick={() => setTipoCarga(t.id)}
-                  className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[9px] uppercase tracking-tighter transition-all ${
-                    tipoCarga === t.id ? "bg-white text-blue-600 shadow-md" : "text-slate-400 hover:text-slate-600"
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-[8px] md:text-[9px] uppercase tracking-tighter transition-all ${
+                    tipoCarga === t.id 
+                      ? "bg-white text-blue-600 shadow-md border border-blue-50" 
+                      : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  <t.icon size={16} /> {t.label}
+                  <t.icon size={16} /> <span>{t.label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="space-y-6">
-              <div className="group">
-                <input 
-                  type="text" 
-                  placeholder="Título de la sesión..." 
-                  className="w-full bg-slate-50 border-none rounded-2xl p-6 font-black text-slate-800 text-xl outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-inner"
-                  value={form.titulo}
-                  onChange={e => setForm({...form, titulo: e.target.value})}
-                />
-              </div>
+            <div className="space-y-4 md:space-y-6">
+              <input 
+                type="text" 
+                placeholder="NOMBRE DE LA SESIÓN..." 
+                className="w-full bg-slate-50 border-2 border-transparent rounded-xl md:rounded-2xl p-4 md:p-6 font-black text-slate-800 text-base md:text-xl outline-none focus:border-blue-100 focus:bg-white transition-all shadow-inner uppercase tracking-tighter"
+                value={form.titulo}
+                onChange={e => setForm({...form, titulo: e.target.value})}
+              />
 
-              {/* INPUTS DINÁMICOS */}
-              <div className="min-h-[300px]">
+              <div className="min-h-[250px] md:min-h-[300px]">
                 {tipoCarga === "texto" && (
                   <textarea 
-                    placeholder="Detalla las series, metros y pausas..."
-                    className="w-full bg-slate-50 rounded-[2rem] p-8 font-medium text-slate-600 h-80 outline-none focus:bg-white border-2 border-transparent focus:border-blue-50 transition-all leading-relaxed shadow-inner"
+                    placeholder="Escribe la rutina aquí..."
+                    className="w-full bg-slate-50 rounded-2xl md:rounded-[2.5rem] p-5 md:p-8 font-bold text-slate-600 h-64 md:h-80 outline-none focus:bg-white border-2 border-transparent focus:border-blue-50 transition-all leading-relaxed shadow-inner text-sm md:text-base"
                     value={form.contenido}
                     onChange={e => setForm({...form, contenido: e.target.value})}
                   />
                 )}
 
                 {tipoCarga === "link" && (
-                  <div className="bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100 animate-in zoom-in-95">
-                    <div className="flex items-center gap-2 text-blue-600 mb-4 font-black text-[10px] uppercase">
-                      <LinkIcon size={14} /> URL del entrenamiento
+                  <div className="bg-blue-50/30 p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] border-2 border-dashed border-blue-100">
+                    <div className="flex items-center gap-2 text-blue-600 mb-4 font-black text-[9px] md:text-[10px] uppercase">
+                      <LinkIcon size={14} /> Link del entrenamiento
                     </div>
                     <input 
                       type="url" 
                       placeholder="https://..." 
-                      className="w-full bg-white rounded-xl p-5 font-bold text-blue-600 outline-none shadow-sm"
+                      className="w-full bg-white rounded-xl md:rounded-2xl p-4 md:p-5 font-bold text-blue-600 outline-none shadow-sm border border-blue-100 text-sm"
                       value={form.contenido}
                       onChange={e => setForm({...form, contenido: e.target.value})}
                     />
@@ -238,25 +215,24 @@ const CrearEntrenamiento = () => {
                 )}
 
                 {tipoCarga === "archivo" && (
-                  <div className="relative group border-4 border-dashed border-slate-100 rounded-[2.5rem] p-12 text-center hover:border-blue-200 transition-all">
+                  <div className={`relative group border-4 border-dashed rounded-2xl md:rounded-[2.5rem] p-8 md:p-12 text-center transition-all ${archivo ? 'border-green-200 bg-green-50/20' : 'border-slate-100 hover:border-blue-200'}`}>
                     <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setArchivo(e.target.files[0])} />
-                    <UploadCloud size={40} className="mx-auto text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
-                    <p className="font-black text-xs uppercase text-slate-800 truncate">
-                      {archivo ? archivo.name : "Subir Planificación"}
+                    <UploadCloud size={32} className={`mx-auto mb-3 md:mb-4 ${archivo ? 'text-green-500' : 'text-blue-500'}`} />
+                    <p className="font-black text-[10px] md:text-xs uppercase text-slate-800 truncate px-2">
+                      {archivo ? archivo.name : "Subir Archivo"}
                     </p>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">PDF o Imagen (Máx 10MB)</p>
                   </div>
                 )}
               </div>
 
-              <div className="pt-4 border-t border-slate-50">
-                <div className="flex items-center gap-2 mb-2 text-slate-400">
-                  <Info size={12} />
-                  <span className="text-[9px] font-black uppercase">Notas técnicas</span>
+              <div className="pt-4 md:pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info size={14} className="text-orange-500" />
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Observaciones</span>
                 </div>
                 <textarea 
-                  placeholder="Consejos adicionales..."
-                  className="w-full bg-transparent p-2 text-xs font-bold text-slate-500 h-20 outline-none resize-none"
+                  placeholder="Consejos técnicos..."
+                  className="w-full bg-transparent p-2 text-xs md:text-[13px] font-bold text-slate-500 h-20 md:h-24 outline-none resize-none border-l-2 border-orange-200 pl-4 focus:border-orange-500 transition-colors"
                   value={form.notas}
                   onChange={e => setForm({...form, notas: e.target.value})}
                 />
@@ -265,53 +241,67 @@ const CrearEntrenamiento = () => {
           </div>
         </div>
 
-        {/* BLOQUE DESTINATARIOS (DERECHA) */}
-        <div className="lg:col-span-5">
-          <aside className="bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-10 shadow-2xl flex flex-col h-[600px] lg:h-[800px] lg:sticky lg:top-8 overflow-hidden">
-            <div className="flex justify-between items-center mb-8">
+        {/* BLOQUE DESTINATARIOS */}
+        <div className="lg:col-span-5 order-1 lg:order-2">
+          <aside className="bg-slate-900 rounded-[2rem] md:rounded-[3rem] p-5 md:p-8 lg:p-10 shadow-2xl flex flex-col max-h-[500px] lg:max-h-[800px] lg:sticky lg:top-8 overflow-hidden border-t-4 border-blue-600">
+            <div className="flex justify-between items-center mb-6 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white"><Users size={20} /></div>
-                <h3 className="text-white font-black uppercase text-sm tracking-tighter italic">Atletas <span className="text-blue-500">({seleccionados.length})</span></h3>
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center text-white shrink-0"><Users size={20} /></div>
+                <div className="min-w-0">
+                  <h3 className="text-white font-black uppercase text-xs md:text-sm tracking-tighter italic">Atletas</h3>
+                  <p className="text-green-500 font-black text-[8px] md:text-[10px] uppercase truncate">{seleccionados.length} Seleccionados</p>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4 mb-6">
+            {/* BUSCADOR Y FILTROS */}
+            <div className="space-y-4 mb-6 shrink-0">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                 <input 
                   type="text" 
-                  placeholder="Buscar nadador..." 
-                  className="w-full pl-12 pr-4 py-4 bg-white/5 border-none rounded-2xl text-white text-[11px] font-bold placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
+                  placeholder="BUSCAR..." 
+                  className="w-full pl-10 pr-4 py-3 md:py-4 bg-white/5 border border-white/5 rounded-xl md:rounded-2xl text-white text-[10px] md:text-[11px] font-bold outline-none focus:bg-white/10 transition-all uppercase"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
                 {["Todas", "Infantil", "Juvenil", "Mayores"].map(c => (
                   <button key={c} onClick={() => setCategoriaFiltro(c)} 
-                    className={`shrink-0 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all ${categoriaFiltro === c ? "bg-blue-600 text-white" : "bg-white/5 text-slate-500 hover:text-white"}`}>
+                    className={`shrink-0 px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase transition-all border ${
+                        categoriaFiltro === c 
+                        ? "bg-green-600 border-green-500 text-white shadow-lg" 
+                        : "bg-white/5 border-transparent text-slate-500 hover:text-white"
+                    }`}>
                     {c}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-              <button onClick={seleccionarTodosFiltrados} className="w-full py-3 border border-dashed border-white/10 text-[9px] font-black text-blue-400 uppercase hover:bg-blue-600 hover:text-white rounded-xl mb-4 transition-all">
-                {nadadoresFiltrados.every(n => seleccionados.includes(n._id)) ? "Deseleccionar Todos" : "Seleccionar Filtrados"}
+            {/* LISTA CON SCROLL */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar-dark">
+              <button 
+                onClick={seleccionarTodosFiltrados} 
+                className="w-full py-3 border-2 border-dashed border-blue-500/30 text-blue-400 text-[9px] md:text-[10px] font-black uppercase rounded-xl md:rounded-2xl mb-4 hover:bg-blue-600 hover:text-white transition-all shrink-0"
+              >
+                {nadadoresFiltrados.every(n => seleccionados.includes(n._id)) ? "Quitar Todos" : "Seleccionar Todo"}
               </button>
               
               {isLoading ? (
-                <div className="py-20 text-center"><Loader2 className="animate-spin text-white/10 mx-auto" size={30} /></div>
+                <div className="py-10 text-center"><Loader2 className="animate-spin text-blue-500 mx-auto" /></div>
               ) : (
-                nadadoresFiltrados.map(n => (
-                  <NadadorRow 
-                    key={n._id} 
-                    n={n} 
-                    isSelected={seleccionados.includes(n._id)} 
-                    onToggle={toggleNadador} 
-                  />
-                ))
+                <div className="grid grid-cols-1 gap-2 md:gap-3">
+                    {nadadoresFiltrados.map(n => (
+                    <NadadorRow 
+                        key={n._id} 
+                        n={n} 
+                        isSelected={seleccionados.includes(n._id)} 
+                        onToggle={toggleNadador} 
+                    />
+                    ))}
+                </div>
               )}
             </div>
           </aside>

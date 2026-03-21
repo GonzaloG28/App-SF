@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getNadadores, deleteNadador } from "../../api/profesor.api"
 import { 
   UserPlus, Search, Filter, User, Edit3, Trash2, 
-  Loader2, AlertCircle, Users, Target, Award, RefreshCcw
+  Loader2, AlertCircle, Users, Target, Award, RefreshCcw,
+  ChevronRight, MoreHorizontal
 } from "lucide-react"
 
 const Nadadores = () => {
@@ -12,11 +13,8 @@ const Nadadores = () => {
   const [categoria, setCategoria] = useState("")
   const [nombre, setNombre] = useState("")
   const [filters, setFilters] = useState({ categoria: "", nombre: "" })
-  
-  // Estado para saber exactamente qué ID se está eliminando y no bloquear toda la UI
   const [deletingId, setDeletingId] = useState(null)
 
-  // 1. OBTENCIÓN DE DATOS
   const { data = [], isLoading, isError, isFetching } = useQuery({
     queryKey: ["nadadores", filters],
     queryFn: async () => {
@@ -27,7 +25,6 @@ const Nadadores = () => {
     staleTime: 1000 * 60 * 5,
   })
 
-  // 2. ESTADÍSTICAS OPTIMIZADAS (1 solo recorrido del array usando reduce)
   const stats = useMemo(() => {
     return data.reduce(
       (acc, n) => {
@@ -41,7 +38,6 @@ const Nadadores = () => {
     )
   }, [data])
 
-  // 3. MUTACIÓN DE ELIMINACIÓN
   const deleteMutation = useMutation({
     mutationFn: deleteNadador,
     onSuccess: () => {
@@ -50,7 +46,7 @@ const Nadadores = () => {
     },
     onError: () => {
       setDeletingId(null)
-      alert("Hubo un error al intentar eliminar el nadador.")
+      alert("Error al eliminar. Intenta de nuevo.")
     }
   })
 
@@ -59,65 +55,69 @@ const Nadadores = () => {
   }, [categoria, nombre])
 
   const handleDelete = useCallback((id) => {
-    if (window.confirm("¿Estás seguro de eliminar este nadador? Esta acción no se puede deshacer.")) {
+    if (window.confirm("¿Eliminar este atleta permanentemente?")) {
       setDeletingId(id)
       deleteMutation.mutate(id)
     }
   }, [deleteMutation])
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-700 pb-10">
+    <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
       
-      {/* HEADER & CTA */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-        <div>
-          <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] mb-2 block">Administración de Equipo</span>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">
-            App<span className="text-blue-600">ÑSF</span> Nadadores
+      {/* HEADER SECCIÓN PROFESOR */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-100 pb-10">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <span className="h-1 w-10 bg-blue-600 rounded-full" />
+            <p className="text-blue-600 text-[12px] font-black uppercase tracking-[0.4em]">Gestión de Plantel</p>
+          </div>
+          <h1 className="text-5x1 md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">
+            Team <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">ÑSF</span>
           </h1>
         </div>
         
         <Link
           to="/profesor/nadadores/nuevo"
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0f172a] hover:bg-blue-600 text-white px-7 py-4 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+          className="group relative inline-flex items-center justify-center gap-3 bg-slate-900 hover:bg-blue-600 text-white px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl shadow-slate-900/20 overflow-hidden"
         >
-          <UserPlus size={18} />
-          <span>REGISTRAR ATLETA</span>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <UserPlus size={18} className="relative z-10 group-hover:rotate-12 transition-transform" />
+          <span className="relative z-10">Registrar Atleta</span>
         </Link>
       </div>
 
-      {/* BARRA DE ESTADÍSTICAS RÁPIDAS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* STATS DE ALTO RENDIMIENTO */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatMiniCard label="Total Plantel" value={stats.total} icon={Users} color="blue" />
-        <StatMiniCard label="Juveniles (A/B)" value={stats.juveniles} icon={Target} color="indigo" />
-        <StatMiniCard label="Infantiles" value={stats.infantiles} icon={Award} color="emerald" />
-        <StatMiniCard label="Mayores/Master" value={stats.mayores} icon={User} color="slate" />
+        <StatMiniCard label="Juveniles" value={stats.juveniles} icon={Target} color="green" />
+        <StatMiniCard label="Infantiles" value={stats.infantiles} icon={Award} color="orange" />
+        <StatMiniCard label="Mayores" value={stats.mayores} icon={User} color="slate" />
       </div>
 
-      {/* PANEL DE CONTROL DE BÚSQUEDA */}
-      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-2 flex flex-col md:flex-row gap-2">
-        <div className="flex-1 relative">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+      {/* BUSCADOR PROFESIONAL */}
+      <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-slate-100 p-2.5 flex flex-col md:flex-row gap-2 sticky top-4 z-40 transition-all hover:shadow-blue-900/10">
+        <div className="flex-1 relative group">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
           <input
             type="text"
-            placeholder="Buscar por nombre..."
+            placeholder="BUSCAR NADADOR POR NOMBRE..."
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
-            className="w-full pl-12 pr-6 py-4 bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 placeholder:text-slate-300 outline-none"
+            className="w-full pl-15 pr-6 py-4 bg-transparent border-none text-[11px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
           />
         </div>
 
-        <div className="h-[1px] md:h-10 w-full md:w-[1px] bg-slate-100 self-center"></div>
+        <div className="hidden md:block w-px h-10 bg-slate-100 self-center mx-2" />
 
-        <div className="flex items-center px-4 py-2 md:py-0">
-          <Filter size={18} className="text-slate-300 mr-3 shrink-0" />
+        <div className="flex items-center bg-slate-50/50 rounded-2xl px-6 py-2 md:py-0 border border-transparent focus-within:border-blue-100 transition-all">
+          <Filter size={16} className="text-blue-500 mr-3" />
           <select
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
-            className="w-full md:w-auto bg-transparent border-none py-2 text-sm font-black text-slate-500 focus:ring-0 cursor-pointer uppercase tracking-wider outline-none"
+            className="bg-transparent border-none py-3 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest min-w-[140px]"
           >
-            <option value="">Todas</option>
+            <option value="">Categorías</option>
             <option value="Infantil">Infantil</option>
             <option value="JA">Juvenil A</option>
             <option value="JB">Juvenil B</option>
@@ -128,99 +128,28 @@ const Nadadores = () => {
         <button
           onClick={handleBuscar}
           disabled={isFetching}
-          className="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white px-8 py-4 md:py-0 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 active:scale-95"
+          className="bg-blue-600 hover:bg-green-500 disabled:bg-slate-300 text-white px-10 py-5 md:py-0 rounded-[1.8rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-3 active:scale-95 min-w-[160px]"
         >
-          {isFetching ? <RefreshCcw size={14} className="animate-spin" /> : "Filtrar"}
+          {isFetching ? <RefreshCcw size={16} className="animate-spin" /> : "Actualizar"}
         </button>
       </div>
 
-      {/* LISTADO */}
+      {/* GRID DE NADADORES */}
       {isLoading ? (
-        <div className="py-20 md:py-32 flex flex-col items-center">
-          <Loader2 size={40} className="animate-spin text-blue-600 mb-4" />
-          <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em]">Sincronizando equipo...</p>
-        </div>
-      ) : isError ? (
-        <div className="bg-red-50 p-8 md:p-12 rounded-[2rem] text-center border border-red-100">
-          <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
-          <p className="text-red-800 font-bold text-sm md:text-base">Error al sincronizar con el servidor.</p>
-          <button onClick={() => window.location.reload()} className="mt-4 text-xs font-black text-red-600 bg-red-100 hover:bg-red-200 px-6 py-3 rounded-xl uppercase transition-colors">
-            Reintentar
-          </button>
-        </div>
+        <LoadingUI />
       ) : (
-        <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 transition-opacity duration-300 ${isFetching ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500 ${isFetching ? 'opacity-40 grayscale pointer-events-none' : 'opacity-100'}`}>
           {data.length > 0 ? (
             data.map((n) => (
-              <div
-                key={n._id}
-                className="group bg-white rounded-[2rem] border border-slate-100 p-6 md:p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative flex flex-col justify-between overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 -mr-8 -mt-8 rounded-full transition-all group-hover:scale-150 duration-700 pointer-events-none" />
-
-                <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white group-hover:-rotate-6 transition-all duration-300 shadow-inner text-xl font-black uppercase">
-                      {n.user?.nombre?.charAt(0) || '?'}
-                    </div>
-                    <div className="bg-slate-50 px-3 py-1.5 rounded-full text-[9px] font-black text-slate-500 uppercase tracking-widest group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                      {n.categoria || 'Sin Cat.'}
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors truncate">
-                      {n.user?.nombre} {n.apellido}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                       <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest bg-slate-100 px-2 py-1 rounded-md">
-                         RUT: {n.rut || 'N/A'}
-                       </span>
-                       {n.user?.correo && (
-                         <span className="text-[10px] text-slate-400 font-medium truncate max-w-[140px]" title={n.user.correo}>
-                           {n.user.correo}
-                         </span>
-                       )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Acciones */}
-                <div className="relative z-10 flex items-center gap-2 pt-5 border-t border-slate-50 mt-auto">
-                  <Link
-                    to={`/profesor/nadador/${n._id}`}
-                    className="flex-1 bg-slate-50 hover:bg-[#0f172a] text-slate-600 hover:text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center transition-all active:scale-95"
-                  >
-                    Ver Perfil
-                  </Link>
-                  
-                  <Link
-                    to={`/profesor/nadadores/editar/${n._id}`}
-                    className="p-3 bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 rounded-xl transition-all active:scale-90"
-                    title="Editar"
-                  >
-                    <Edit3 size={16} />
-                  </Link>
-
-                  <button
-                    onClick={() => handleDelete(n._id)}
-                    disabled={deletingId === n._id}
-                    className="p-3 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all active:scale-90 disabled:opacity-50"
-                    title="Eliminar"
-                  >
-                    {deletingId === n._id ? <Loader2 size={16} className="animate-spin text-red-500" /> : <Trash2 size={16} />}
-                  </button>
-                </div>
-              </div>
+              <AthleteCard 
+                key={n._id} 
+                nadador={n} 
+                onDelete={handleDelete} 
+                isDeleting={deletingId === n._id} 
+              />
             ))
           ) : (
-            <div className="col-span-full py-16 md:py-20 text-center bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-200">
-               <Users className="mx-auto text-slate-300 mb-4" size={40} />
-               <p className="text-slate-500 font-bold text-sm">No se encontraron nadadores con esos filtros.</p>
-               <button onClick={() => {setNombre(""); setCategoria(""); handleBuscar()}} className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
-                 Limpiar Filtros
-               </button>
-            </div>
+            <EmptyState onReset={() => {setNombre(""); setCategoria(""); setFilters({categoria:"", nombre:""})}} />
           )}
         </div>
       )}
@@ -228,24 +157,103 @@ const Nadadores = () => {
   )
 }
 
+// --- SUB-COMPONENTE: CARD DE ATLETA ---
+const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
+  <div className="group bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
+    
+    {/* Decoración de fondo */}
+    <div className="absolute -top-12 -right-12 w-32 h-32 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors duration-500" />
+    
+    <div className="relative z-10">
+      <div className="flex items-start justify-between mb-8">
+        <div className="w-16 h-16 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center text-2xl font-black italic shadow-lg group-hover:bg-blue-600 group-hover:rotate-6 transition-all duration-500">
+          {nadador.user?.nombre?.charAt(0) || 'N'}
+        </div>
+        <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full border border-green-100 text-[9px] font-black uppercase tracking-widest">
+          {nadador.categoria || 'S/C'}
+        </div>
+      </div>
+
+      <div className="space-y-1 mb-8">
+        <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none group-hover:text-blue-600 transition-colors truncate">
+          {nadador.user?.nombre} {nadador.apellido}
+        </h3>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          RUT {nadador.rut || 'N/A'} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
+        </p>
+      </div>
+    </div>
+
+    {/* BOTONES DE ACCIÓN */}
+    <div className="relative z-10 flex items-center gap-2 pt-6 border-t border-slate-50">
+      <Link
+        to={`/profesor/nadador/${nadador._id}`}
+        className="flex-1 bg-slate-50 hover:bg-slate-900 text-slate-500 hover:text-white h-12 flex items-center justify-center rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+      >
+        Ver Perfil
+      </Link>
+      
+      <Link
+        to={`/profesor/nadadores/editar/${nadador._id}`}
+        className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center rounded-2xl transition-all hover:rotate-12"
+        title="Editar"
+      >
+        <Edit3 size={18} />
+      </Link>
+
+      <button
+        onClick={() => onDelete(nadador._id)}
+        disabled={isDeleting}
+        className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center rounded-2xl transition-all disabled:opacity-50"
+      >
+        {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+      </button>
+    </div>
+  </div>
+)
+
+// --- SUB-COMPONENTE: STAT CARD ---
 const StatMiniCard = memo(({ label, value, icon: Icon, color }) => {
-  const colors = {
-    blue: "text-blue-600 bg-blue-50",
-    indigo: "text-indigo-600 bg-indigo-50",
-    emerald: "text-emerald-600 bg-emerald-50",
-    slate: "text-slate-600 bg-slate-50"
+  const themes = {
+    blue: "text-blue-600 bg-blue-50 border-blue-100 shadow-blue-500/5",
+    green: "text-green-600 bg-green-50 border-green-100 shadow-green-500/5",
+    orange: "text-orange-600 bg-orange-50 border-orange-100 shadow-orange-500/5",
+    slate: "text-slate-600 bg-slate-50 border-slate-100 shadow-slate-500/5"
   }
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-[1.5rem] border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
-      <div className={`p-2.5 sm:p-3 rounded-xl ${colors[color]}`}>
-        <Icon size={18} className="sm:w-5 sm:h-5" />
+    <div className={`bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col items-start gap-4 hover:shadow-xl transition-all group ${themes[color]}`}>
+      <div className={`p-3 rounded-2xl ${themes[color]} border shadow-inner group-hover:scale-110 transition-transform`}>
+        <Icon size={20} />
       </div>
       <div>
-        <p className="text-xl sm:text-2xl font-black text-slate-800 leading-none tabular-nums">{value}</p>
-        <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5">{label}</p>
+        <p className="text-3xl font-black text-slate-900 leading-none tabular-nums italic">{value}</p>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">{label}</p>
       </div>
     </div>
   )
 })
+
+// --- ESTADOS AUXILIARES ---
+const LoadingUI = () => (
+  <div className="py-32 flex flex-col items-center">
+    <div className="relative w-20 h-20 mb-6">
+       <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
+       <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+    <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Sincronizando Base de Datos...</p>
+  </div>
+)
+
+const EmptyState = ({ onReset }) => (
+  <div className="col-span-full py-24 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+    <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-300">
+      <Users size={32} />
+    </div>
+    <h3 className="text-lg font-black text-slate-900 uppercase italic">Sin coincidencias</h3>
+    <button onClick={onReset} className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-full transition-colors">
+      Restablecer Búsqueda
+    </button>
+  </div>
+)
 
 export default Nadadores
