@@ -1,43 +1,35 @@
 import axios from "axios"
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
-    withCredentials: true,
+  baseURL:         import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  // FIX CRÍTICO: withCredentials: true le dice al navegador que incluya
+  // las cookies (httpOnly) en cada request cross-origin.
+  // Sin esto la cookie nunca se envía y el servidor siempre responde 401.
+  withCredentials: true,
 })
 
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem("token")
+// FIX: eliminado el interceptor que leía el token de localStorage
+// y lo ponía en el header Authorization.
+// Ahora el token viaja automáticamente como cookie httpOnly —
+// el navegador lo adjunta solo, sin que JavaScript lo toque.
 
-        if(token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
-    },
-    (error) => {
-        return Promise.reject(error)
-    }
-)
-
+// Interceptor de respuesta — manejo de sesión expirada
 api.interceptors.response.use(
-  (response) => {
-    return response; // Si todo va bien, deja pasar la respuesta
-  },
+  (response) => response,
   (error) => {
-    // Si el error es 401 (No autorizado / Token expirado)
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      console.warn("Sesión expirada. Limpiando credenciales...");
-      
-      // Limpiamos el almacenamiento
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      
-      // Redirigimos al login limpiamente (evita el bug visual)
-      window.location.href = "/login";
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn("Sesión expirada o no autorizado")
+      // No limpiamos localStorage del token porque ya no lo usamos.
+      // El logout real lo maneja AuthContext llamando a /api/auth/logout
+      // que borra la cookie desde el servidor.
+      //
+      // Solo redirigimos si no estamos ya en login para evitar loop
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login"
+      }
     }
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
-
+)
 
 export default api

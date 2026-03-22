@@ -136,9 +136,8 @@ const NadadorLayout = () => {
   })
 
   const handleLogout = useCallback(() => {
-    logout()
-    navigate("/login")
-  }, [logout, navigate])
+      logout()   
+  }, [logout])
 
   const userName     = perfil?.user?.nombre  || "Atleta"
   const userLastName = perfil?.apellido       || ""
