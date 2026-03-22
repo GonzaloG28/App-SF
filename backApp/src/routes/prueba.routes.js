@@ -1,6 +1,3 @@
-import express from "express";
-import { crearPrueba, listarPruebasPorCompetencia, obtenerPruebasDisponibles, rankingIndividual, eliminarPrueba } from "../controllers/prueba.controller.js";
-
 import express from "express"
 import { verificarRol } from "../middleware/roleMiddleware.js"
 import { verificarToken } from "../middleware/authMiddleware.js"
