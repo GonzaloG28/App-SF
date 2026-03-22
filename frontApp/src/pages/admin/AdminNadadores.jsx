@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Search, CheckCircle2, XCircle, RefreshCcw, Filter } from "lucide-react"
+import { Search, CheckCircle2, XCircle,Loader2, RefreshCcw, Filter } from "lucide-react"
 
 export const AdminNadadores = () => {
   const queryClient = useQueryClient()

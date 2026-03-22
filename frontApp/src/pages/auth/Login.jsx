@@ -22,7 +22,7 @@ const Login = () => {
   try {
     const result = await login(formData)
     if (result.success) {
-      const routes = { nadador: "/nadador/dashboard", profesor: "/profesor/nadadores" }
+      const routes = { nadador: "/nadador/dashboard", profesor: "/profesor/nadadores", admin: "/admin" }
       navigate(routes[result.rol] || "/")
     } else {
       setStatus({ loading: false, error: result.message || "Correo o contraseña incorrectos" })
