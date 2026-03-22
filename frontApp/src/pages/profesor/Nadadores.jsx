@@ -5,7 +5,7 @@ import { getNadadores, deleteNadador } from "../../api/profesor.api"
 import {
   UserPlus, Search, Filter, User, Edit3, Trash2,
   Loader2, AlertCircle, Users, Target, Award, RefreshCcw,
-  ChevronRight
+  ChevronRight,CheckCircle2, XCircle
 } from "lucide-react"
 
 const Nadadores = () => {
@@ -182,6 +182,14 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
           RUT {nadador.rut || "N/A"} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
         </p>
       </div>
+      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
+        nadador.pagoAlDia
+          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+          : "bg-orange-50 text-orange-600 border-orange-100"
+        }`}>
+        {nadador.pagoAlDia ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+        {nadador.pagoAlDia ? "Cuenta activa" : "Cuenta inactiva"}
+        </div>
     </div>
 
     <div className="relative z-10 flex items-center gap-2 pt-6 border-t border-slate-50">

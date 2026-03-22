@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   },
   rol: {
     type: String,
-    enum: ["profesor", "nadador"],
+    enum: ["profesor", "nadador", "admin"],
     required: true
   },
   debeCambiarPassword: {

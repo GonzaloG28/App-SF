@@ -9,6 +9,15 @@ import ProtectedRouter from './ProtectedRoute'
 import ProfesorLayout from '../layouts/ProfesorLayout'
 import NadadorLayout from '../layouts/NadadorLayout'
 
+// paginas admin
+import AdminConvocatorias from '../pages/admin/AdminConvocatorias'
+import AdminLayout from '../layouts/AdminLayout'
+import { AdminNadadores } from '../pages/admin/AdminNadadores'
+import AdminFormativos from '../pages/admin/AdminFormativos'
+import { AdminDashboard } from '../pages/admin/AdminDashboard'
+import { ConvocatoriaDetalle } from '../pages/profesor/ConvocatoriaDetalle'
+
+
 // Páginas Profesor
 import DashboardProfesor from '../pages/profesor/DashboardProfesor'
 import Nadadores from '../pages/profesor/Nadadores'
@@ -21,6 +30,8 @@ import PruebasList from '../pages/profesor/PruebasList'
 import CrearCompetencia from '../pages/profesor/CrearCompetencia'
 import CrearPrueba from '../pages/profesor/CrearPrueba'
 import RankingNadador from '../pages/rankingNadador'
+import { CrearConvocatoria } from '../pages/profesor/CrearConvocatoria'
+import CalendarioProfesor from '../pages/profesor/CalendarioProfesor'
 
 // Páginas Nadador
 import DashboardNadador from '../pages/nadador/DashboardNadador'
@@ -28,6 +39,7 @@ import MisTiempos from '../pages/nadador/MisTiempos'
 import MisCompetencias from '../pages/nadador/MisCompetencias'
 import MisEntrenamientos from '../pages/nadador/MisEntrenamientos'
 import MiPerfil from '../pages/nadador/MiPerfil'
+import { CalendarioNadador } from '../pages/nadador/CalendarioNadador'
 
 const AppRouter = () => {
     const { isAuthenticated, user, loading } = useAuth();
@@ -70,6 +82,7 @@ const AppRouter = () => {
                 <Route path="mis-tiempos" element={<MisTiempos />} />
                 <Route path="competencias" element={<MisCompetencias />} />
                 <Route path="perfil" element={<MiPerfil />} />
+                <Route path="/nadador/calendario" element={<CalendarioNadador />} />
             </Route>
 
             {/* --- SECCIÓN PROFESOR --- */}
@@ -93,7 +106,19 @@ const AppRouter = () => {
                 <Route path="competencia/:id/pruebas" element={<PruebasList />} />
                 <Route path="competencia/:id/pruebas/nuevo" element={<CrearPrueba />} />
                 <Route path="crear-entrenamiento" element={<CrearEntrenamiento />} />
-                <Route path="entrenamientos" element={<GestionEntrenamientos />} /> 
+                <Route path="entrenamientos" element={<GestionEntrenamientos />} />
+                <Route path="/profesor/convocatoria/nueva" element={<CrearConvocatoria />} />
+                <Route path="/profesor/convocatoria/:id" element={<ConvocatoriaDetalle />} />
+                <Route path="/profesor/calendario" element={<CalendarioProfesor />} /> 
+            </Route>
+
+                {/* --- SECCIÓN ADMIN --- */}
+            <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="nadadores" element={<AdminNadadores />} />
+            <Route path="formativos" element={<AdminFormativos />} />
+            <Route path="convocatorias" element={<AdminConvocatorias />} />
+            <Route path="convocatorias/:id" element={<ConvocatoriaDetalle />} />
             </Route>
 
             {/* 3. COMODÍN: Cualquier otra ruta vuelve al Home o Login */}

@@ -89,6 +89,20 @@ const NadadorProfile = () => {
               <DataLabel icon={Calendar}    label="Edad" value={`${nadador.edad || "--"} años`} />
             </div>
           </div>
+
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-[11px] font-black uppercase ${
+              nadador.pagoAlDia
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                  : "bg-orange-50 border-orange-200 text-orange-700"
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${nadador.pagoAlDia ? "bg-emerald-500 animate-pulse" : "bg-orange-400"}`} />
+                {nadador.pagoAlDia ? "Cuenta Activa" : "Cuenta Inactiva"}
+                {nadador.fechaUltimoPago && nadador.pagoAlDia && (
+                  <span className="opacity-60 font-bold normal-case">
+                    · Pago: {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES",{day:"2-digit",month:"short"})}
+                  </span>
+                )}
+            </div>
         </div>
       </div>
 

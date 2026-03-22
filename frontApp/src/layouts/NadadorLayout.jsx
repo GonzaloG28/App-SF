@@ -7,7 +7,7 @@ import { useNotificaciones } from "../hooks/useNotificaciones"
 import NotificacionesPanel from "../components/NotificacionesPanel"
 import {
   LayoutDashboard, Trophy, User, LogOut,
-  Menu, X, Waves, ChevronRight, ClipboardList
+  Menu, X, Waves, ChevronRight, ClipboardList, Calendar
 } from "lucide-react"
 
 export const PERFIL_QUERY_KEY = ["miPerfil"]
@@ -55,6 +55,7 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
           <NavItem to="/nadador/entrenamientos" label="Entrenamientos" Icon={ClipboardList}   isActive={isActive} />
           <NavItem to="/nadador/mis-tiempos"    label="Mis Marcas"     Icon={Waves}           isActive={isActive} />
           <NavItem to="/nadador/competencias"   label="Competencias"   Icon={Trophy}          isActive={isActive} />
+          <NavItem to="/nadador/calendario"     label="Calendario"     Icon={Calendar}        isActive={isActive} />
           <NavItem to="/nadador/perfil"         label="Ficha Técnica"  Icon={User}            isActive={isActive} />
         </nav>
       </div>
@@ -199,4 +200,5 @@ const NadadorLayout = () => {
 }
 
 export default NadadorLayout
+
 

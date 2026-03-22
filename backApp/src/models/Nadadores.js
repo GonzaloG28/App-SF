@@ -19,7 +19,9 @@ const nadadorSchema = new mongoose.Schema({
   profesor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
-  }
+  },
+  pagoAlDia:        { type: Boolean, default: false },
+  fechaUltimoPago:  { type: Date,    default: null }
 }, {
   timestamps: true,
   toJSON:   { virtuals: true },
