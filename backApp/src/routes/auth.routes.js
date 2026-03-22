@@ -4,7 +4,6 @@ import { verificarToken } from "../middleware/authMiddleware.js"
 
 const router = Router()
 
-// Protección de register en producción
 const protegerRegister = (req, res, next) => {
   if (process.env.NODE_ENV === "development") return next()
   const adminToken = req.headers["x-admin-token"]
@@ -13,12 +12,10 @@ const protegerRegister = (req, res, next) => {
   }
   next()
 }
-router.get("/me", verificarToken, getMe)
+
+router.get ("/me",       verificarToken, getMe)
 router.post("/register", protegerRegister, registerProfesor)
 router.post("/login",    loginUser)
-
-
-// NUEVO: logout limpia la cookie desde el servidor
-router.post("/logout", verificarToken, logoutUser)
+router.post("/logout",   verificarToken, logoutUser)
 
 export default router
