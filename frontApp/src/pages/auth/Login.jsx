@@ -17,36 +17,34 @@ const Login = () => {
   }, [])
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setStatus({ loading: true, error: "" });
-
+    e.preventDefault()
+    setStatus({ loading: true, error: "" })
     try {
-      const result = await login(formData);
+      const result = await login(formData)
       if (result.success) {
-        const routes = {
-          nadador: "/nadador/dashboard",
-          profesor: "/profesor/nadadores"
-        };
-        navigate(routes[result.rol] || "/");
+        const routes = { nadador: "/nadador/dashboard", profesor: "/profesor/nadadores" }
+        navigate(routes[result.rol] || "/")
       } else {
-        setStatus({ loading: false, error: "Correo o contraseña incorrectos" });
+        setStatus({ loading: false, error: "Correo o contraseña incorrectos" })
       }
-    } catch (err) {
-      setStatus({ loading: false, error: "Correo o contraseña incorrectos" });
+    } catch {
+      setStatus({ loading: false, error: "Correo o contraseña incorrectos" })
     }
-  };
+  }
 
   return (
+    // FIX: overflow-hidden en raíz para contener cualquier animación futura
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden px-6 selection:bg-green-500/20">
-      
+
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-md z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        
-        {/* Identidad Visual */}
+      {/* FIX: Eliminado "animate-in slide-in-from-bottom-4 duration-500"
+          Reemplazado por fade-in puro que no afecta el eje X del viewport */}
+      <div className="w-full max-w-md z-10 animate-fade-in">
+
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-4 rotate-2">
             <ShieldCheck size={32} className="text-white" />
@@ -59,7 +57,6 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Card de Acceso */}
         <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-white shadow-2xl shadow-slate-200/50">
           <header className="mb-8">
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">Acceso Privado</h2>
@@ -67,7 +64,6 @@ const Login = () => {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Input Correo */}
             <div className="space-y-1.5">
               <label className="text-[9px] font-black text-slate-400 uppercase ml-1 tracking-widest">Email</label>
               <div className="relative group">
@@ -85,7 +81,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Input Password */}
             <div className="space-y-1.5">
               <label className="text-[9px] font-black text-slate-400 uppercase ml-1 tracking-widest">Password</label>
               <div className="relative group">
@@ -110,19 +105,19 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Error Message */}
             {status.error && (
-              <div className="bg-red-50 text-red-500 text-[10px] font-black p-4 rounded-2xl border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 italic">
+              // FIX: Eliminado "animate-in slide-in-from-top-2" — causa shift de layout
+              <div className="bg-red-50 text-red-500 text-[10px] font-black p-4 rounded-2xl border border-red-100 flex items-center gap-3 italic">
                 <AlertCircle size={16} className="shrink-0" />
                 <span className="tracking-wider uppercase">{status.error}</span>
               </div>
             )}
 
-            {/* Botón Principal */}
+            {/* FIX: py-4.5 → py-[18px] (py-4.5 no existe en Tailwind) */}
             <button
               type="submit"
               disabled={status.loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 mt-6 active:scale-[0.98] disabled:opacity-50"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-[18px] rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 mt-6 active:scale-[0.98] disabled:opacity-50"
             >
               {status.loading ? (
                 <>

@@ -2,10 +2,10 @@ import { useState, useMemo, useCallback, memo } from "react"
 import { Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getNadadores, deleteNadador } from "../../api/profesor.api"
-import { 
-  UserPlus, Search, Filter, User, Edit3, Trash2, 
+import {
+  UserPlus, Search, Filter, User, Edit3, Trash2,
   Loader2, AlertCircle, Users, Target, Award, RefreshCcw,
-  ChevronRight, MoreHorizontal
+  ChevronRight
 } from "lucide-react"
 
 const Nadadores = () => {
@@ -21,7 +21,8 @@ const Nadadores = () => {
       const res = await getNadadores(filters)
       return res.data
     },
-    keepPreviousData: true,
+    // FIX #12: keepPreviousData deprecado en TanStack Query v5 → placeholderData
+    placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 5,
   })
 
@@ -62,20 +63,21 @@ const Nadadores = () => {
   }, [deleteMutation])
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
-      
-      {/* HEADER SECCIÓN PROFESOR */}
+    <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-fade-in">
+
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-100 pb-10">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <span className="h-1 w-10 bg-blue-600 rounded-full" />
             <p className="text-blue-600 text-[12px] font-black uppercase tracking-[0.4em]">Gestión de Plantel</p>
           </div>
-          <h1 className="text-5x1 md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">
+          {/* FIX #10: text-5x1 (typo) → text-5xl */}
+          <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">
             Team <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">ÑSF</span>
           </h1>
         </div>
-        
+
         <Link
           to="/profesor/nadadores/nuevo"
           className="group relative inline-flex items-center justify-center gap-3 bg-slate-900 hover:bg-blue-600 text-white px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl shadow-slate-900/20 overflow-hidden"
@@ -86,25 +88,26 @@ const Nadadores = () => {
         </Link>
       </div>
 
-      {/* STATS DE ALTO RENDIMIENTO */}
+      {/* STATS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatMiniCard label="Total Plantel" value={stats.total} icon={Users} color="blue" />
-        <StatMiniCard label="Juveniles" value={stats.juveniles} icon={Target} color="green" />
-        <StatMiniCard label="Infantiles" value={stats.infantiles} icon={Award} color="orange" />
-        <StatMiniCard label="Mayores" value={stats.mayores} icon={User} color="slate" />
+        <StatMiniCard label="Total Plantel" value={stats.total}     icon={Users}  color="blue"   />
+        <StatMiniCard label="Juveniles"     value={stats.juveniles} icon={Target} color="green"  />
+        <StatMiniCard label="Infantiles"    value={stats.infantiles}icon={Award}  color="orange" />
+        <StatMiniCard label="Mayores"       value={stats.mayores}   icon={User}   color="slate"  />
       </div>
 
-      {/* BUSCADOR PROFESIONAL */}
+      {/* BUSCADOR */}
       <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-slate-100 p-2.5 flex flex-col md:flex-row gap-2 sticky top-4 z-40 transition-all hover:shadow-blue-900/10">
         <div className="flex-1 relative group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
+          {/* FIX #8: pl-15 no existe en Tailwind → pl-14 */}
           <input
             type="text"
             placeholder="BUSCAR NADADOR POR NOMBRE..."
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
-            className="w-full pl-15 pr-6 py-4 bg-transparent border-none text-[11px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
+            onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+            className="w-full pl-14 pr-6 py-4 bg-transparent border-none text-[11px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
           />
         </div>
 
@@ -134,22 +137,22 @@ const Nadadores = () => {
         </button>
       </div>
 
-      {/* GRID DE NADADORES */}
+      {/* GRID */}
       {isLoading ? (
         <LoadingUI />
       ) : (
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500 ${isFetching ? 'opacity-40 grayscale pointer-events-none' : 'opacity-100'}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-500 ${isFetching ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
           {data.length > 0 ? (
             data.map((n) => (
-              <AthleteCard 
-                key={n._id} 
-                nadador={n} 
-                onDelete={handleDelete} 
-                isDeleting={deletingId === n._id} 
+              <AthleteCard
+                key={n._id}
+                nadador={n}
+                onDelete={handleDelete}
+                isDeleting={deletingId === n._id}
               />
             ))
           ) : (
-            <EmptyState onReset={() => {setNombre(""); setCategoria(""); setFilters({categoria:"", nombre:""})}} />
+            <EmptyState onReset={() => { setNombre(""); setCategoria(""); setFilters({ categoria: "", nombre: "" }) }} />
           )}
         </div>
       )}
@@ -157,20 +160,17 @@ const Nadadores = () => {
   )
 }
 
-// --- SUB-COMPONENTE: CARD DE ATLETA ---
 const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
   <div className="group bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
-    
-    {/* Decoración de fondo */}
     <div className="absolute -top-12 -right-12 w-32 h-32 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors duration-500" />
-    
+
     <div className="relative z-10">
       <div className="flex items-start justify-between mb-8">
         <div className="w-16 h-16 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center text-2xl font-black italic shadow-lg group-hover:bg-blue-600 group-hover:rotate-6 transition-all duration-500">
-          {nadador.user?.nombre?.charAt(0) || 'N'}
+          {nadador.user?.nombre?.charAt(0) || "N"}
         </div>
         <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full border border-green-100 text-[9px] font-black uppercase tracking-widest">
-          {nadador.categoria || 'S/C'}
+          {nadador.categoria || "S/C"}
         </div>
       </div>
 
@@ -179,12 +179,11 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
           {nadador.user?.nombre} {nadador.apellido}
         </h3>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          RUT {nadador.rut || 'N/A'} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
+          RUT {nadador.rut || "N/A"} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
         </p>
       </div>
     </div>
 
-    {/* BOTONES DE ACCIÓN */}
     <div className="relative z-10 flex items-center gap-2 pt-6 border-t border-slate-50">
       <Link
         to={`/profesor/nadador/${nadador._id}`}
@@ -192,7 +191,6 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
       >
         Ver Perfil
       </Link>
-      
       <Link
         to={`/profesor/nadadores/editar/${nadador._id}`}
         className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center rounded-2xl transition-all hover:rotate-12"
@@ -200,7 +198,6 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
       >
         <Edit3 size={18} />
       </Link>
-
       <button
         onClick={() => onDelete(nadador._id)}
         disabled={isDeleting}
@@ -212,13 +209,12 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
   </div>
 )
 
-// --- SUB-COMPONENTE: STAT CARD ---
 const StatMiniCard = memo(({ label, value, icon: Icon, color }) => {
   const themes = {
-    blue: "text-blue-600 bg-blue-50 border-blue-100 shadow-blue-500/5",
-    green: "text-green-600 bg-green-50 border-green-100 shadow-green-500/5",
+    blue:   "text-blue-600 bg-blue-50 border-blue-100 shadow-blue-500/5",
+    green:  "text-green-600 bg-green-50 border-green-100 shadow-green-500/5",
     orange: "text-orange-600 bg-orange-50 border-orange-100 shadow-orange-500/5",
-    slate: "text-slate-600 bg-slate-50 border-slate-100 shadow-slate-500/5"
+    slate:  "text-slate-600 bg-slate-50 border-slate-100 shadow-slate-500/5"
   }
   return (
     <div className={`bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col items-start gap-4 hover:shadow-xl transition-all group ${themes[color]}`}>
@@ -233,12 +229,11 @@ const StatMiniCard = memo(({ label, value, icon: Icon, color }) => {
   )
 })
 
-// --- ESTADOS AUXILIARES ---
 const LoadingUI = () => (
   <div className="py-32 flex flex-col items-center">
     <div className="relative w-20 h-20 mb-6">
-       <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
-       <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
+      <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
     </div>
     <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Sincronizando Base de Datos...</p>
   </div>

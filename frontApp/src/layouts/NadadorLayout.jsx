@@ -1,92 +1,48 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
-import { useState, useEffect, useRef } from "react" // Añadido useRef
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery } from "@tanstack/react-query"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
-import { 
-  LayoutDashboard, 
-  Trophy, 
-  User, 
-  LogOut, 
-  Bell, 
-  Menu, 
-  X, 
-  Waves, 
-  ChevronRight, 
+import {
+  LayoutDashboard,
+  Trophy,
+  User,
+  LogOut,
+  Bell,
+  Menu,
+  X,
+  Waves,
+  ChevronRight,
   ClipboardList
 } from "lucide-react"
 
-const NadadorLayout = () => {
-  const { logout } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  
-  // Estados para menús y notificaciones
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef(null);
+const NavItem = ({ to, label, Icon, isActive }) => {
+  const active = isActive(to)
+  return (
+    <Link
+      to={to}
+      className={`
+        group flex items-center justify-between px-4 py-3.5 rounded-2xl
+        transition-all duration-300 ease-out mb-1.5
+        ${active
+          ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
+          : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"}
+      `}
+    >
+      <div className="flex items-center gap-3">
+        <Icon size={19} strokeWidth={active ? 2.5 : 2} className={active ? "" : "group-hover:scale-110 transition-transform"} />
+        <span className="font-bold tracking-tight text-sm">{label}</span>
+      </div>
+      {active && <ChevronRight size={14} className="opacity-70" />}
+    </Link>
+  )
+}
 
-  // Sincronizar cierre de menús al navegar
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setShowNotifications(false);
-  }, [location]);
+const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
+  const userName = perfil?.user?.nombre || "Atleta"
+  const userEmail = perfil?.user?.correo || "cargando..."
 
-  // Cerrar notificaciones al hacer clic fuera del componente
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Lógica de datos (React Query)
-  const { data: perfil, isLoading } = useQuery({
-    queryKey: ["miPerfilHeader"],
-    queryFn: async () => {
-      const res = await api.get("/nadadores/perfil");
-      return res.data;
-    },
-    staleTime: 1000 * 60 * 10,
-  });
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const userName = perfil?.user?.nombre || "Atleta";
-  const userLastName = perfil?.apellido || "";
-  const userEmail = perfil?.user?.correo || "cargando...";
-
-  const isActive = (path) => location.pathname.startsWith(path);
-
-  const NavItem = ({ to, label, Icon }) => {
-    const active = isActive(to);
-    return (
-      <Link
-        to={to}
-        className={`
-          group flex items-center justify-between px-4 py-3.5 rounded-2xl
-          transition-all duration-500 ease-out mb-1.5
-          ${active
-            ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-            : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"}
-        `}
-      >
-        <div className="flex items-center gap-3">
-          <Icon size={19} strokeWidth={active ? 2.5 : 2} className={active ? "animate-pulse" : "group-hover:scale-110 transition-transform"} />
-          <span className="font-bold tracking-tight text-sm">{label}</span>
-        </div>
-        {active && <ChevronRight size={14} className="opacity-70 animate-in slide-in-from-left-2" />}
-      </Link>
-    );
-  };
-
-  const SidebarContent = () => (
+  return (
     <div className="flex flex-col h-full">
       <div className="flex-1">
         <div className="mb-10 px-2 flex items-center gap-3">
@@ -103,11 +59,11 @@ const NadadorLayout = () => {
 
         <nav className="flex flex-col gap-1">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Rendimiento</p>
-          <NavItem to="/nadador/dashboard" label="Mi Panel" Icon={LayoutDashboard} />
-          <NavItem to="/nadador/entrenamientos" label="Entrenamientos" Icon={ClipboardList} />
-          <NavItem to="/nadador/mis-tiempos" label="Mis Marcas" Icon={Waves} />
-          <NavItem to="/nadador/competencias" label="Competencias" Icon={Trophy} />
-          <NavItem to="/nadador/perfil" label="Ficha Técnica" Icon={User} />
+          <NavItem to="/nadador/dashboard"      label="Mi Panel"       Icon={LayoutDashboard} isActive={isActive} />
+          <NavItem to="/nadador/entrenamientos" label="Entrenamientos"  Icon={ClipboardList}   isActive={isActive} />
+          <NavItem to="/nadador/mis-tiempos"    label="Mis Marcas"      Icon={Waves}           isActive={isActive} />
+          <NavItem to="/nadador/competencias"   label="Competencias"    Icon={Trophy}          isActive={isActive} />
+          <NavItem to="/nadador/perfil"         label="Ficha Técnica"   Icon={User}            isActive={isActive} />
         </nav>
       </div>
 
@@ -129,7 +85,10 @@ const NadadorLayout = () => {
           </div>
         </div>
 
-        <button onClick={handleLogout} className="group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-orange-50 hover:text-orange-600 transition-all duration-300">
+        <button
+          onClick={onLogout}
+          className="group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-orange-50 hover:text-orange-600 transition-all duration-300"
+        >
           <div className="flex items-center gap-3">
             <LogOut size={18} strokeWidth={2.5} />
             <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión</span>
@@ -138,86 +97,244 @@ const NadadorLayout = () => {
         </button>
       </div>
     </div>
-  );
+  )
+}
+
+const NadadorLayout = () => {
+  const { logout } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const notificationRef = useRef(null)
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+    setShowNotifications(false)
+  }, [location])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Bloquear scroll del body cuando el bottom sheet está abierto en mobile
+  useEffect(() => {
+    if (showNotifications) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [showNotifications])
+
+  const { data: perfil, isLoading } = useQuery({
+    queryKey: ["miPerfilHeader"],
+    queryFn: async () => {
+      const res = await api.get("/nadadores/perfil")
+      return res.data
+    },
+    staleTime: 1000 * 60 * 10,
+  })
+
+  const handleLogout = useCallback(() => {
+    logout()
+    navigate("/login")
+  }, [logout, navigate])
+
+  const userName   = perfil?.user?.nombre   || "Atleta"
+  const userLastName = perfil?.apellido     || ""
+
+  // Iniciales para el avatar: primera letra del nombre + primera del apellido
+  const initials = [
+    perfil?.user?.nombre?.charAt(0),
+    perfil?.apellido?.charAt(0)
+  ].filter(Boolean).join("").toUpperCase() || "AT"
+
+  const isActive = useCallback(
+    (path) => location.pathname.startsWith(path),
+    [location.pathname]
+  )
 
   return (
-    <div className="flex min-h-screen bg-[#FDFDFD] font-sans text-slate-900">
-      
+    <div className="flex min-h-screen bg-[#FDFDFD] font-sans text-slate-900 overflow-hidden">
+
+      {/* Sidebar Desktop */}
       <aside className="hidden lg:flex w-72 bg-white text-slate-900 flex-col sticky top-0 h-screen p-6 z-30 border-r border-slate-100">
-        <SidebarContent />
+        <SidebarContent
+          perfil={perfil}
+          isLoading={isLoading}
+          onLogout={handleLogout}
+          isActive={isActive}
+        />
       </aside>
 
+      {/* Sidebar Mobile */}
       <div className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
         <aside className={`absolute inset-y-0 left-0 w-72 bg-white p-6 shadow-2xl transition-transform duration-500 ease-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600"><X size={20} /></button>
-          <SidebarContent />
+          <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600">
+            <X size={20} />
+          </button>
+          <SidebarContent
+            perfil={perfil}
+            isLoading={isLoading}
+            onLogout={handleLogout}
+            isActive={isActive}
+          />
         </aside>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 px-6 lg:px-10 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-blue-50 transition-colors"><Menu size={20} /></button>
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-blue-50 transition-colors"
+            >
+              <Menu size={20} />
+            </button>
             <div className="hidden sm:block">
-               <span className="text-[9px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">Centro de Atletas</span>
-               <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">
-                 {isLoading ? "Cargando..." : `Hola, ${userName.split(" ")[0]}`}
-               </h1>
+              <span className="text-[9px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">Centro de Atletas</span>
+              <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">
+                {isLoading ? "Cargando..." : `Hola, ${userName.split(" ")[0]}`}
+              </h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            {/* --- NOTIFICACIONES --- */}
+
+            {/* ── NOTIFICACIONES ──────────────────────────────────────────
+                En desktop: dropdown anclado a la derecha (w-80).
+                En mobile:  overlay oscuro + bottom sheet ancho completo.
+                El ref sigue cubriendo ambos casos para cerrar al tocar fuera. */}
             <div className="relative" ref={notificationRef}>
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`relative p-2.5 transition-all group rounded-xl ${
-                  showNotifications ? "text-orange-600 bg-orange-50" : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                  showNotifications
+                    ? "text-orange-600 bg-orange-50"
+                    : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
                 }`}
               >
                 <Bell size={20} className={`${showNotifications ? "" : "group-hover:rotate-12"} transition-transform`} />
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-orange-600 rounded-full border-2 border-white"></span>
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-orange-600 rounded-full border-2 border-white" />
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
-                    <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full">Actualizado</span>
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto p-2 text-center py-8">
-                     <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <>
+                  {/* Overlay para mobile (solo visible en pantallas pequeñas) */}
+                  <div
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+                    onClick={() => setShowNotifications(false)}
+                  />
+
+                  {/* Panel — bottom sheet en mobile, dropdown en desktop */}
+                  <div className={`
+                    z-50 bg-white border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/50
+                    fixed bottom-0 left-0 right-0 rounded-t-[2rem]
+                    lg:absolute lg:bottom-auto lg:left-auto lg:right-0 lg:top-full lg:mt-3
+                    lg:w-80 lg:rounded-3xl lg:shadow-2xl
+                  `}>
+                    {/* Handle para mobile */}
+                    <div className="flex justify-center pt-3 pb-1 lg:hidden">
+                      <div className="w-10 h-1 bg-slate-200 rounded-full" />
+                    </div>
+
+                    <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full">Actualizado</span>
+                        {/* Botón X solo visible en mobile */}
+                        <button
+                          onClick={() => setShowNotifications(false)}
+                          className="lg:hidden p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto p-2 text-center py-8">
+                      <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <Bell size={20} className="text-slate-300" />
-                     </div>
-                     <p className="text-xs font-bold text-slate-400">Sin nuevos avisos</p>
+                      </div>
+                      <p className="text-xs font-bold text-slate-400">Sin nuevos avisos</p>
+                    </div>
+
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors"
+                    >
+                      Ver historial completo
+                    </button>
+
+                    {/* Espacio extra en mobile para el safe area del notch inferior */}
+                    <div className="h-safe-bottom lg:hidden pb-[env(safe-area-inset-bottom)]" />
                   </div>
-                  <button className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors">
-                    Ver historial completo
-                  </button>
-                </div>
+                </>
               )}
             </div>
 
             <div className="h-6 w-[1px] bg-slate-100 mx-2" />
 
-            {/* --- USER TOOLTIP --- */}
+            {/* ── USER AVATAR ─────────────────────────────────────────────
+                Problema original: el tooltip era `group-hover` → invisible en mobile
+                (no existe estado hover en pantallas táctiles).
+
+                Solución:
+                - Avatar siempre muestra las INICIALES del usuario (visible sin hover).
+                - Tooltip de nombre completo solo en desktop (hidden en mobile).
+                - En desktop el tooltip sigue funcionando con group-hover.
+                - Al tocar el avatar en mobile navega directo al perfil. */}
             <div className="relative group">
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-xl z-50 animate-in fade-in slide-in-from-top-1">
-                {isLoading ? "Cargando..." : `${userName} ${userLastName}`}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></div>
+              {/* Tooltip — solo desktop */}
+              <div className="
+                absolute top-full mt-2 left-1/2 -translate-x-1/2
+                px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black
+                uppercase tracking-wider rounded-lg
+                opacity-0 group-hover:opacity-100
+                transition-all duration-300 pointer-events-none
+                whitespace-nowrap shadow-xl z-50
+                hidden lg:block
+              ">
+                {isLoading ? "Cargando..." : `${userName} ${userLastName}`.trim()}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900" />
               </div>
 
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600/10 to-green-500/10 text-blue-600 flex items-center justify-center border border-blue-100 cursor-help transition-transform active:scale-95 group-hover:border-blue-200">
-                <User size={18} />
-              </div>
+              {/* Avatar con iniciales → siempre legible en mobile y desktop */}
+              <Link
+                to="/nadador/perfil"
+                className="
+                  w-10 h-10 rounded-xl
+                  bg-gradient-to-tr from-blue-600/10 to-green-500/10
+                  text-blue-600 flex items-center justify-center
+                  border border-blue-100
+                  transition-all active:scale-95
+                  hover:border-blue-300 hover:bg-blue-50
+                  cursor-pointer
+                "
+                title={isLoading ? "" : `${userName} ${userLastName}`.trim()}
+              >
+                {isLoading
+                  ? <User size={16} />
+                  : <span className="text-[17px] font-black tracking-tight leading-none">{initials}</span>
+                }
+              </Link>
             </div>
+
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="flex-1 p-4 lg:p-8 overflow-x-hidden">
           <div className="max-w-7xl mx-auto">
-            <div className="animate-in fade-in slide-in-from-bottom-3 duration-700">
+            <div className="animate-fade-in">
               <Outlet />
             </div>
           </div>
@@ -227,4 +344,4 @@ const NadadorLayout = () => {
   )
 }
 
-export default NadadorLayout;
+export default NadadorLayout
