@@ -291,8 +291,6 @@ const DashboardNadador = () => {
                 </div>
                 <h3 className="text-sm font-black uppercase italic text-white tracking-widest">Últimas Competencias</h3>
               </div>
-              {/* DISEÑO: subido de text-[11px] a text-[11px] */}
-              <span className="text-[11px] font-black text-blue-400 uppercase tracking-[0.3em] border-b border-blue-400/30 pb-1">Análisis de Marcas</span>
             </div>
             <div className="space-y-4 relative z-10">
               {pasadasComp.slice(0, 3).map((comp, idx) => (

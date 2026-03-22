@@ -62,7 +62,7 @@ const MisCompetencias = () => {
             <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.3em]">Performance Track</p>
           </div>
           <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">
-            Mis <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Marcas</span>
+            Mis <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Competencias</span>
           </h2>
         </div>
         
