@@ -17,7 +17,7 @@ const ListHeader = memo(({ id }) => (
     <div className="space-y-4">
       <Link 
         to={`/profesor/nadador/${id}`} 
-        className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 font-black text-[9px] uppercase tracking-[0.2em] transition-all group"
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 font-black text-[11px] uppercase tracking-[0.2em] transition-all group"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
         Volver a la ficha
@@ -29,7 +29,7 @@ const ListHeader = memo(({ id }) => (
 
     <Link
       to={`/profesor/nadador/${id}/competencias/nuevo`}
-      className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-blue-200 group active:scale-95"
+      className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-blue-200 group active:scale-95"
     >
       <Plus size={18} className="group-hover:rotate-90 transition-transform" />
       Nueva Competencia
@@ -48,7 +48,7 @@ const HighlightCard = memo(({ destacada, id }) => {
       <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div className="space-y-4 min-w-0 flex-1">
           <div className="flex items-center gap-3">
-            <span className="bg-emerald-500 text-white px-3 py-1 rounded-md text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5">
+            <span className="bg-emerald-500 text-white px-3 py-1 rounded-md text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5">
               <Trophy size={10} /> Actuación Reciente
             </span>
             <TrendingUp size={14} className="text-blue-400 animate-pulse" />
@@ -56,7 +56,7 @@ const HighlightCard = memo(({ destacada, id }) => {
           <h3 className="text-3xl md:text-5xl lg:text-6xl font-black italic tracking-tighter leading-[0.9] uppercase break-words">
             {destacada.nombre}
           </h3>
-          <div className="flex flex-wrap items-center gap-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+          <div className="flex flex-wrap items-center gap-4 text-slate-400 text-[11px] font-bold uppercase tracking-widest">
             <span className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
               <Calendar size={14} className="text-blue-400" /> 
               {new Date(destacada.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -70,7 +70,7 @@ const HighlightCard = memo(({ destacada, id }) => {
         <Link 
           to={`/profesor/competencia/${destacada._id}/pruebas`} 
           state={{ nadadorId: id }} 
-          className="w-full lg:w-auto bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all text-center shadow-lg"
+          className="w-full lg:w-auto bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all text-center shadow-lg"
         >
           Analizar Resultados
         </Link>
@@ -90,10 +90,10 @@ const CompetenciaCard = memo(({ c, id }) => (
           {c.nombre}
         </h3>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded uppercase tracking-widest">
+          <span className="text-[11px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded uppercase tracking-widest">
              {new Date(c.fecha).toLocaleDateString()}
           </span>
-          <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest flex items-center gap-1">
+          <span className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest flex items-center gap-1">
             <Waves size={10} /> {c.piscina}m
           </span>
         </div>
@@ -103,7 +103,7 @@ const CompetenciaCard = memo(({ c, id }) => (
     <Link
       to={`/profesor/competencia/${c._id}/pruebas`}
       state={{ nadadorId: id }}
-      className="w-full sm:w-auto flex items-center justify-center gap-4 bg-slate-900 text-white hover:bg-blue-600 px-8 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95"
+      className="w-full sm:w-auto flex items-center justify-center gap-4 bg-slate-900 text-white hover:bg-blue-600 px-8 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg active:scale-95"
     >
       Ver Pruebas
       <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -155,7 +155,7 @@ const CompetenciasList = () => {
         <Loader2 size={48} className="animate-spin text-blue-600" />
         <Waves size={18} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-300" />
       </div>
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Sincronizando Tiempos</p>
+      <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">Sincronizando Tiempos</p>
     </div>
   );
 
@@ -199,7 +199,7 @@ const CompetenciasList = () => {
             <select
               value={orden}
               onChange={(e) => setOrden(e.target.value)}
-              className="bg-transparent border-none py-4 text-[10px] font-black text-white focus:ring-0 cursor-pointer uppercase tracking-widest w-full"
+              className="bg-transparent border-none py-4 text-[11px] font-black text-white focus:ring-0 cursor-pointer uppercase tracking-widest w-full"
             >
               <option value="desc" className="text-slate-900">Más Recientes</option>
               <option value="asc" className="text-slate-900">Más Antiguos</option>
@@ -209,7 +209,7 @@ const CompetenciasList = () => {
           {(searchNombre || searchFecha) && (
             <button 
               onClick={resetFilters} 
-              className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-4 text-orange-500 bg-orange-50 hover:bg-orange-500 hover:text-white rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest shadow-sm"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-4 text-orange-500 bg-orange-50 hover:bg-orange-500 hover:text-white rounded-2xl transition-all font-black text-[11px] uppercase tracking-widest shadow-sm"
             >
               <XCircle size={18} /> Borrar
             </button>

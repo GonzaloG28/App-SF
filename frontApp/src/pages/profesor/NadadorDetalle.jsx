@@ -50,17 +50,17 @@ const NadadorProfile = () => {
           <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
           </div>
-          <span className="font-black text-[10px] uppercase tracking-[0.2em]">Volver al Plantel</span>
+          <span className="font-black text-[11px] uppercase tracking-[0.2em]">Volver al Plantel</span>
         </Link>
         
         <div className="flex items-center gap-4">
           {isFetching && (
             <div className="flex items-center gap-2 text-blue-500 animate-pulse">
               <RefreshCcw size={12} className="animate-spin" />
-              <span className="text-[9px] font-black uppercase">Sincronizando...</span>
+              <span className="text-[11px] font-black uppercase">Sincronizando...</span>
             </div>
           )}
-          <div className="px-4 py-1.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+          <div className="px-4 py-1.5 bg-slate-900 text-white rounded-full text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
             <ShieldCheck size={12} className="text-blue-400" />
             ID Verificado ÑSF
           </div>
@@ -86,7 +86,7 @@ const NadadorProfile = () => {
 
     <div className="text-center md:text-left space-y-4 flex-1">
       <div className="space-y-1">
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em]">
+        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-[0.2em]">
           <Target size={12} /> {nadador.categoria || 'Sin Categoría'}
         </div>
         
@@ -128,7 +128,7 @@ const NadadorProfile = () => {
               </div>
               <div>
                 <h3 className="font-black text-slate-900 uppercase tracking-tighter text-2xl italic">Especialidades</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enfoque Técnico</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enfoque Técnico</p>
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ const DataLabelLight = ({ icon: Icon, label, value }) => (
       <Icon size={14} />
     </div>
     <div className="flex flex-col">
-      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
       <span className="text-xs font-black text-slate-700 uppercase italic leading-none">{value}</span>
     </div>
   </div>
@@ -197,7 +197,7 @@ const MetricCard = ({ title, value, icon: Icon, color }) => {
       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 group-hover:rotate-3 ${styles[color]} border`}>
         <Icon size={24} />
       </div>
-      <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] mb-2">{title}</p>
+      <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] mb-2">{title}</p>
       <p className="text-xl font-black text-slate-900 italic tracking-tighter uppercase">{value}</p>
     </div>
   )
@@ -215,7 +215,7 @@ const SidebarAction = ({ to, icon: Icon, title, subtitle, color }) => (
       </div>
       <div className="flex flex-col">
         <span className="font-black text-slate-900 group-hover:text-white text-lg uppercase tracking-tight italic transition-colors leading-none">{title}</span>
-        <span className="text-[9px] font-bold text-slate-400 group-hover:text-blue-400 uppercase tracking-widest mt-1">{subtitle}</span>
+        <span className="text-[11px] font-bold text-slate-400 group-hover:text-blue-400 uppercase tracking-widest mt-1">{subtitle}</span>
       </div>
     </div>
     <ExternalLink size={20} className="text-slate-200 group-hover:text-white transition-all transform group-hover:translate-x-1" />

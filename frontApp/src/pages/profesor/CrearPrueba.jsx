@@ -79,7 +79,7 @@ const CrearPrueba = () => {
   if (loadingComp) return (
     <div className="flex flex-col h-[60vh] items-center justify-center gap-4">
       <Loader2 className="animate-spin text-blue-600" size={40} />
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Accediendo a la Competencia...</p>
+      <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 italic">Accediendo a la Competencia...</p>
     </div>
   );
 
@@ -89,7 +89,7 @@ const CrearPrueba = () => {
       {/* BOTÓN VOLVER SUTIL */}
       <button 
         onClick={() => navigate(-1)} 
-        className="flex items-center gap-3 text-slate-400 hover:text-slate-600 transition-all font-black text-[9px] uppercase tracking-widest px-2"
+        className="flex items-center gap-3 text-slate-400 hover:text-slate-600 transition-all font-black text-[11px] uppercase tracking-widest px-2"
       >
         <ArrowLeft size={14} /> Volver a Pruebas
       </button>
@@ -104,7 +104,7 @@ const CrearPrueba = () => {
             </div>
             <div>
               <h1 className="text-xl font-black italic uppercase tracking-tighter">Nueva Marca</h1>
-              <p className="text-slate-500 text-[8px] font-black uppercase tracking-[0.3em]">Registro Técnico</p>
+              <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.3em]">Registro Técnico</p>
             </div>
           </div>
           <Activity size={20} className="text-slate-700" />
@@ -114,7 +114,7 @@ const CrearPrueba = () => {
           
           {/* GRID DE ESTILOS - BOTONES OPTIMIZADOS */}
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Waves size={14} className="text-blue-500" /> Estilo
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
@@ -123,7 +123,7 @@ const CrearPrueba = () => {
                   key={est}
                   type="button"
                   onClick={() => setForm({ ...form, estilo: est })}
-                  className={`py-4 rounded-2xl text-[10px] font-black uppercase transition-all border-2 ${
+                  className={`py-4 rounded-2xl text-[11px] font-black uppercase transition-all border-2 ${
                     form.estilo === est 
                     ? "bg-blue-600 border-blue-600 text-white shadow-md scale-[0.98]" 
                     : "bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100"
@@ -137,7 +137,7 @@ const CrearPrueba = () => {
 
           {/* DISTANCIA - SCROLL HORIZONTAL MOBILE */}
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Ruler size={14} className="text-emerald-500" /> Distancia
             </label>
             <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
@@ -162,7 +162,7 @@ const CrearPrueba = () => {
           <div className="flex flex-col items-center gap-4 py-8 bg-slate-50 rounded-[2rem] border border-slate-100 relative">
             <div className="absolute top-4 left-6 flex items-center gap-2 opacity-30">
                <Timer size={14} />
-               <span className="text-[8px] font-black uppercase tracking-widest">Final</span>
+               <span className="text-[11px] font-black uppercase tracking-widest">Final</span>
             </div>
             
             <input
@@ -182,7 +182,7 @@ const CrearPrueba = () => {
                 className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-200 active:scale-95 transition-transform"
               >
                 <Zap size={14} fill="currentColor" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Usar Suma: {msATiempo(sumaParcialesMs)}</span>
+                <span className="text-[11px] font-black uppercase tracking-widest">Usar Suma: {msATiempo(sumaParcialesMs)}</span>
               </button>
             )}
           </div>
@@ -190,7 +190,7 @@ const CrearPrueba = () => {
           {/* PARCIALES COMPACTOS */}
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-800">Telemetría (Laps)</h3>
+               <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-800">Telemetría (Laps)</h3>
                {!validacion.coincide && <AlertCircle size={16} className="text-orange-500 animate-pulse" />}
             </div>
 

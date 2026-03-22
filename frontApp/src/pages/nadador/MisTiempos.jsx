@@ -69,7 +69,7 @@ const MisTiempos = () => {
       <header className="relative pt-10">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-[2px] w-12 bg-blue-600"></div>
-          <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.4em]">Analisis de marcas</p>
+          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em]">Analisis de marcas</p>
         </div>
         <h1 className="text-6xl md:text-8xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">
           Mis <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">Marcas</span>
@@ -84,7 +84,7 @@ const MisTiempos = () => {
           { label: "Piscina", name: "piscina", options: [{v:25, t:"25m"}, {v:50, t:"50m"}] }
         ].map((f) => (
           <div key={f.name} className="flex-1 min-w-[140px] space-y-2">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4 italic">{f.label}</p>
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-4 italic">{f.label}</p>
             <div className="relative group">
               <select 
                 name={f.name} 
@@ -102,7 +102,7 @@ const MisTiempos = () => {
         ))}
         
         <div className="flex-1 min-w-[140px] space-y-2">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4 italic">Ordenar por</p>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-4 italic">Ordenar por</p>
           <select name="orden" value={filtros.orden} onChange={handleFilterChange} className="w-full bg-blue-600 text-white border-none rounded-2xl px-6 py-4 font-black text-xs shadow-lg shadow-blue-200 cursor-pointer">
             <option value="asc">Mejor Marca (PB)</option>
             <option value="desc">Más Reciente</option>
@@ -119,7 +119,7 @@ const MisTiempos = () => {
             <div>
               <div className="flex items-center gap-2 mb-2 text-emerald-400">
                 <TrendingDown size={20} />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Live Progression</span>
+                <span className="text-[11px] font-black uppercase tracking-[0.3em]">Live Progression</span>
               </div>
               <h3 className="text-white font-black italic text-3xl md:text-4xl uppercase tracking-tighter">
                 Curva de <span className="text-blue-500">Rendimiento</span>
@@ -127,7 +127,7 @@ const MisTiempos = () => {
             </div>
             
             <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl">
-              <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Mejor Tiempo Actual</p>
+              <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-1">Mejor Tiempo Actual</p>
               <p className="text-3xl font-black text-white italic leading-none">{ranking[0]?.tiempo}s</p>
             </div>
           </div>
@@ -171,7 +171,7 @@ const MisTiempos = () => {
         {isLoading ? (
           <div className="p-32 text-center space-y-4">
             <Loader2 className="animate-spin text-blue-600 mx-auto" size={48} />
-            <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Compilando marcas...</p>
+            <p className="text-slate-400 font-black text-[11px] uppercase tracking-widest">Compilando marcas...</p>
           </div>
         ) : ranking?.length > 0 ? (
           <div className="overflow-x-auto">
@@ -179,10 +179,10 @@ const MisTiempos = () => {
             <table className="w-full text-left hidden md:table border-collapse">
               <thead>
                 <tr className="bg-slate-50/80">
-                  <th className="pl-12 py-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Rank</th>
-                  <th className="px-8 py-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Tiempo Oficial</th>
-                  <th className="px-8 py-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Competencia / Sede</th>
-                  <th className="pr-12 py-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Data Fecha</th>
+                  <th className="pl-12 py-10 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Rank</th>
+                  <th className="px-8 py-10 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Tiempo Oficial</th>
+                  <th className="px-8 py-10 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Competencia / Sede</th>
+                  <th className="pr-12 py-10 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Data Fecha</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -206,10 +206,10 @@ const MisTiempos = () => {
                     </td>
                     <td className="px-8 py-8">
                       <p className="font-black text-slate-800 text-xl italic uppercase tracking-tighter leading-none group-hover:text-blue-600 transition-colors">{prueba.competencia?.nombre}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Sede Oficial FINA</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase mt-1">Sede Oficial FINA</p>
                     </td>
                     <td className="pr-12 py-8 text-right">
-                      <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-slate-100 rounded-xl text-slate-900 font-black text-[10px] tabular-nums group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-slate-100 rounded-xl text-slate-900 font-black text-[11px] tabular-nums group-hover:bg-blue-600 group-hover:text-white transition-all">
                         <Calendar size={14} />
                         {new Date(prueba.fecha).toLocaleDateString('es-ES')}
                       </div>
@@ -225,7 +225,7 @@ const MisTiempos = () => {
                 <div key={prueba._id} className="p-8 space-y-6 group">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{new Date(prueba.fecha).toLocaleDateString()}</span>
+                      <span className="text-[11px] font-black text-blue-600 uppercase tracking-widest">{new Date(prueba.fecha).toLocaleDateString()}</span>
                       <h4 className="font-black text-slate-900 italic uppercase leading-tight text-xl mt-1 group-hover:text-blue-600 transition-colors">
                         {prueba.competencia?.nombre}
                       </h4>
@@ -233,7 +233,7 @@ const MisTiempos = () => {
                     {prueba.esRecordPersonal && <Award className="text-amber-500 drop-shadow-lg" size={32} />}
                   </div>
                   <div className="flex justify-between items-end bg-slate-50 p-6 rounded-[2rem]">
-                    <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase">
+                    <div className="flex items-center gap-2 text-slate-400 font-black text-[11px] uppercase">
                       <ArrowUpRight size={16} className="text-blue-500" /> Rank #{index + 1}
                     </div>
                     <span className={`text-5xl font-black italic tracking-tighter ${prueba.esRecordPersonal ? 'text-amber-600' : 'text-slate-900'}`}>
@@ -249,7 +249,7 @@ const MisTiempos = () => {
             <div className="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
               <Trophy size={40} className="text-slate-200" />
             </div>
-            <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Esperando registros oficiales</p>
+            <p className="text-slate-400 font-black text-[11px] uppercase tracking-[0.3em]">Esperando registros oficiales</p>
           </div>
         )}
       </section>
@@ -264,7 +264,7 @@ const LoadingState = () => (
       <div className="w-20 h-20 border-[6px] border-blue-50 border-t-blue-600 rounded-full animate-spin" />
       <ChartIcon className="absolute inset-0 m-auto text-blue-600" size={30} />
     </div>
-    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">Sincronizando Marcas FINA</p>
+    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">Sincronizando Marcas FINA</p>
   </div>
 );
 

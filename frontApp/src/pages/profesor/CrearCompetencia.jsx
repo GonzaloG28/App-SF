@@ -22,7 +22,7 @@ const FormHeader = memo(({ onBack }) => (
     
     <button 
       onClick={onBack}
-      className="mb-8 flex items-center gap-3 text-slate-400 hover:text-blue-400 font-black text-[10px] uppercase tracking-[0.3em] transition-all group"
+      className="mb-8 flex items-center gap-3 text-slate-400 hover:text-blue-400 font-black text-[11px] uppercase tracking-[0.3em] transition-all group"
     >
       <div className="p-2 bg-white/5 rounded-full group-hover:bg-blue-500/10 transition-colors">
         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
@@ -39,7 +39,7 @@ const FormHeader = memo(({ onBack }) => (
           NUEVA <br />
           <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent not-italic">COMPETENCIA</span>
         </h2>
-        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
+        <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
           <Activity size={12} className="text-emerald-500 animate-pulse" /> Registro de Alto Rendimiento
         </p>
       </div>
@@ -53,7 +53,7 @@ const InfoFooter = memo(() => (
       <AlertCircle size={20} />
     </div>
     <div className="min-w-0">
-      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">
+      <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">
         Próximo paso: <span className="text-blue-600">Configuración de Marcas</span>
       </p>
       <p className="text-[11px] text-slate-500 mt-1 leading-snug font-medium">
@@ -119,8 +119,8 @@ const CrearCompetencia = () => {
           {/* CAMPO: NOMBRE (Blanco y Azul) */}
           <div className="space-y-3">
             <div className="flex justify-between items-center px-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Evento o Torneo</label>
-              {errors.nombre && <span className="text-[10px] text-orange-500 font-black uppercase italic animate-bounce">{errors.nombre}</span>}
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Evento o Torneo</label>
+              {errors.nombre && <span className="text-[11px] text-orange-500 font-black uppercase italic animate-bounce">{errors.nombre}</span>}
             </div>
             <div className="relative group">
               <Trophy className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
@@ -141,7 +141,7 @@ const CrearCompetencia = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-10">
             {/* CAMPO: FECHA */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Cronología</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Cronología</label>
               <div className="relative group custom-datepicker-container">
                 <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 z-10 transition-colors pointer-events-none" size={20} />
                 <DatePicker
@@ -163,7 +163,7 @@ const CrearCompetencia = () => {
 
             {/* CAMPO: PISCINA (Verde) */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Tipo de Piscina</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Tipo de Piscina</label>
               <div className="relative group">
                 <Waves className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" size={20} />
                 <select

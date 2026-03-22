@@ -27,10 +27,10 @@ const NadadorRow = memo(({ n, isSelected, onToggle }) => (
         }
       </div>
       <div className="min-w-0">
-        <p className={`text-[10px] md:text-xs font-black uppercase truncate ${isSelected ? "text-white" : "text-slate-400"}`}>
+        <p className={`text-[11px] md:text-xs font-black uppercase truncate ${isSelected ? "text-white" : "text-slate-400"}`}>
           {n.user.nombre}
         </p>
-        <p className={`text-[8px] font-bold uppercase tracking-tighter ${isSelected ? "text-green-500/70" : "text-slate-600"}`}>
+        <p className={`text-[11px] font-bold uppercase tracking-tighter ${isSelected ? "text-green-500/70" : "text-slate-600"}`}>
           {n.categoria || "S/N"}
         </p>
       </div>
@@ -118,7 +118,7 @@ const CrearEntrenamiento = () => {
           <div className={notificacion.tipo === "success" ? "bg-green-600 p-1.5 rounded-lg shrink-0" : "bg-orange-600 p-1.5 rounded-lg shrink-0"}>
             {notificacion.tipo === "success" ? <CheckCircle2 size={16} /> : <X size={16} />}
           </div>
-          <p className="font-black uppercase text-[9px] md:text-[10px] tracking-widest">{notificacion.mensaje}</p>
+          <p className="font-black uppercase text-[11px] md:text-[11px] tracking-widest">{notificacion.mensaje}</p>
         </div>
       )}
       
@@ -127,7 +127,7 @@ const CrearEntrenamiento = () => {
         <div className="w-full lg:w-auto">
           <div className="flex items-center gap-2 mb-2">
             <div className="bg-blue-600 p-1.5 rounded-lg shrink-0"><Zap size={12} className="text-white fill-white" /></div>
-            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Coach Workspace</p>
+            <p className="text-[11px] md:text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Coach Workspace</p>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 italic tracking-tighter uppercase leading-none break-words">
             Training <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Builder</span>
@@ -144,7 +144,7 @@ const CrearEntrenamiento = () => {
             <button 
                 onClick={handleEnviar}
                 disabled={mutation.isPending || !form.titulo || seleccionados.length === 0}
-                className="flex-1 flex items-center justify-center gap-3 bg-blue-600 hover:bg-slate-900 text-white px-6 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-3xl font-black text-[10px] md:text-[11px] uppercase tracking-widest transition-all shadow-xl disabled:opacity-20 active:scale-95"
+                className="flex-1 flex items-center justify-center gap-3 bg-blue-600 hover:bg-slate-900 text-white px-6 md:px-10 py-4 md:py-5 rounded-2xl md:rounded-3xl font-black text-[11px] md:text-[11px] uppercase tracking-widest transition-all shadow-xl disabled:opacity-20 active:scale-95"
             >
                 {mutation.isPending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
                 <span className="hidden sm:inline">Publicar Rutina</span>
@@ -169,7 +169,7 @@ const CrearEntrenamiento = () => {
                 <button
                   key={t.id}
                   onClick={() => setTipoCarga(t.id)}
-                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-[8px] md:text-[9px] uppercase tracking-tighter transition-all ${
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-[11px] md:text-[11px] uppercase tracking-tighter transition-all ${
                     tipoCarga === t.id 
                       ? "bg-white text-blue-600 shadow-md border border-blue-50" 
                       : "text-slate-400 hover:text-slate-600"
@@ -201,7 +201,7 @@ const CrearEntrenamiento = () => {
 
                 {tipoCarga === "link" && (
                   <div className="bg-blue-50/30 p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] border-2 border-dashed border-blue-100">
-                    <div className="flex items-center gap-2 text-blue-600 mb-4 font-black text-[9px] md:text-[10px] uppercase">
+                    <div className="flex items-center gap-2 text-blue-600 mb-4 font-black text-[11px] md:text-[11px] uppercase">
                       <LinkIcon size={14} /> Link del entrenamiento
                     </div>
                     <input 
@@ -218,7 +218,7 @@ const CrearEntrenamiento = () => {
                   <div className={`relative group border-4 border-dashed rounded-2xl md:rounded-[2.5rem] p-8 md:p-12 text-center transition-all ${archivo ? 'border-green-200 bg-green-50/20' : 'border-slate-100 hover:border-blue-200'}`}>
                     <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setArchivo(e.target.files[0])} />
                     <UploadCloud size={32} className={`mx-auto mb-3 md:mb-4 ${archivo ? 'text-green-500' : 'text-blue-500'}`} />
-                    <p className="font-black text-[10px] md:text-xs uppercase text-slate-800 truncate px-2">
+                    <p className="font-black text-[11px] md:text-xs uppercase text-slate-800 truncate px-2">
                       {archivo ? archivo.name : "Subir Archivo"}
                     </p>
                   </div>
@@ -228,7 +228,7 @@ const CrearEntrenamiento = () => {
               <div className="pt-4 md:pt-6 border-t border-slate-50">
                 <div className="flex items-center gap-2 mb-3">
                   <Info size={14} className="text-orange-500" />
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Observaciones</span>
+                  <span className="text-[11px] md:text-[11px] font-black uppercase tracking-widest">Observaciones</span>
                 </div>
                 <textarea 
                   placeholder="Consejos técnicos..."
@@ -249,7 +249,7 @@ const CrearEntrenamiento = () => {
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center text-white shrink-0"><Users size={20} /></div>
                 <div className="min-w-0">
                   <h3 className="text-white font-black uppercase text-xs md:text-sm tracking-tighter italic">Atletas</h3>
-                  <p className="text-green-500 font-black text-[8px] md:text-[10px] uppercase truncate">{seleccionados.length} Seleccionados</p>
+                  <p className="text-green-500 font-black text-[11px] md:text-[11px] uppercase truncate">{seleccionados.length} Seleccionados</p>
                 </div>
               </div>
             </div>
@@ -261,7 +261,7 @@ const CrearEntrenamiento = () => {
                 <input 
                   type="text" 
                   placeholder="BUSCAR..." 
-                  className="w-full pl-10 pr-4 py-3 md:py-4 bg-white/5 border border-white/5 rounded-xl md:rounded-2xl text-white text-[10px] md:text-[11px] font-bold outline-none focus:bg-white/10 transition-all uppercase"
+                  className="w-full pl-10 pr-4 py-3 md:py-4 bg-white/5 border border-white/5 rounded-xl md:rounded-2xl text-white text-[11px] md:text-[11px] font-bold outline-none focus:bg-white/10 transition-all uppercase"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
@@ -269,7 +269,7 @@ const CrearEntrenamiento = () => {
               <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
                 {["Todas", "Infantil", "Juvenil", "Mayores"].map(c => (
                   <button key={c} onClick={() => setCategoriaFiltro(c)} 
-                    className={`shrink-0 px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase transition-all border ${
+                    className={`shrink-0 px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[11px] md:text-[11px] font-black uppercase transition-all border ${
                         categoriaFiltro === c 
                         ? "bg-green-600 border-green-500 text-white shadow-lg" 
                         : "bg-white/5 border-transparent text-slate-500 hover:text-white"
@@ -284,7 +284,7 @@ const CrearEntrenamiento = () => {
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar-dark">
               <button 
                 onClick={seleccionarTodosFiltrados} 
-                className="w-full py-3 border-2 border-dashed border-blue-500/30 text-blue-400 text-[9px] md:text-[10px] font-black uppercase rounded-xl md:rounded-2xl mb-4 hover:bg-blue-600 hover:text-white transition-all shrink-0"
+                className="w-full py-3 border-2 border-dashed border-blue-500/30 text-blue-400 text-[11px] md:text-[11px] font-black uppercase rounded-xl md:rounded-2xl mb-4 hover:bg-blue-600 hover:text-white transition-all shrink-0"
               >
                 {nadadoresFiltrados.every(n => seleccionados.includes(n._id)) ? "Quitar Todos" : "Seleccionar Todo"}
               </button>

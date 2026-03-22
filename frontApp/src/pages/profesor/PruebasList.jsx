@@ -17,7 +17,7 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-blue-600">
             <Activity size={14} className="animate-pulse text-emerald-500" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Telemetría de Carrera</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Telemetría de Carrera</span>
           </div>
           <h3 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tighter italic uppercase leading-none">
             {prueba.distancia}m <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">{prueba.estilo}</span>
@@ -41,7 +41,7 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
               <Timer size={24} className="text-blue-500" />
             </div>
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Tiempo Oficial</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Tiempo Oficial</p>
               <p className="text-3xl font-black tabular-nums text-white italic">{prueba.tiempo}</p>
             </div>
           </div>
@@ -52,17 +52,17 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
       {/* Análisis de Splits: Verde y Azul */}
       <div className="px-8 md:px-10 pb-8 space-y-4 flex-1">
         <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <TrendingUp size={12} className="text-emerald-500" /> Parciales
           </span>
-          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Laps: {prueba.parciales?.length || 0}</span>
+          <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Laps: {prueba.parciales?.length || 0}</span>
         </div>
         
         <div className="space-y-3">
           {prueba.parciales?.length > 0 ? (
             prueba.parciales.map((par, idx) => (
               <div key={idx} className="space-y-1 group/lap">
-                <div className="flex justify-between text-[10px] font-black italic text-slate-500 uppercase">
+                <div className="flex justify-between text-[11px] font-black italic text-slate-500 uppercase">
                   <span>Tramo {par.nroParcial}</span>
                   <span className="text-slate-800 group-hover/lap:text-emerald-600 transition-colors">{par.tiempo}</span>
                 </div>
@@ -75,7 +75,7 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
               </div>
             ))
           ) : (
-            <p className="text-[9px] text-slate-300 font-black uppercase text-center py-6 italic tracking-widest border-2 border-dashed border-slate-50 rounded-2xl">
+            <p className="text-[11px] text-slate-300 font-black uppercase text-center py-6 italic tracking-widest border-2 border-dashed border-slate-50 rounded-2xl">
               Sin datos de telemetría
             </p>
           )}
@@ -133,7 +133,7 @@ const PruebasList = () => {
         <Loader2 size={50} className="animate-spin text-blue-600" />
         <Activity size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-500" />
       </div>
-      <p className="font-black text-[10px] uppercase tracking-[0.5em] text-slate-400 animate-pulse text-center">Desencriptando Vault Técnico</p>
+      <p className="font-black text-[11px] uppercase tracking-[0.5em] text-slate-400 animate-pulse text-center">Desencriptando Vault Técnico</p>
     </div>
   );
 
@@ -148,7 +148,7 @@ const PruebasList = () => {
           <div className="space-y-8 w-full lg:w-auto">
             <button 
               onClick={() => navigate(-1)}
-              className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-blue-600 transition-all"
+              className="group flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-blue-600 transition-all"
             >
               <div className="p-2 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors">
                 <ArrowLeft size={16} /> 
@@ -173,14 +173,14 @@ const PruebasList = () => {
                 <div className="bg-slate-900 text-white px-6 py-4 rounded-[1.8rem] flex items-center gap-4 shadow-lg">
                    <Layers size={20} className="text-blue-500" />
                    <div>
-                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Pruebas</p>
+                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Pruebas</p>
                      <p className="text-2xl font-black italic leading-none">{stats.total}</p>
                    </div>
                 </div>
                 <div className="bg-white border border-slate-100 px-6 py-4 rounded-[1.8rem] flex items-center gap-4 shadow-sm">
                    <Target size={20} className="text-emerald-500" />
                    <div>
-                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Volumen</p>
+                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Volumen</p>
                      <p className="text-2xl font-black italic leading-none text-slate-900">{stats.distanciaTotal}m</p>
                    </div>
                 </div>
@@ -224,7 +224,7 @@ const PruebasList = () => {
       <footer className="pt-16 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-[2px] bg-gradient-to-r from-blue-600 to-emerald-500" />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">
             Data Engine v2.0 • {new Date().getFullYear()}
           </p>
         </div>
@@ -234,7 +234,7 @@ const PruebasList = () => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
           </div>
-          <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest italic">
+          <span className="text-[11px] font-black text-emerald-700 uppercase tracking-widest italic">
             Nodo Central Sincronizado
           </span>
         </div>

@@ -52,7 +52,7 @@ const Login = () => {
           <h1 className="text-3xl font-black text-slate-900 italic tracking-tighter">
             App<span className="text-blue-600">ÑSF</span>
           </h1>
-          <p className="text-green-600 text-[9px] font-black uppercase tracking-[0.4em] mt-2">
+          <p className="text-green-600 text-[11px] font-black uppercase tracking-[0.4em] mt-2">
             Security Gateway
           </p>
         </div>
@@ -65,7 +65,7 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-1 tracking-widest">Email</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">Email</label>
               <div className="relative group">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
@@ -82,7 +82,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-1 tracking-widest">Password</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">Password</label>
               <div className="relative group">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
@@ -107,7 +107,7 @@ const Login = () => {
 
             {status.error && (
               // FIX: Eliminado "animate-in slide-in-from-top-2" — causa shift de layout
-              <div className="bg-red-50 text-red-500 text-[10px] font-black p-4 rounded-2xl border border-red-100 flex items-center gap-3 italic">
+              <div className="bg-red-50 text-red-500 text-[11px] font-black p-4 rounded-2xl border border-red-100 flex items-center gap-3 italic">
                 <AlertCircle size={16} className="shrink-0" />
                 <span className="tracking-wider uppercase">{status.error}</span>
               </div>
@@ -117,7 +117,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={status.loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-[18px] rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 mt-6 active:scale-[0.98] disabled:opacity-50"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-[18px] rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 mt-6 active:scale-[0.98] disabled:opacity-50"
             >
               {status.loading ? (
                 <>
@@ -134,7 +134,7 @@ const Login = () => {
           </form>
 
           <footer className="mt-8 pt-6 border-t border-slate-50">
-            <p className="text-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+            <p className="text-center text-[11px] text-slate-400 font-bold uppercase tracking-widest">
               Conexión Encriptada • AppÑSF v2.0
             </p>
           </footer>

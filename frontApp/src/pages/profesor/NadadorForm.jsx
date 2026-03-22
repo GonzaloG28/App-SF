@@ -104,7 +104,7 @@ const NadadorForm = () => {
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center py-40 gap-4">
       <Loader2 size={48} className="animate-spin text-blue-600" />
-      <p className="font-black text-[10px] uppercase tracking-[0.5em] text-slate-400">Sincronizando Atleta...</p>
+      <p className="font-black text-[11px] uppercase tracking-[0.5em] text-slate-400">Sincronizando Atleta...</p>
     </div>
   )
 
@@ -126,14 +126,14 @@ const NadadorForm = () => {
                 <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent not-italic">Atleta</span>
               </h2>
               <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Ficha de Rendimiento</span>
-                {isEdit && <span className="bg-slate-800 text-[9px] px-3 py-1 rounded-full text-blue-400 font-mono tracking-tighter italic">ID: {id.slice(-8)}</span>}
+                <span className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em]">Ficha de Rendimiento</span>
+                {isEdit && <span className="bg-slate-800 text-[11px] px-3 py-1 rounded-full text-blue-400 font-mono tracking-tighter italic">ID: {id.slice(-8)}</span>}
               </div>
             </div>
           </div>
           <Link to="/profesor/nadadores" className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 px-6 py-3 rounded-2xl border border-white/10 transition-all">
             <ArrowLeft size={18} className="text-slate-400 group-hover:text-white" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Volver</span>
+            <span className="text-[11px] font-black uppercase tracking-widest">Volver</span>
           </Link>
         </div>
       </div>
@@ -169,7 +169,7 @@ const NadadorForm = () => {
               <CustomInput label="Altura (CM)"  name="altura" type="number" icon={Ruler}  form={form} setForm={setForm} errors={errors} placeholder="180" />
             </div>
             <div className="flex flex-col space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">Fecha de Nacimiento</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">Fecha de Nacimiento</label>
               <div className="relative group">
                 <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 z-10 transition-colors" size={20} />
                 <DatePicker
@@ -192,7 +192,7 @@ const NadadorForm = () => {
             <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em] flex items-center gap-3">
               <Waves size={16} className="text-blue-500" /> Especialidades y Nombres
             </h3>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-4 py-2 bg-slate-50 rounded-full italic">Datos visibles en el perfil público</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-4 py-2 bg-slate-50 rounded-full italic">Datos visibles en el perfil público</span>
           </div>
 
           <div className="grid md:grid-cols-2 gap-10">
@@ -234,8 +234,8 @@ const NadadorForm = () => {
 const CustomInput = ({ label, name, type = "text", icon: Icon, form, setForm, errors, placeholder, description, disabled, onChange }) => (
   <div className={`flex flex-col space-y-3 ${disabled ? "opacity-70" : ""}`}>
     <div className="flex justify-between items-center px-2">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">{label}</label>
-      {description && <span className="text-[8px] font-bold text-blue-500 uppercase">{description}</span>}
+      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] italic">{label}</label>
+      {description && <span className="text-[11px] font-bold text-blue-500 uppercase">{description}</span>}
     </div>
     <div className="relative group">
       <div className={`absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none transition-colors ${disabled ? "text-slate-300" : "text-slate-400 group-focus-within:text-blue-600"}`}>

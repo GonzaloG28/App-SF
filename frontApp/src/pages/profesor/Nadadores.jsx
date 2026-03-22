@@ -118,7 +118,7 @@ const Nadadores = () => {
           <select
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
-            className="bg-transparent border-none py-3 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest min-w-[140px]"
+            className="bg-transparent border-none py-3 text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest min-w-[140px]"
           >
             <option value="">Categorías</option>
             <option value="Infantil">Infantil</option>
@@ -131,7 +131,7 @@ const Nadadores = () => {
         <button
           onClick={handleBuscar}
           disabled={isFetching}
-          className="bg-blue-600 hover:bg-green-500 disabled:bg-slate-300 text-white px-10 py-5 md:py-0 rounded-[1.8rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-3 active:scale-95 min-w-[160px]"
+          className="bg-blue-600 hover:bg-green-500 disabled:bg-slate-300 text-white px-10 py-5 md:py-0 rounded-[1.8rem] font-black text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-3 active:scale-95 min-w-[160px]"
         >
           {isFetching ? <RefreshCcw size={16} className="animate-spin" /> : "Actualizar"}
         </button>
@@ -169,7 +169,7 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
         <div className="w-16 h-16 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center text-2xl font-black italic shadow-lg group-hover:bg-blue-600 group-hover:rotate-6 transition-all duration-500">
           {nadador.user?.nombre?.charAt(0) || "N"}
         </div>
-        <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full border border-green-100 text-[9px] font-black uppercase tracking-widest">
+        <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full border border-green-100 text-[11px] font-black uppercase tracking-widest">
           {nadador.categoria || "S/C"}
         </div>
       </div>
@@ -178,7 +178,7 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
         <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none group-hover:text-blue-600 transition-colors truncate">
           {nadador.user?.nombre} {nadador.apellido}
         </h3>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
           RUT {nadador.rut || "N/A"} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
         </p>
       </div>
@@ -187,7 +187,7 @@ const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
     <div className="relative z-10 flex items-center gap-2 pt-6 border-t border-slate-50">
       <Link
         to={`/profesor/nadador/${nadador._id}`}
-        className="flex-1 bg-slate-50 hover:bg-slate-900 text-slate-500 hover:text-white h-12 flex items-center justify-center rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+        className="flex-1 bg-slate-50 hover:bg-slate-900 text-slate-500 hover:text-white h-12 flex items-center justify-center rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
       >
         Ver Perfil
       </Link>
@@ -223,7 +223,7 @@ const StatMiniCard = memo(({ label, value, icon: Icon, color }) => {
       </div>
       <div>
         <p className="text-3xl font-black text-slate-900 leading-none tabular-nums italic">{value}</p>
-        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">{label}</p>
+        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-2">{label}</p>
       </div>
     </div>
   )
@@ -235,7 +235,7 @@ const LoadingUI = () => (
       <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
       <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
     </div>
-    <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Sincronizando Base de Datos...</p>
+    <p className="text-slate-400 font-black text-[11px] uppercase tracking-[0.4em] animate-pulse">Sincronizando Base de Datos...</p>
   </div>
 )
 
@@ -245,7 +245,7 @@ const EmptyState = ({ onReset }) => (
       <Users size={32} />
     </div>
     <h3 className="text-lg font-black text-slate-900 uppercase italic">Sin coincidencias</h3>
-    <button onClick={onReset} className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-full transition-colors">
+    <button onClick={onReset} className="mt-4 text-[11px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-full transition-colors">
       Restablecer Búsqueda
     </button>
   </div>

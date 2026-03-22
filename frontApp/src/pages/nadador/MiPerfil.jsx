@@ -34,12 +34,12 @@ const MiPerfil = () => {
       {/* HEADER TÉCNICO COMPACTO */}
       <header className="flex justify-between items-end border-b border-slate-100 pb-6">
         <div>
-          <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-1 block italic">User profile</span>
+          <span className="text-blue-600 font-black text-[11px] uppercase tracking-[0.4em] mb-1 block italic">User profile</span>
           <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Mi Perfil</h2>
         </div>
         <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-2 shadow-sm">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest italic">Cuenta Activa</span>
+          <span className="text-[11px] font-black uppercase tracking-widest italic">Cuenta Activa</span>
         </div>
       </header>
 
@@ -60,7 +60,7 @@ const MiPerfil = () => {
 
           <div className="text-center md:text-left space-y-4 flex-1">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em]">
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-[0.2em]">
                 <Target size={12} /> {nadador.categoria || 'Nivel Club'}
               </div>
               <h1 className="text-4xl md:text-6xl font-black tracking-[-0.04em] italic leading-[0.9] text-slate-900 uppercase">
@@ -97,7 +97,7 @@ const MiPerfil = () => {
                 </div>
                 <h3 className="font-black text-slate-900 text-xl tracking-tighter uppercase italic">Próximas Pruebas</h3>
               </div>
-              <Link to="/nadador/competencias" className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Ver Historial</Link>
+              <Link to="/nadador/competencias" className="text-[11px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Ver Historial</Link>
             </div>
 
             <div className="space-y-3">
@@ -114,7 +114,7 @@ const MiPerfil = () => {
 
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Módulos de Análisis</h3>
+            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Módulos de Análisis</h3>
             <div className="space-y-3">
               <ActionLink to="/nadador/competencias" title="Mis Logros" icon={Trophy} />
               <ActionLink to="/nadador/mis-tiempos" title="Estadísticas" icon={BarChart3} />
@@ -124,9 +124,9 @@ const MiPerfil = () => {
 
           <div className="bg-gradient-to-br from-blue-600 to-emerald-500 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
             <Target className="absolute -right-6 -bottom-6 opacity-10 group-hover:rotate-12 transition-transform duration-1000" size={160} />
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-80">Objetivo Actual</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] mb-2 opacity-80">Objetivo Actual</h4>
             <p className="text-2xl font-black italic uppercase leading-[0.9] mb-6">Potencia de <br/> Viraje</p>
-            <button className="w-full bg-white/20 backdrop-blur-md text-white border border-white/30 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-blue-600 transition-all flex items-center justify-center gap-2">
+            <button className="w-full bg-white/20 backdrop-blur-md text-white border border-white/30 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-white hover:text-blue-600 transition-all flex items-center justify-center gap-2">
               Ver Plan <ArrowUpRight size={14} />
             </button>
           </div>
@@ -149,7 +149,7 @@ const StatCard = memo(({ title, value, icon: Icon, colorTheme }) => {
       <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform border ${themes[colorTheme]}`}>
         <Icon size={20} strokeWidth={2.5} />
       </div>
-      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{title}</p>
+      <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] mb-1">{title}</p>
       <p className="text-xl font-black text-slate-900 italic tracking-tighter uppercase tabular-nums">{value}</p>
     </div>
   );
@@ -161,14 +161,14 @@ const ActionLink = ({ to, title, icon: Icon }) => (
       <div className="p-2.5 bg-slate-50 text-slate-400 group-hover:bg-blue-600 group-hover:text-white rounded-xl transition-all duration-300 shadow-sm">
         <Icon size={18} strokeWidth={2.5} />
       </div>
-      <span className="font-black text-slate-700 text-[10px] uppercase tracking-wider">{title}</span>
+      <span className="font-black text-slate-700 text-[11px] uppercase tracking-wider">{title}</span>
     </div>
     <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
   </Link>
 );
 
 const BadgeLight = ({ icon: Icon, label, highlight = false }) => (
-  <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
+  <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider border transition-all ${
     highlight 
     ? "bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm" 
     : "bg-slate-50 border-slate-100 text-slate-400"
@@ -186,10 +186,10 @@ const CompetitionRow = ({ comp }) => (
       </div>
       <div>
         <h4 className="font-black text-slate-800 uppercase text-xs tracking-tight">{comp.nombre}</h4>
-        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{comp.piscina}M • {new Date(comp.fecha).toLocaleDateString()}</p>
+        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{comp.piscina}M • {new Date(comp.fecha).toLocaleDateString()}</p>
       </div>
     </div>
-    <span className="text-[9px] font-black bg-white text-emerald-600 px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm uppercase italic">
+    <span className="text-[11px] font-black bg-white text-emerald-600 px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm uppercase italic">
       Días: {Math.ceil((new Date(comp.fecha) - new Date()) / (1000 * 60 * 60 * 24))}
     </span>
   </div>
@@ -197,7 +197,7 @@ const CompetitionRow = ({ comp }) => (
 
 const EmptyEvents = () => (
   <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50">
-    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest italic">Sin eventos próximos en radar</p>
+    <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest italic">Sin eventos próximos en radar</p>
   </div>
 );
 

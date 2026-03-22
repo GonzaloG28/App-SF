@@ -23,10 +23,10 @@ const EntrenamientoCard = ({ ent, onEliminar, onDetalles, isDeleting }) => {
         {/* Info Temporal */}
         <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-start text-center lg:text-left min-w-0">
           <div className="flex items-center gap-3 mb-2 shrink-0">
-            <span className="bg-blue-50 px-3 py-1 rounded-lg text-[9px] md:text-[10px] font-black text-blue-600 uppercase tracking-wider">
+            <span className="bg-blue-50 px-3 py-1 rounded-lg text-[11px] md:text-[11px] font-black text-blue-600 uppercase tracking-wider">
               {new Date(ent.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
             </span>
-            <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[9px] md:text-[10px]">
+            <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[11px] md:text-[11px]">
               <Clock size={12} className="text-blue-400" />
               {new Date(ent.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -39,7 +39,7 @@ const EntrenamientoCard = ({ ent, onEliminar, onDetalles, isDeleting }) => {
         {/* Progreso con Naranja, Verde y Azul */}
         <div className="w-full flex-1">
           <div className="flex justify-between items-end mb-2">
-            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+            <p className="text-[11px] md:text-[11px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
               {esBajo && <AlertCircle size={10} className="text-orange-500" />}
               Progreso de Clase
             </p>
@@ -70,7 +70,7 @@ const EntrenamientoCard = ({ ent, onEliminar, onDetalles, isDeleting }) => {
           </button>
           <button 
             onClick={() => onDetalles(ent)}
-            className="flex-1 lg:flex-none flex items-center justify-center gap-3 bg-blue-600 text-white px-6 md:px-8 py-4 md:py-5 rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all font-black text-[10px] uppercase tracking-widest"
+            className="flex-1 lg:flex-none flex items-center justify-center gap-3 bg-blue-600 text-white px-6 md:px-8 py-4 md:py-5 rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all font-black text-[11px] uppercase tracking-widest"
           >
             Detalles <ChevronRight size={16} />
           </button>
@@ -116,7 +116,7 @@ const GestionEntrenamientos = () => {
   if (isLoading) return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
       <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 text-center">Analizando Datos</p>
+      <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 text-center">Analizando Datos</p>
     </div>
   );
 
@@ -129,18 +129,18 @@ const GestionEntrenamientos = () => {
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-slate-900 italic tracking-tighter uppercase leading-none break-words">
             CONTROL <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">RUTINAS</span>
           </h1>
-          <p className="text-slate-400 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
+          <p className="text-slate-400 text-[11px] md:text-[11px] font-bold uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
             <span className="w-6 h-[2px] bg-blue-600 shrink-0"></span> Panel de Monitoreo
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 w-full md:w-64 lg:w-80">
           <div className="bg-white border border-slate-100 text-slate-900 p-5 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center shadow-sm">
-            <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-wider">Sesiones</p>
+            <p className="text-[11px] md:text-[11px] text-slate-400 font-bold uppercase tracking-wider">Sesiones</p>
             <p className="text-2xl md:text-3xl font-black italic text-blue-600">{statsGlobales.total}</p>
           </div>
           <div className="bg-blue-600 text-white p-5 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center shadow-lg shadow-blue-200/50">
-            <p className="text-[8px] md:text-[9px] opacity-70 font-bold uppercase tracking-wider">Promedio</p>
+            <p className="text-[11px] md:text-[11px] opacity-70 font-bold uppercase tracking-wider">Promedio</p>
             <p className="text-2xl md:text-3xl font-black italic">{statsGlobales.promedio}%</p>
           </div>
         </div>
@@ -161,7 +161,7 @@ const GestionEntrenamientos = () => {
         ) : (
           <div className="py-24 text-center border-4 border-dashed border-slate-100 rounded-[3rem] flex flex-col items-center">
             <Trophy className="text-blue-100 mb-6" size={64} />
-            <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">No hay actividad registrada</p>
+            <p className="text-slate-400 font-black text-[11px] uppercase tracking-[0.3em]">No hay actividad registrada</p>
           </div>
         )}
       </section>
@@ -175,7 +175,7 @@ const GestionEntrenamientos = () => {
             <div className="p-6 md:p-10 bg-blue-50/50 border-b border-blue-100 flex justify-between items-center">
               <div className="min-w-0">
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 italic uppercase truncate">{modalData.titulo}</h3>
-                <p className="text-[9px] md:text-[10px] font-bold text-blue-400 uppercase tracking-widest mt-1">Checklist de Asistencia</p>
+                <p className="text-[11px] md:text-[11px] font-bold text-blue-400 uppercase tracking-widest mt-1">Checklist de Asistencia</p>
               </div>
               <button onClick={() => setModalData(null)} className="p-3 bg-white hover:bg-orange-50 hover:text-orange-500 rounded-full transition-all shadow-sm shrink-0">
                 <X size={20} />
@@ -192,20 +192,20 @@ const GestionEntrenamientos = () => {
                         </div>
                         <p className="font-bold text-xs md:text-sm text-slate-800 uppercase truncate">{atleta.nombre}</p>
                       </div>
-                      <span className="flex items-center gap-1.5 text-[8px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg shrink-0">
+                      <span className="flex items-center gap-1.5 text-[11px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg shrink-0">
                         <CheckCircle2 size={12} /> LISTO
                       </span>
                     </div>
                   ))
               ) : (
-                <p className="text-center py-10 text-slate-400 text-[10px] font-black uppercase tracking-widest">Esperando completados...</p>
+                <p className="text-center py-10 text-slate-400 text-[11px] font-black uppercase tracking-widest">Esperando completados...</p>
               )}
             </div>
             
             <div className="p-6 md:p-10 bg-white border-t border-slate-100">
                <button 
                 onClick={() => setModalData(null)}
-                className="w-full bg-blue-600 text-white py-4 md:py-5 rounded-2xl font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
+                className="w-full bg-blue-600 text-white py-4 md:py-5 rounded-2xl font-black text-[11px] md:text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
                >
                  Cerrar Reporte
                </button>

@@ -42,7 +42,7 @@ const Home = () => {
                   <Waves size={24} />
                 </div>
                 <div>
-                  <p className="text-green-600 text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] leading-none mb-1">
+                  <p className="text-green-600 text-[11px] md:text-[11px] font-black uppercase tracking-[0.4em] leading-none mb-1">
                     Plataforma Oficial
                   </p>
                   <h2 className="text-slate-900 text-base md:text-lg font-bold tracking-tighter">
@@ -114,7 +114,7 @@ const Home = () => {
                 <h3 className="text-slate-900 font-black text-base xl:text-lg mb-1 italic uppercase tracking-tight">
                   Gestión de Torneos
                 </h3>
-                <p className="text-slate-500 text-[9px] xl:text-[10px] font-bold uppercase tracking-widest">
+                <p className="text-slate-500 text-[11px] xl:text-[11px] font-bold uppercase tracking-widest">
                   Resultados centralizados
                 </p>
               </div>

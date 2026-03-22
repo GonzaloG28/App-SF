@@ -40,9 +40,9 @@ const RankingNadador = () => {
       </div>
       <div className="text-center space-y-2">
         <h2 className="text-2xl md:text-4xl font-black italic tracking-tighter uppercase text-slate-900">Error de Conexión</h2>
-        <p className="text-slate-500 font-bold uppercase text-[9px] tracking-widest">Revisa tu conexión a internet</p>
+        <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Revisa tu conexión a internet</p>
       </div>
-      <button onClick={() => window.location.reload()} className="w-full md:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em]">
+      <button onClick={() => window.location.reload()} className="w-full md:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em]">
         Reintentar
       </button>
     </div>
@@ -56,7 +56,7 @@ const RankingNadador = () => {
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-200">
             <Zap size={10} fill="currentColor" />
-            <span className="text-[8px] font-black uppercase tracking-widest">Performance</span>
+            <span className="text-[11px] font-black uppercase tracking-widest">Performance</span>
           </div>
           <h1 className="text-5xl md:text-8xl font-black text-slate-900 italic tracking-tighter leading-[0.85]">
             RANKING <br className="md:hidden" />
@@ -64,7 +64,7 @@ const RankingNadador = () => {
           </h1>
         </div>
         
-        <button onClick={() => navigate(-1)} className="flex items-center gap-3 text-slate-400 font-black text-[9px] uppercase tracking-widest group">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-3 text-slate-400 font-black text-[11px] uppercase tracking-widest group">
           <div className="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 transition-all">
             <ChevronLeft size={16} />
           </div>
@@ -83,7 +83,7 @@ const RankingNadador = () => {
             { label: "Vaso", name: "piscina", icon: Filter, options: [{l: "Corta (25m)", v: 25}, {l: "Larga (50m)", v: 50}], color: "text-blue-500" }
           ].map((f) => (
             <div key={f.name} className="space-y-3">
-              <label className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">
+              <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">
                 <f.icon size={12} className={f.color} /> {f.label}
               </label>
               <select 
@@ -100,7 +100,7 @@ const RankingNadador = () => {
           ))}
 
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">
+            <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">
               <Timer size={12} className="text-orange-500" /> Prioridad
             </label>
             <select 
@@ -119,7 +119,7 @@ const RankingNadador = () => {
         {isLoading ? (
           <div className="p-20 text-center space-y-4">
              <Loader2 className="animate-spin text-blue-600 mx-auto" size={40} />
-             <p className="text-slate-400 font-black text-[9px] uppercase tracking-[0.4em]">Sincronizando...</p>
+             <p className="text-slate-400 font-black text-[11px] uppercase tracking-[0.4em]">Sincronizando...</p>
           </div>
         ) : ranking?.length > 0 ? (
           <>
@@ -128,10 +128,10 @@ const RankingNadador = () => {
               <table className="w-full text-left border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-slate-50/50">
-                    <th className="pl-14 py-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">Posición</th>
-                    <th className="px-8 py-10 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Crono</th>
-                    <th className="px-8 py-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">Evento</th>
-                    <th className="pr-14 py-10 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha</th>
+                    <th className="pl-14 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest">Posición</th>
+                    <th className="px-8 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Crono</th>
+                    <th className="px-8 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest">Evento</th>
+                    <th className="pr-14 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -151,10 +151,10 @@ const RankingNadador = () => {
                       </td>
                       <td className="px-8 py-10">
                         <p className="font-black text-slate-800 text-lg italic uppercase">{prueba.competencia?.nombre || "Control Técnico"}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{filtros.estilo} • {filtros.distancia}m</p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">{filtros.estilo} • {filtros.distancia}m</p>
                       </td>
                       <td className="pr-14 py-10 text-right">
-                         <span className="px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-black text-slate-600 tabular-nums">
+                         <span className="px-4 py-2 bg-slate-50 rounded-xl text-[11px] font-black text-slate-600 tabular-nums">
                            {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : "---"}
                          </span>
                       </td>
@@ -172,12 +172,12 @@ const RankingNadador = () => {
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-black text-slate-300 italic">#{String(index + 1).padStart(2, '0')}</span>
                       {prueba.esRecordPersonal && (
-                        <div className="flex items-center gap-1 bg-emerald-500 text-white px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter">
+                        <div className="flex items-center gap-1 bg-emerald-500 text-white px-2 py-0.5 rounded-md text-[11px] font-black uppercase tracking-tighter">
                           <Star size={8} fill="currentColor" /> Personal Best
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase">
+                    <div className="flex items-center gap-1 text-[11px] font-black text-slate-400 uppercase">
                       <Calendar size={10} /> {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : "S/D"}
                     </div>
                   </div>
@@ -186,7 +186,7 @@ const RankingNadador = () => {
                       <h4 className="text-sm font-black text-slate-900 uppercase italic truncate max-w-[180px]">
                         {prueba.competencia?.nombre || "Control Técnico"}
                       </h4>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase">{filtros.estilo} • {filtros.distancia}m</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase">{filtros.estilo} • {filtros.distancia}m</p>
                     </div>
                     <span className={`text-4xl font-black italic tracking-tighter leading-none ${prueba.esRecordPersonal ? 'text-blue-600' : 'text-slate-900'}`}>
                       {prueba.tiempo}
@@ -199,7 +199,7 @@ const RankingNadador = () => {
         ) : (
           <div className="p-20 text-center space-y-4">
             <Waves size={40} className="mx-auto text-slate-100" />
-            <p className="text-slate-300 font-black text-[10px] uppercase tracking-widest">Sin registros</p>
+            <p className="text-slate-300 font-black text-[11px] uppercase tracking-widest">Sin registros</p>
           </div>
         )}
       </div>
@@ -207,7 +207,7 @@ const RankingNadador = () => {
       {/* FOOTER */}
       <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto z-20">
         <div className="bg-slate-900/95 backdrop-blur-md px-8 py-4 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-between md:justify-center gap-6">
-          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+          <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
             Database Sync: <span className="text-emerald-500">Active</span>
           </p>
           <div className="flex -space-x-2">

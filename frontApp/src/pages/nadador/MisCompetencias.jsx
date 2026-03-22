@@ -59,7 +59,7 @@ const MisCompetencias = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="w-6 h-1 bg-blue-600 rounded-full" />
-            <p className="text-blue-600 text-[9px] font-black uppercase tracking-[0.3em]">Performance Track</p>
+            <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.3em]">Performance Track</p>
           </div>
           <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">
             Mis <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Marcas</span>
@@ -67,7 +67,7 @@ const MisCompetencias = () => {
         </div>
         
         <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center self-start sm:self-auto min-w-[100px]">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Eventos</p>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Eventos</p>
           <p className="text-2xl font-black text-slate-900 italic leading-none">{competencias.length}</p>
         </div>
       </header>
@@ -81,7 +81,7 @@ const MisCompetencias = () => {
             placeholder="BUSCAR COMPETENCIA..."
             value={searchNombre}
             onChange={(e) => setSearchNombre(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-transparent border-none text-[10px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
+            className="w-full pl-10 pr-4 py-3 bg-transparent border-none text-[11px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
           />
         </div>
         
@@ -94,14 +94,14 @@ const MisCompetencias = () => {
               placeholderText="FECHA"
               showYearDropdown
               dropdownMode="select"
-              className="bg-transparent border-none py-2 text-[10px] font-black text-slate-600 focus:ring-0 w-20 uppercase"
+              className="bg-transparent border-none py-2 text-[11px] font-black text-slate-600 focus:ring-0 w-20 uppercase"
             />
           </div>
 
           <select
             value={orden}
             onChange={(e) => setOrden(e.target.value)}
-            className="bg-slate-50 border-none rounded-xl py-2.5 px-3 text-[10px] font-black text-slate-600 focus:ring-0 uppercase cursor-pointer shrink-0"
+            className="bg-slate-50 border-none rounded-xl py-2.5 px-3 text-[11px] font-black text-slate-600 focus:ring-0 uppercase cursor-pointer shrink-0"
           >
             <option value="desc">RECIENTES</option>
             <option value="asc">ANTIGUAS</option>
@@ -192,7 +192,7 @@ const CompetenciaAcordeon = ({ competencia, isExpanded, onToggle }) => {
               {loadingPruebas ? (
                 <div className="py-12 flex flex-col items-center gap-3">
                   <Loader2 className="animate-spin text-blue-600" size={24} />
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Analizando Marcas...</p>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Analizando Marcas...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -209,7 +209,7 @@ const CompetenciaAcordeon = ({ competencia, isExpanded, onToggle }) => {
                       </div>
 
                       <div className="mb-4">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Tiempo Final</p>
+                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-tighter">Tiempo Final</p>
                         <p className="text-3xl font-black text-blue-600 tabular-nums italic leading-none drop-shadow-sm">{p.tiempo}</p>
                       </div>
 
@@ -246,7 +246,7 @@ const LoadingState = () => (
       <div className="w-12 h-12 border-4 border-slate-100 rounded-full" />
       <div className="absolute top-0 w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
     </div>
-    <p className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-400 animate-pulse">Sincronizando Base de Datos...</p>
+    <p className="font-black text-[11px] uppercase tracking-[0.4em] text-slate-400 animate-pulse">Sincronizando Base de Datos...</p>
   </div>
 );
 
@@ -254,7 +254,7 @@ const EmptyState = () => (
   <div className="py-20 text-center bg-white rounded-[2rem] border border-dashed border-slate-200 mx-4">
     <Search size={40} className="mx-auto text-slate-200 mb-4 rotate-12" />
     <h3 className="text-lg font-black text-slate-900 uppercase italic mb-1">Sin registros</h3>
-    <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest">No hay marcas disponibles para este filtro</p>
+    <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest">No hay marcas disponibles para este filtro</p>
   </div>
 );
 

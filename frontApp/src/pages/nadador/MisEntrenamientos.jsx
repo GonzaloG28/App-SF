@@ -33,15 +33,15 @@ const MisEntrenamientos = () => {
       <header className="flex justify-between items-end border-b border-slate-100 pb-8">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">Live</span>
-            <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.4em]">Performance Data</p>
+            <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">Live</span>
+            <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em]">Performance Data</p>
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">
             Mis <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">Rutinas</span>
           </h1>
         </div>
         <div className="hidden md:block text-right">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Sesiones Totales</p>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Sesiones Totales</p>
           <p className="text-3xl font-black text-slate-900 italic leading-none">{entrenamientos?.length || 0}</p>
         </div>
       </header>
@@ -80,7 +80,7 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-xl shadow-md">
             <Calendar size={12} className="text-blue-400" />
-            <span className="font-black text-[9px] uppercase tracking-wider tabular-nums">
+            <span className="font-black text-[11px] uppercase tracking-wider tabular-nums">
               {new Date(ent.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
             </span>
           </div>
@@ -91,7 +91,7 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
           <h3 className="text-3xl md:text-5xl font-black text-slate-900 italic uppercase tracking-tighter leading-[0.9] group-hover:translate-x-1 transition-transform">
             {ent.titulo}
           </h3>
-          <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
+          <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
             <Zap size={12} fill="currentColor" /> {ent.tipo === 'archivo' ? 'Descarga Técnica' : 'Instrucciones Digitales'}
           </p>
         </div>
@@ -111,7 +111,7 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
               rel="noreferrer"
               className="inline-flex items-center gap-4 bg-slate-900 text-white p-2 pl-6 rounded-2xl hover:bg-blue-600 transition-all shadow-lg group/btn"
             >
-              <span className="font-black text-[10px] uppercase tracking-widest">Descargar PDF de Rutina</span>
+              <span className="font-black text-[11px] uppercase tracking-widest">Descargar PDF de Rutina</span>
               <div className="bg-white/10 p-3 rounded-xl group-hover/btn:bg-white group-hover/btn:text-blue-600 transition-colors">
                 <Download size={20} />
               </div>
@@ -143,7 +143,7 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Info size={14} className="text-blue-600" />
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Notas del Coach</p>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Notas del Coach</p>
             </div>
             <p className="text-[12px] font-bold text-slate-500 leading-relaxed italic">
               "{ent.notasProfesor || "Nada por ahora..."}"
@@ -153,7 +153,7 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
           <button
             onClick={onComplete}
             disabled={ent.completado || isPending}
-            className={`mt-8 w-full flex items-center justify-center gap-3 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${
+            className={`mt-8 w-full flex items-center justify-center gap-3 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 ${
               ent.completado 
               ? "bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-default" 
               : "bg-blue-600 text-white hover:bg-slate-900 shadow-lg shadow-blue-200 active:scale-95"
@@ -174,7 +174,7 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
 );
 
 const StatusBadge = ({ completed, type }) => (
-  <span className={`text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border shadow-sm ${
+  <span className={`text-[11px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border shadow-sm ${
     completed 
     ? "bg-emerald-500 border-transparent text-white" 
     : "bg-white border-slate-100 text-slate-500"
@@ -188,7 +188,7 @@ const EmptyState = () => (
     <div className="bg-slate-50 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform -rotate-6">
       <Clock className="text-slate-300" size={32} />
     </div>
-    <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[10px] italic">
+    <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[11px] italic">
       Sin sesiones programadas para hoy
     </p>
   </div>
@@ -200,7 +200,7 @@ const LoadingState = () => (
       <div className="w-16 h-16 border-4 border-blue-50 border-t-blue-600 rounded-full animate-spin" />
       <Zap className="absolute inset-0 m-auto text-blue-600" size={24} fill="currentColor" />
     </div>
-    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">
+    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">
       Sincronizando Telemetría
     </p>
   </div>

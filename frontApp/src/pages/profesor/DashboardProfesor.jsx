@@ -42,7 +42,7 @@ const DashboardProfesor = () => {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400">
         <Loader2 className="animate-spin mb-4 text-blue-600" size={48} />
-        <p className="font-black tracking-[0.2em] text-[10px] uppercase italic text-slate-500">Sincronizando Sistema ÑSF...</p>
+        <p className="font-black tracking-[0.2em] text-[11px] uppercase italic text-slate-500">Sincronizando Sistema ÑSF...</p>
       </div>
     );
   }
@@ -53,7 +53,7 @@ const DashboardProfesor = () => {
         <p className="font-black italic mb-4 text-center tracking-tighter uppercase">Error de sincronización</p>
         <button 
           onClick={() => window.location.reload()} 
-          className="text-[10px] font-black uppercase tracking-widest bg-orange-50 hover:bg-orange-100 text-orange-600 px-8 py-4 rounded-2xl transition-all active:scale-95 border border-orange-100"
+          className="text-[11px] font-black uppercase tracking-widest bg-orange-50 hover:bg-orange-100 text-orange-600 px-8 py-4 rounded-2xl transition-all active:scale-95 border border-orange-100"
         >
           Reintentar Conexión
         </button>
@@ -70,12 +70,12 @@ const DashboardProfesor = () => {
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic uppercase">
             Panel de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Gestión</span>
           </h1>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">High Performance Center</p>
+          <p className="text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em] mt-1">High Performance Center</p>
         </div>
         
         <Link 
           to="/profesor/nadadores/nuevo" 
-          className="w-full sm:w-auto flex items-center justify-center gap-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] italic"
+          className="w-full sm:w-auto flex items-center justify-center gap-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] italic"
         >
           <UserPlus size={18} strokeWidth={3} />
           Nuevo Nadador
@@ -89,7 +89,7 @@ const DashboardProfesor = () => {
             <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 group-hover:scale-110 transition-all shadow-sm`}>
               <stat.icon size={28} strokeWidth={2.5} />
             </div>
-            <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.25em]">{stat.label}</p>
+            <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.25em]">{stat.label}</p>
             <h3 className="text-4xl font-black text-slate-900 mt-1 tracking-tighter italic">{stat.value}</h3>
           </div>
         ))}
@@ -102,7 +102,7 @@ const DashboardProfesor = () => {
           {/* PRÓXIMAS CITAS */}
           <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
             <div className="p-7 sm:p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] flex items-center gap-3">
+              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] flex items-center gap-3">
                 <Clock className="text-blue-600" size={18} />
                 Próximas Citas
               </h3>
@@ -114,12 +114,12 @@ const DashboardProfesor = () => {
                 <div key={i} className="p-7 sm:p-8 hover:bg-blue-50/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group cursor-pointer">
                   <div className="flex items-center gap-5">
                     <div className="text-center bg-gradient-to-br from-blue-600 to-green-500 text-white rounded-2xl p-4 min-w-[75px] shadow-lg shadow-blue-500/10 transform group-hover:rotate-3 transition-transform">
-                      <p className="text-[9px] font-black uppercase tracking-tighter opacity-80">{comp.mes}</p>
+                      <p className="text-[11px] font-black uppercase tracking-tighter opacity-80">{comp.mes}</p>
                       <p className="text-2xl font-black italic leading-none mt-1">{comp.dia}</p>
                     </div>
                     <div>
                       <h4 className="font-black text-slate-900 group-hover:text-blue-600 transition-colors italic uppercase text-sm tracking-tight">{comp.nombre}</h4>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{comp.lugar}</p>
+                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{comp.lugar}</p>
                     </div>
                   </div>
                   <ChevronRight size={18} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-2 transition-all hidden sm:block" />
@@ -137,7 +137,7 @@ const DashboardProfesor = () => {
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-8">
-                <h3 className="font-black uppercase tracking-[0.3em] text-green-500 text-[10px]">Hitos Recientes</h3>
+                <h3 className="font-black uppercase tracking-[0.3em] text-green-500 text-[11px]">Hitos Recientes</h3>
                 <Trophy size={22} className="text-orange-500 animate-bounce" />
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
@@ -149,7 +149,7 @@ const DashboardProfesor = () => {
                       </div>
                       <div className="overflow-hidden">
                         <p className="text-sm font-black uppercase italic tracking-tight">{record.nombre}</p>
-                        <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest mt-1">
+                        <p className="text-[11px] text-blue-400 font-black uppercase tracking-widest mt-1">
                           {record.prueba} <span className="text-white">|</span> {record.tiempo}
                         </p>
                       </div>
@@ -167,7 +167,7 @@ const DashboardProfesor = () => {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
               <TrendingUp className="text-slate-200" size={40} />
             </div>
-            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest leading-relaxed">
+            <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest leading-relaxed">
               Módulo de asistencia <br />
               <span className="text-blue-500/50 italic">Próximamente disponible</span>
             </p>

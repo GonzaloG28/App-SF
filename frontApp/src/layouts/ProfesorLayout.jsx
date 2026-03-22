@@ -46,7 +46,7 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
           <Waves size={20} className="text-white" />
         </div>
         <div>
-          <p className="text-green-600 text-[8px] font-black uppercase tracking-[0.3em] leading-none mb-0.5">Admin</p>
+          <p className="text-green-600 text-[11px] font-black uppercase tracking-[0.3em] leading-none mb-0.5">Admin</p>
           <h2 className="text-xl font-black tracking-tighter text-slate-900">
             App<span className="text-blue-600 italic">ÑSF</span>
           </h2>
@@ -54,7 +54,7 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
       </div>
 
       <nav className="flex flex-col gap-1">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Métricas & Gestión</p>
+        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Métricas & Gestión</p>
         <NavItem to="/profesor"            label="Dashboard"   Icon={LayoutDashboard} isActive={isActive} />
         <NavItem to="/profesor/calendario" label="Calendario"  Icon={Calendar}        isActive={isActive} />
         <NavItem to="/profesor/nadadores"  label="Nadadores"   Icon={Users}           isActive={isActive} />
@@ -84,13 +84,13 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
             <div className="flex flex-col ml-9 mt-1 gap-0.5 border-l-2 border-green-100 pl-4">
               <Link
                 to="/profesor/crear-entrenamiento"
-                className={`text-[10px] font-black uppercase tracking-widest py-2.5 transition-colors ${location.pathname === "/profesor/crear-entrenamiento" ? "text-green-600" : "text-slate-400 hover:text-blue-500"}`}
+                className={`text-[11px] font-black uppercase tracking-widest py-2.5 transition-colors ${location.pathname === "/profesor/crear-entrenamiento" ? "text-green-600" : "text-slate-400 hover:text-blue-500"}`}
               >
                 • Crear Nuevo
               </Link>
               <Link
                 to="/profesor/entrenamientos"
-                className={`text-[10px] font-black uppercase tracking-widest py-2.5 transition-colors ${location.pathname === "/profesor/entrenamientos" ? "text-green-600" : "text-slate-400 hover:text-blue-500"}`}
+                className={`text-[11px] font-black uppercase tracking-widest py-2.5 transition-colors ${location.pathname === "/profesor/entrenamientos" ? "text-green-600" : "text-slate-400 hover:text-blue-500"}`}
               >
                 • Ver Reportes
               </Link>
@@ -113,7 +113,7 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
           </div>
           <div className="flex-1 min-w-0">
             <span className="text-xs font-black text-slate-900 block truncate uppercase italic leading-none">{user?.nombre || "Coach"}</span>
-            <span className="text-[10px] text-slate-400 font-bold truncate">Online</span>
+            <span className="text-[11px] text-slate-400 font-bold truncate">Online</span>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
       >
         <div className="flex items-center gap-3">
           <LogOut size={18} strokeWidth={2.5} />
-          <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión</span>
+          <span className="text-[11px] font-black uppercase tracking-widest">Cerrar Sesión</span>
         </div>
         <div className="w-1.5 h-1.5 rounded-full bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
@@ -218,7 +218,7 @@ const ProfesorLayout = () => {
               <Menu size={20} />
             </button>
             <div className="hidden sm:block">
-              <span className="text-[9px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">High Performance</span>
+              <span className="text-[11px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">High Performance</span>
               <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">Panel de Control</h1>
             </div>
           </div>
@@ -260,9 +260,9 @@ const ProfesorLayout = () => {
                     </div>
 
                     <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
                       <div className="flex items-center gap-2">
-                        <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full">0 Nuevas</span>
+                        <span className="bg-orange-100 text-orange-600 text-[11px] font-black px-2 py-0.5 rounded-full">0 Nuevas</span>
                         <button
                           onClick={() => setShowNotifications(false)}
                           className="lg:hidden p-1 text-slate-400 hover:text-slate-600 transition-colors"
@@ -281,7 +281,7 @@ const ProfesorLayout = () => {
 
                     <button
                       onClick={() => setShowNotifications(false)}
-                      className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors"
+                      className="w-full py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors"
                     >
                       Ver todo el historial
                     </button>
@@ -299,7 +299,7 @@ const ProfesorLayout = () => {
               {/* Tooltip solo desktop */}
               <div className="
                 absolute top-full mt-2 left-1/2 -translate-x-1/2
-                px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black
+                px-3 py-1.5 bg-slate-900 text-white text-[11px] font-black
                 uppercase tracking-wider rounded-lg
                 opacity-0 group-hover:opacity-100
                 transition-all duration-300 pointer-events-none

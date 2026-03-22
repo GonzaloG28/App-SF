@@ -4,17 +4,13 @@ import { useQuery } from "@tanstack/react-query"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import {
-  LayoutDashboard,
-  Trophy,
-  User,
-  LogOut,
-  Bell,
-  Menu,
-  X,
-  Waves,
-  ChevronRight,
-  ClipboardList
+  LayoutDashboard, Trophy, User, LogOut,
+  Bell, Menu, X, Waves, ChevronRight, ClipboardList
 } from "lucide-react"
+
+// QUERYKEY COMPARTIDA — exportada para que DashboardNadador y MiPerfil
+// usen la misma key y React Query devuelva el caché sin hacer un segundo request.
+export const PERFIL_QUERY_KEY = ["miPerfil"]
 
 const NavItem = ({ to, label, Icon, isActive }) => {
   const active = isActive(to)
@@ -50,7 +46,7 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
             <Waves size={20} className="text-white" />
           </div>
           <div>
-            <p className="text-green-600 text-[8px] font-black uppercase tracking-[0.3em] leading-none mb-0.5">Atleta</p>
+            <p className="text-green-600 text-[11px] font-black uppercase tracking-[0.3em] leading-none mb-0.5">Atleta</p>
             <h2 className="text-xl font-black tracking-tighter text-slate-900">
               App<span className="text-blue-600 italic">ÑSF</span>
             </h2>
@@ -58,7 +54,7 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
         </div>
 
         <nav className="flex flex-col gap-1">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Rendimiento</p>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Rendimiento</p>
           <NavItem to="/nadador/dashboard"      label="Mi Panel"       Icon={LayoutDashboard} isActive={isActive} />
           <NavItem to="/nadador/entrenamientos" label="Entrenamientos"  Icon={ClipboardList}   isActive={isActive} />
           <NavItem to="/nadador/mis-tiempos"    label="Mis Marcas"      Icon={Waves}           isActive={isActive} />
@@ -80,7 +76,7 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
               <span className="text-xs font-black text-slate-900 block truncate uppercase italic leading-none">
                 {isLoading ? "..." : userName.split(" ")[0]}
               </span>
-              <span className="text-[10px] text-slate-400 font-bold truncate block mt-0.5">{userEmail}</span>
+              <span className="text-[11px] text-slate-400 font-bold truncate block mt-0.5">{userEmail}</span>
             </div>
           </div>
         </div>
@@ -91,7 +87,7 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
         >
           <div className="flex items-center gap-3">
             <LogOut size={18} strokeWidth={2.5} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión</span>
+            <span className="text-[11px] font-black uppercase tracking-widest">Cerrar Sesión</span>
           </div>
           <div className="w-1.5 h-1.5 rounded-full bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
@@ -102,11 +98,11 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
 
 const NadadorLayout = () => {
   const { logout } = useAuth()
-  const location = useLocation()
-  const navigate = useNavigate()
+  const location   = useLocation()
+  const navigate   = useNavigate()
 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
+  const [isMobileMenuOpen,   setIsMobileMenuOpen]   = useState(false)
+  const [showNotifications,  setShowNotifications]  = useState(false)
   const notificationRef = useRef(null)
 
   useEffect(() => {
@@ -115,8 +111,8 @@ const NadadorLayout = () => {
   }, [location])
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
         setShowNotifications(false)
       }
     }
@@ -124,23 +120,19 @@ const NadadorLayout = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Bloquear scroll del body cuando el bottom sheet está abierto en mobile
   useEffect(() => {
-    if (showNotifications) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
-    }
+    document.body.style.overflow = showNotifications ? "hidden" : ""
     return () => { document.body.style.overflow = "" }
   }, [showNotifications])
 
+  // OPTIMIZACIÓN: queryKey unificada con DashboardNadador y MiPerfil.
+  // Antes el layout usaba ["miPerfilHeader"] y el dashboard ["miPerfil"] →
+  // dos requests al mismo endpoint /nadadores/perfil en cada carga.
+  // Ahora ambos usan PERFIL_QUERY_KEY = ["miPerfil"] → React Query sirve el caché.
   const { data: perfil, isLoading } = useQuery({
-    queryKey: ["miPerfilHeader"],
-    queryFn: async () => {
-      const res = await api.get("/nadadores/perfil")
-      return res.data
-    },
-    staleTime: 1000 * 60 * 10,
+    queryKey: PERFIL_QUERY_KEY,
+    queryFn:  async () => (await api.get("/nadadores/perfil")).data,
+    staleTime: 1000 * 60 * 10,  // 10 min — el perfil no cambia frecuentemente
   })
 
   const handleLogout = useCallback(() => {
@@ -148,14 +140,10 @@ const NadadorLayout = () => {
     navigate("/login")
   }, [logout, navigate])
 
-  const userName   = perfil?.user?.nombre   || "Atleta"
-  const userLastName = perfil?.apellido     || ""
-
-  // Iniciales para el avatar: primera letra del nombre + primera del apellido
-  const initials = [
-    perfil?.user?.nombre?.charAt(0),
-    perfil?.apellido?.charAt(0)
-  ].filter(Boolean).join("").toUpperCase() || "AT"
+  const userName     = perfil?.user?.nombre  || "Atleta"
+  const userLastName = perfil?.apellido       || ""
+  const initials     = [perfil?.user?.nombre?.charAt(0), perfil?.apellido?.charAt(0)]
+    .filter(Boolean).join("").toUpperCase() || "AT"
 
   const isActive = useCallback(
     (path) => location.pathname.startsWith(path),
@@ -166,13 +154,8 @@ const NadadorLayout = () => {
     <div className="flex min-h-screen bg-[#FDFDFD] font-sans text-slate-900 overflow-hidden">
 
       {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex w-72 bg-white text-slate-900 flex-col sticky top-0 h-screen p-6 z-30 border-r border-slate-100">
-        <SidebarContent
-          perfil={perfil}
-          isLoading={isLoading}
-          onLogout={handleLogout}
-          isActive={isActive}
-        />
+      <aside className="hidden lg:flex w-72 bg-white flex-col sticky top-0 h-screen p-6 z-30 border-r border-slate-100">
+        <SidebarContent perfil={perfil} isLoading={isLoading} onLogout={handleLogout} isActive={isActive} />
       </aside>
 
       {/* Sidebar Mobile */}
@@ -182,26 +165,18 @@ const NadadorLayout = () => {
           <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600">
             <X size={20} />
           </button>
-          <SidebarContent
-            perfil={perfil}
-            isLoading={isLoading}
-            onLogout={handleLogout}
-            isActive={isActive}
-          />
+          <SidebarContent perfil={perfil} isLoading={isLoading} onLogout={handleLogout} isActive={isActive} />
         </aside>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 px-6 lg:px-10 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-blue-50 transition-colors"
-            >
+            <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-blue-50 transition-colors">
               <Menu size={20} />
             </button>
             <div className="hidden sm:block">
-              <span className="text-[9px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">Centro de Atletas</span>
+              <span className="text-[11px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">Centro de Atletas</span>
               <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">
                 {isLoading ? "Cargando..." : `Hola, ${userName.split(" ")[0]}`}
               </h1>
@@ -210,17 +185,12 @@ const NadadorLayout = () => {
 
           <div className="flex items-center gap-3">
 
-            {/* ── NOTIFICACIONES ──────────────────────────────────────────
-                En desktop: dropdown anclado a la derecha (w-80).
-                En mobile:  overlay oscuro + bottom sheet ancho completo.
-                El ref sigue cubriendo ambos casos para cerrar al tocar fuera. */}
+            {/* NOTIFICACIONES — bottom sheet en mobile, dropdown en desktop */}
             <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`relative p-2.5 transition-all group rounded-xl ${
-                  showNotifications
-                    ? "text-orange-600 bg-orange-50"
-                    : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
+                  showNotifications ? "text-orange-600 bg-orange-50" : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
                 }`}
               >
                 <Bell size={20} className={`${showNotifications ? "" : "group-hover:rotate-12"} transition-transform`} />
@@ -229,54 +199,30 @@ const NadadorLayout = () => {
 
               {showNotifications && (
                 <>
-                  {/* Overlay para mobile (solo visible en pantallas pequeñas) */}
-                  <div
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
-                    onClick={() => setShowNotifications(false)}
-                  />
-
-                  {/* Panel — bottom sheet en mobile, dropdown en desktop */}
-                  <div className={`
-                    z-50 bg-white border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/50
-                    fixed bottom-0 left-0 right-0 rounded-t-[2rem]
-                    lg:absolute lg:bottom-auto lg:left-auto lg:right-0 lg:top-full lg:mt-3
-                    lg:w-80 lg:rounded-3xl lg:shadow-2xl
-                  `}>
-                    {/* Handle para mobile */}
+                  <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden" onClick={() => setShowNotifications(false)} />
+                  <div className="z-50 bg-white border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/50 fixed bottom-0 left-0 right-0 rounded-t-[2rem] lg:absolute lg:bottom-auto lg:left-auto lg:right-0 lg:top-full lg:mt-3 lg:w-80 lg:rounded-3xl">
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                       <div className="w-10 h-1 bg-slate-200 rounded-full" />
                     </div>
-
                     <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
                       <div className="flex items-center gap-2">
-                        <span className="bg-orange-100 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full">Actualizado</span>
-                        {/* Botón X solo visible en mobile */}
-                        <button
-                          onClick={() => setShowNotifications(false)}
-                          className="lg:hidden p-1 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
+                        <span className="bg-orange-100 text-orange-600 text-[11px] font-black px-2 py-0.5 rounded-full">Actualizado</span>
+                        <button onClick={() => setShowNotifications(false)} className="lg:hidden p-1 text-slate-400 hover:text-slate-600">
                           <X size={16} />
                         </button>
                       </div>
                     </div>
-
-                    <div className="max-h-[300px] overflow-y-auto p-2 text-center py-8">
+                    <div className="max-h-[300px] overflow-y-auto text-center py-8">
                       <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <Bell size={20} className="text-slate-300" />
                       </div>
                       <p className="text-xs font-bold text-slate-400">Sin nuevos avisos</p>
                     </div>
-
-                    <button
-                      onClick={() => setShowNotifications(false)}
-                      className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors"
-                    >
+                    <button onClick={() => setShowNotifications(false)} className="w-full py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors">
                       Ver historial completo
                     </button>
-
-                    {/* Espacio extra en mobile para el safe area del notch inferior */}
-                    <div className="h-safe-bottom lg:hidden pb-[env(safe-area-inset-bottom)]" />
+                    <div className="lg:hidden pb-[env(safe-area-inset-bottom)]" />
                   </div>
                 </>
               )}
@@ -284,47 +230,20 @@ const NadadorLayout = () => {
 
             <div className="h-6 w-[1px] bg-slate-100 mx-2" />
 
-            {/* ── USER AVATAR ─────────────────────────────────────────────
-                Problema original: el tooltip era `group-hover` → invisible en mobile
-                (no existe estado hover en pantallas táctiles).
-
-                Solución:
-                - Avatar siempre muestra las INICIALES del usuario (visible sin hover).
-                - Tooltip de nombre completo solo en desktop (hidden en mobile).
-                - En desktop el tooltip sigue funcionando con group-hover.
-                - Al tocar el avatar en mobile navega directo al perfil. */}
+            {/* USER AVATAR — iniciales siempre visibles, tooltip solo desktop */}
             <div className="relative group">
-              {/* Tooltip — solo desktop */}
-              <div className="
-                absolute top-full mt-2 left-1/2 -translate-x-1/2
-                px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black
-                uppercase tracking-wider rounded-lg
-                opacity-0 group-hover:opacity-100
-                transition-all duration-300 pointer-events-none
-                whitespace-nowrap shadow-xl z-50
-                hidden lg:block
-              ">
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-xl z-50 hidden lg:block">
                 {isLoading ? "Cargando..." : `${userName} ${userLastName}`.trim()}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900" />
               </div>
-
-              {/* Avatar con iniciales → siempre legible en mobile y desktop */}
               <Link
                 to="/nadador/perfil"
-                className="
-                  w-10 h-10 rounded-xl
-                  bg-gradient-to-tr from-blue-600/10 to-green-500/10
-                  text-blue-600 flex items-center justify-center
-                  border border-blue-100
-                  transition-all active:scale-95
-                  hover:border-blue-300 hover:bg-blue-50
-                  cursor-pointer
-                "
-                title={isLoading ? "" : `${userName} ${userLastName}`.trim()}
+                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600/10 to-green-500/10 text-blue-600 flex items-center justify-center border border-blue-100 transition-all active:scale-95 hover:border-blue-300 hover:bg-blue-50"
+                title={`${userName} ${userLastName}`.trim()}
               >
                 {isLoading
                   ? <User size={16} />
-                  : <span className="text-[17px] font-black tracking-tight leading-none">{initials}</span>
+                  : <span className="text-[11px] font-black tracking-tight leading-none">{initials}</span>
                 }
               </Link>
             </div>
