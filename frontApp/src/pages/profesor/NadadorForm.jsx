@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate, useParams, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createNadador, getNadadorById, updateNadador } from "../../api/profesor.api"
@@ -7,7 +7,8 @@ import "react-datepicker/dist/react-datepicker.css"
 import es from "date-fns/locale/es"
 import {
   User, Mail, Calendar, Weight, Ruler, Fingerprint,
-  Waves, ArrowLeft, Save, Loader2, Info, AlertTriangle, CheckCircle2
+  Waves, ArrowLeft, Save, Loader2, Info, AlertTriangle,
+  CheckCircle2, Edit3, Lock
 } from "lucide-react"
 
 registerLocale("es", es)
@@ -15,25 +16,28 @@ registerLocale("es", es)
 const formatRut = (value) => {
   const clean = value.replace(/[^0-9kK]/g, "")
   if (clean.length <= 1) return clean
-  const dv = clean.slice(-1)
-  let body = clean.slice(0, -1)
-  body = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+  const dv   = clean.slice(-1)
+  let body   = clean.slice(0, -1)
+  body       = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
   return `${body}-${dv}`
 }
 
 const NadadorForm = () => {
-  const { id } = useParams()
-  const isEdit = !!id
-  const navigate = useNavigate()
+  const { id }     = useParams()
+  const isEdit     = !!id
+  const navigate   = useNavigate()
   const queryClient = useQueryClient()
 
   const [errors,      setErrors]      = useState({})
   const [serverError, setServerError] = useState("")
 
+  // En modo edición el formulario empieza vacío.
+  // Los valores originales se guardan en originalData para comparar.
   const [form, setForm] = useState({
     nombre: "", apellido: "", correo: "", fechaNacimiento: null,
     peso: "", altura: "", rut: "", pruebasEspecialidad: ""
   })
+  const originalData = useRef(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ["nadador", id],
@@ -44,11 +48,19 @@ const NadadorForm = () => {
 
   useEffect(() => {
     if (data) {
-      setForm({
-        ...data,
-        fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento) : null,
+      const original = {
+        nombre:              data.user?.nombre        || "",
+        apellido:            data.apellido            || "",
+        correo:              data.user?.correo        || "",
+        fechaNacimiento:     data.fechaNacimiento ? new Date(data.fechaNacimiento) : null,
+        peso:                data.peso?.toString()    || "",
+        altura:              data.altura?.toString()  || "",
+        rut:                 data.rut                 || "",
         pruebasEspecialidad: data.pruebasEspecialidad?.join(", ") || ""
-      })
+      }
+      originalData.current = original
+      // En modo edición NO prellenamos el form — el usuario solo toca lo que quiere cambiar
+      // Los placeholders mostrarán el valor actual
     }
   }, [data])
 
@@ -74,26 +86,60 @@ const NadadorForm = () => {
   const validate = useCallback(() => {
     const newErrors = {}
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!form.nombre.trim())           newErrors.nombre          = "Requerido"
-    if (!form.apellido.trim())         newErrors.apellido        = "Requerido"
-    if (!emailRegex.test(form.correo)) newErrors.correo          = "Email inválido"
-    if (!form.fechaNacimiento)         newErrors.fechaNacimiento = "Falta fecha"
-    if (!form.rut.trim())              newErrors.rut             = "RUT requerido"
+
+    if (isEdit) {
+      // En modo edición: solo validar los campos que el usuario tocó
+      if (form.correo && !emailRegex.test(form.correo)) newErrors.correo = "Email inválido"
+      // Al menos un campo debe tener valor
+      const algoCambio = Object.values(form).some(v => v !== "" && v !== null)
+      if (!algoCambio) {
+        setServerError("Modifica al menos un campo para guardar.")
+        return false
+      }
+    } else {
+      // En modo creación: todos los campos son obligatorios
+      if (!form.nombre.trim())            newErrors.nombre          = "Requerido"
+      if (!form.apellido.trim())          newErrors.apellido        = "Requerido"
+      if (!emailRegex.test(form.correo))  newErrors.correo          = "Email inválido"
+      if (!form.fechaNacimiento)          newErrors.fechaNacimiento = "Falta fecha"
+      if (!form.rut.trim())               newErrors.rut             = "RUT requerido"
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }, [form])
+  }, [form, isEdit])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     setServerError("")
     if (!validate()) return
-    mutation.mutate({
-      ...form,
-      peso:   form.peso   ? Number(form.peso)   : 0,
-      altura: form.altura ? Number(form.altura) : 0,
-      pruebasEspecialidad: form.pruebasEspecialidad
-        .split(",").map(p => p.trim()).filter(p => p !== "")
-    })
+
+    if (isEdit) {
+      // Solo enviar los campos que tienen valor (los que el usuario cambió)
+      const cambios = {}
+      Object.entries(form).forEach(([key, val]) => {
+        if (val !== "" && val !== null) {
+          cambios[key] = val
+        }
+      })
+      // Procesar pruebasEspecialidad si viene
+      if (cambios.pruebasEspecialidad) {
+        cambios.pruebasEspecialidad = cambios.pruebasEspecialidad
+          .split(",").map(p => p.trim()).filter(p => p !== "")
+      }
+      if (cambios.fechaNacimiento) {
+        cambios.fechaNacimiento = cambios.fechaNacimiento.toISOString()
+      }
+      mutation.mutate(cambios)
+    } else {
+      mutation.mutate({
+        ...form,
+        peso:   form.peso   ? Number(form.peso)   : 0,
+        altura: form.altura ? Number(form.altura) : 0,
+        pruebasEspecialidad: form.pruebasEspecialidad
+          .split(",").map(p => p.trim()).filter(p => p !== "")
+      })
+    }
   }
 
   const handleRutChange = (e) => {
@@ -112,13 +158,14 @@ const NadadorForm = () => {
     </div>
   )
 
+  const orig = originalData.current
+
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-fade-in pb-8 p-4">
 
-      {/* HEADER — más compacto en mobile */}
+      {/* HEADER */}
       <div className="relative bg-slate-900 rounded-2xl md:rounded-[3rem] p-5 md:p-10 text-white overflow-hidden shadow-xl">
         <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/20 rounded-full blur-[60px] -mr-20 -mt-20 pointer-events-none" />
-
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4 w-full sm:w-auto">
             <div className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] flex items-center justify-center shadow-xl shrink-0 ${isEdit ? "bg-gradient-to-br from-emerald-400 to-emerald-600" : "bg-gradient-to-br from-blue-500 to-blue-700"}`}>
@@ -130,20 +177,29 @@ const NadadorForm = () => {
                 <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent not-italic">Atleta</span>
               </h2>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Ficha de Rendimiento</span>
+                <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">
+                  {isEdit ? "Solo llena los campos que quieres cambiar" : "Ficha de Rendimiento"}
+                </span>
                 {isEdit && <span className="bg-slate-800 text-[10px] px-2 py-0.5 rounded-full text-blue-400 font-mono">...{id.slice(-6)}</span>}
               </div>
             </div>
           </div>
-          <Link
-            to="/profesor/nadadores"
-            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 transition-all self-start sm:self-auto"
-          >
+          <Link to="/profesor/nadadores" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 transition-all self-start sm:self-auto">
             <ArrowLeft size={15} className="text-slate-400" />
             <span className="text-[11px] font-black uppercase tracking-widest">Volver</span>
           </Link>
         </div>
       </div>
+
+      {/* Banner informativo en modo edición */}
+      {isEdit && (
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
+          <Edit3 size={16} className="text-blue-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] font-black text-blue-700 uppercase tracking-wider leading-relaxed">
+            Los campos vacíos mantienen su valor actual. Solo se actualizan los campos que completes.
+          </p>
+        </div>
+      )}
 
       {serverError && (
         <div className="bg-orange-500 text-white p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-orange-200">
@@ -154,10 +210,8 @@ const NadadorForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* IDENTIDAD + BIOMETRÍA — en mobile columna, en md fila */}
+        {/* IDENTIDAD */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          {/* Identidad */}
           <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5 relative overflow-hidden">
             <div className="absolute -top-4 -right-4 text-slate-50 rotate-12 pointer-events-none">
               <Fingerprint size={80} />
@@ -166,24 +220,50 @@ const NadadorForm = () => {
               <Fingerprint size={14} /> Identidad
             </h3>
             <div className="space-y-4 relative z-10">
-              <Field label="RUT" name="rut" icon={Fingerprint} form={form} errors={errors}
-                placeholder="12.345.678-9" onChange={handleRutChange} disabled={isEdit} />
-              <Field label="Email" name="correo" type="email" icon={Mail} form={form}
-                setForm={setForm} errors={errors} placeholder="atleta@club.cl" />
+              {/* RUT — siempre deshabilitado en edición */}
+              <Field
+                label="RUT"
+                name="rut"
+                icon={isEdit ? Lock : Fingerprint}
+                form={form} errors={errors}
+                placeholder={isEdit ? (orig?.rut || "No editable") : "12.345.678-9"}
+                onChange={handleRutChange}
+                disabled={isEdit}
+                hint={isEdit ? "El RUT no puede modificarse" : undefined}
+              />
+              <Field
+                label="Email"
+                name="correo"
+                type="email"
+                icon={Mail}
+                form={form} setForm={setForm} errors={errors}
+                placeholder={isEdit ? (orig?.correo || "correo@ejemplo.com") : "atleta@club.cl"}
+              />
             </div>
           </div>
 
-          {/* Biometría */}
+          {/* BIOMETRÍA */}
           <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5">
             <h3 className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
               <Info size={14} /> Biometría
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Peso (kg)"   name="peso"   type="number" icon={Weight} form={form} setForm={setForm} errors={errors} placeholder="70" />
-              <Field label="Altura (cm)" name="altura" type="number" icon={Ruler}  form={form} setForm={setForm} errors={errors} placeholder="180" />
+              <Field
+                label="Peso (kg)" name="peso" type="number" icon={Weight}
+                form={form} setForm={setForm} errors={errors}
+                placeholder={isEdit ? (orig?.peso || "kg") : "70"}
+              />
+              <Field
+                label="Altura (cm)" name="altura" type="number" icon={Ruler}
+                form={form} setForm={setForm} errors={errors}
+                placeholder={isEdit ? (orig?.altura || "cm") : "180"}
+              />
             </div>
             <div className="flex flex-col space-y-2">
-              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Nacimiento</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Fecha de Nacimiento
+                {isEdit && <span className="ml-2 text-slate-300 normal-case font-bold">({orig?.fechaNacimiento ? new Date(orig.fechaNacimiento).toLocaleDateString("es-ES") : "no registrada"})</span>}
+              </label>
               <div className="relative group">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 z-10 transition-colors" size={17} />
                 <DatePicker
@@ -193,7 +273,7 @@ const NadadorForm = () => {
                   dateFormat="dd / MM / yyyy"
                   showYearDropdown
                   dropdownMode="select"
-                  placeholderText="DD / MM / AAAA"
+                  placeholderText={isEdit ? "Dejar vacío para no cambiar" : "DD / MM / AAAA"}
                   wrapperClassName="w-full"
                   className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border-2 rounded-xl text-sm font-black focus:ring-4 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all ${
                     errors.fechaNacimiento ? "border-orange-400 bg-orange-50/30" : "border-slate-100 hover:border-slate-200"
@@ -214,26 +294,35 @@ const NadadorForm = () => {
               <Waves size={14} className="text-blue-500" /> Datos del Perfil
             </h3>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1.5 bg-slate-50 rounded-full italic self-start sm:self-auto">
-              Visible en el perfil del nadador
+              Visible en el perfil
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombres"  name="nombre"   icon={User}  form={form} setForm={setForm} errors={errors} placeholder="Ej: Juan Andrés" />
-            <Field label="Apellidos" name="apellido" icon={User}  form={form} setForm={setForm} errors={errors} placeholder="Ej: Pérez Soto" />
+            <Field
+              label="Nombres" name="nombre" icon={User}
+              form={form} setForm={setForm} errors={errors}
+              placeholder={isEdit ? (orig?.nombre || "Nombre actual") : "Ej: Juan Andrés"}
+            />
+            <Field
+              label="Apellidos" name="apellido" icon={User}
+              form={form} setForm={setForm} errors={errors}
+              placeholder={isEdit ? (orig?.apellido || "Apellido actual") : "Ej: Pérez Soto"}
+            />
             <div className="sm:col-span-2">
               <Field
                 label="Pruebas de Especialidad"
                 name="pruebasEspecialidad"
                 icon={Waves}
                 form={form} setForm={setForm} errors={errors}
-                placeholder="Ej: 100m Mariposa, 50m Pecho..."
+                placeholder={isEdit
+                  ? (orig?.pruebasEspecialidad || "Especialidades actuales")
+                  : "Ej: 100m Mariposa, 50m Pecho..."}
                 description="Separar con comas"
               />
             </div>
           </div>
         </div>
 
-        {/* BOTÓN SUBMIT */}
         <button
           type="submit"
           disabled={mutation.isPending}
@@ -244,17 +333,16 @@ const NadadorForm = () => {
           }`}
         >
           {mutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
-          {isEdit ? "Sincronizar Cambios" : "Inscribir Nadador"}
+          {isEdit ? "Guardar Cambios" : "Inscribir Nadador"}
         </button>
       </form>
     </div>
   )
 }
 
-// Input simplificado con altura más cómoda en mobile
-const Field = ({ label, name, type = "text", icon: Icon, form, setForm, errors, placeholder, description, disabled, onChange }) => (
-  <div className={`flex flex-col space-y-1.5 ${disabled ? "opacity-70" : ""}`}>
-    <div className="flex justify-between items-center px-1">
+const Field = ({ label, name, type = "text", icon: Icon, form, setForm, errors, placeholder, description, disabled, onChange, hint }) => (
+  <div className={`flex flex-col space-y-1.5 ${disabled ? "opacity-60" : ""}`}>
+    <div className="flex justify-between items-center px-1 flex-wrap gap-1">
       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">{label}</label>
       {description && <span className="text-[10px] font-bold text-blue-500 uppercase">{description}</span>}
       {errors[name] && <span className="text-[10px] text-orange-500 font-black uppercase">{errors[name]}</span>}
@@ -283,6 +371,7 @@ const Field = ({ label, name, type = "text", icon: Icon, form, setForm, errors, 
         </div>
       )}
     </div>
+    {hint && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1">{hint}</p>}
   </div>
 )
 
