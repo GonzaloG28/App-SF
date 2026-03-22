@@ -1,13 +1,13 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useQuery } from "@tanstack/react-query"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import { useNotificaciones } from "../hooks/useNotificaciones"
-import NotificacionItem from "../components/NotificacionItem"
+import NotificacionesPanel from "../components/NotificacionesPanel"
 import {
   LayoutDashboard, Trophy, User, LogOut,
-  Bell, Menu, X, Waves, ChevronRight, ClipboardList
+  Menu, X, Waves, ChevronRight, ClipboardList
 } from "lucide-react"
 
 export const PERFIL_QUERY_KEY = ["miPerfil"]
@@ -91,36 +91,20 @@ const NadadorLayout = () => {
   const { logout, isAuthenticated } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const notificationRef = useRef(null)
 
-  const {
-    notificaciones, cantidad, hayNuevas,
-    panelAbierto, abrirPanel, cerrarPanel
-  } = useNotificaciones(isAuthenticated)
+  const { notificaciones, cantidad, hayNuevas, panelAbierto, abrirPanel, cerrarPanel } = useNotificaciones(isAuthenticated)
 
   useEffect(() => {
     setIsMobileMenuOpen(false)
     cerrarPanel()
   }, [location, cerrarPanel])
 
-  // Cierra al click fuera — solo aplica en desktop (el overlay mobile ya lo maneja)
+  // Bloquear scroll del body cuando sidebar mobile o panel están abiertos
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
-        cerrarPanel()
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [cerrarPanel])
-
-  // Bloquea scroll del body cuando el panel está abierto en mobile
-  useEffect(() => {
-    document.body.style.overflow = panelAbierto ? "hidden" : ""
+    document.body.style.overflow = (isMobileMenuOpen || panelAbierto) ? "hidden" : ""
     return () => { document.body.style.overflow = "" }
-  }, [panelAbierto])
+  }, [isMobileMenuOpen, panelAbierto])
 
   const { data: perfil, isLoading } = useQuery({
     queryKey: PERFIL_QUERY_KEY,
@@ -135,21 +119,22 @@ const NadadorLayout = () => {
   const initials     = [perfil?.user?.nombre?.charAt(0), perfil?.apellido?.charAt(0)]
     .filter(Boolean).join("").toUpperCase() || "AT"
 
-  const isActive = useCallback(
-    (path) => location.pathname.startsWith(path),
-    [location.pathname]
-  )
+  const isActive = useCallback((path) => location.pathname.startsWith(path), [location.pathname])
 
   return (
-    <div className="flex min-h-screen bg-[#FDFDFD] font-sans text-slate-900 overflow-hidden">
+    // FIX SCROLL: h-screen + overflow-hidden en el contenedor raíz
+    // El scroll ocurre SOLO dentro del <main>, no en toda la página
+    <div className="flex h-screen overflow-hidden bg-[#FDFDFD] font-sans text-slate-900">
 
-      <aside className="hidden lg:flex w-72 bg-white flex-col sticky top-0 h-screen p-6 z-30 border-r border-slate-100">
+      {/* Sidebar Desktop — sin sticky ni h-screen, overflow-y-auto propio */}
+      <aside className="hidden lg:flex w-72 flex-shrink-0 bg-white flex-col overflow-y-auto p-6 z-30 border-r border-slate-100">
         <SidebarContent perfil={perfil} isLoading={isLoading} onLogout={handleLogout} isActive={isActive} />
       </aside>
 
-      <div className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+      {/* Sidebar Mobile — portal sobre toda la pantalla */}
+      <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-        <aside className={`absolute inset-y-0 left-0 w-72 bg-white p-6 shadow-2xl transition-transform duration-500 ease-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside className={`absolute inset-y-0 left-0 w-72 bg-white p-6 shadow-2xl transition-transform duration-500 ease-out overflow-y-auto ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600">
             <X size={20} />
           </button>
@@ -157,8 +142,11 @@ const NadadorLayout = () => {
         </aside>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 px-6 lg:px-10 py-4 border-b border-slate-100 flex justify-between items-center">
+      {/* Columna derecha: header + main */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+
+        {/* Header — flex-shrink-0 para que no se encoja, sin sticky necesario */}
+        <header className="flex-shrink-0 bg-white/80 backdrop-blur-md z-20 px-6 lg:px-10 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-blue-50 transition-colors">
               <Menu size={20} />
@@ -172,113 +160,15 @@ const NadadorLayout = () => {
           </div>
 
           <div className="flex items-center gap-3">
-
-            {/* NOTIFICACIONES */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => panelAbierto ? cerrarPanel() : abrirPanel()}
-                className={`relative p-2.5 transition-all group rounded-xl ${
-                  panelAbierto ? "text-orange-600 bg-orange-50" : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
-                }`}
-              >
-                <Bell size={20} className={`${panelAbierto ? "" : "group-hover:rotate-12"} transition-transform`} />
-                {hayNuevas && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white leading-none">
-                    {cantidad > 9 ? "9+" : cantidad}
-                  </span>
-                )}
-              </button>
-
-              {panelAbierto && (
-                <>
-                  {/* Overlay */}
-                  <div
-                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
-                    onClick={cerrarPanel}
-                  />
-
-                  {/* MOBILE — card centrada 80% altura */}
-                  <div className="lg:hidden fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
-                    <div
-                      className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl pointer-events-auto flex flex-col animate-fade-in"
-                      style={{ maxHeight: "80vh" }}
-                    >
-                      {/* Header */}
-                      <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-                            Notificaciones
-                          </h3>
-                          {notificaciones.length > 0 && (
-                            <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full">
-                              {notificaciones.length} {notificaciones.length === 1 ? "nueva" : "nuevas"}
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={cerrarPanel}
-                          className="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl flex items-center justify-center transition-colors"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-
-                      {/* Lista */}
-                      <div className="flex-1 overflow-y-auto p-3">
-                        {notificaciones.length > 0 ? (
-                          notificaciones.map(n => (
-                            <NotificacionItem key={n._id} notificacion={n} />
-                          ))
-                        ) : (
-                          <div className="text-center py-12">
-                            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                              <Bell size={22} className="text-slate-300" />
-                            </div>
-                            <p className="text-xs font-bold text-slate-400">Sin avisos nuevos</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="p-4 border-t border-slate-100">
-                        <button
-                          onClick={cerrarPanel}
-                          className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95"
-                        >
-                          Cerrar
-                        </button>
-                        <div className="pb-[env(safe-area-inset-bottom)]" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* DESKTOP — dropdown original */}
-                  <div className="hidden lg:block absolute right-0 top-full mt-3 w-96 bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/50 z-50">
-                    <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
-                    </div>
-                    <div className="max-h-[400px] overflow-y-auto p-2">
-                      {notificaciones.length > 0 ? (
-                        notificaciones.map(n => <NotificacionItem key={n._id} notificacion={n} />)
-                      ) : (
-                        <div className="text-center py-10">
-                          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <Bell size={20} className="text-slate-300" />
-                          </div>
-                          <p className="text-xs font-bold text-slate-400">Sin avisos nuevos</p>
-                        </div>
-                      )}
-                    </div>
-                    <button onClick={cerrarPanel} className="w-full py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors">
-                      Cerrar
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
+            <NotificacionesPanel
+              notificaciones={notificaciones}
+              hayNuevas={hayNuevas}
+              cantidad={cantidad}
+              panelAbierto={panelAbierto}
+              abrirPanel={abrirPanel}
+              cerrarPanel={cerrarPanel}
+            />
             <div className="h-6 w-[1px] bg-slate-100 mx-2" />
-
             <div className="relative group">
               <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-xl z-50 hidden lg:block">
                 {isLoading ? "Cargando..." : `${userName} ${userLastName}`.trim()}
@@ -292,12 +182,12 @@ const NadadorLayout = () => {
                 {isLoading ? <User size={16} /> : <span className="text-[11px] font-black tracking-tight leading-none">{initials}</span>}
               </Link>
             </div>
-
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-8 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto">
+        {/* Main — overflow-y-auto: SOLO esta área scrollea */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             <div className="animate-fade-in">
               <Outlet />
             </div>
