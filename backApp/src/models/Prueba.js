@@ -1,3 +1,4 @@
+import mongoose from "mongoose"
 const pruebaSchema = new mongoose.Schema({
   competencia: {
     type: mongoose.Schema.Types.ObjectId,

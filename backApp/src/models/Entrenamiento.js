@@ -25,4 +25,4 @@ const EntrenamientoSchema = new mongoose.Schema({
 EntrenamientoSchema.index({ destinatarios: 1, fecha: -1 })
 EntrenamientoSchema.index({ profesor: 1,      fecha: -1 })
 
-export const Entrenamiento = mongoose.model("Entrenamiento", EntrenamientoSchema)
+export default mongoose.model("Entrenamiento", EntrenamientoSchema)

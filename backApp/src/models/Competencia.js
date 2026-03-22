@@ -15,4 +15,4 @@ const competenciaSchema = new mongoose.Schema({
 // nadador → listarCompetenciasPorNadador hace find({ nadador }) en cada vista
 competenciaSchema.index({ nadador: 1, fecha: -1 })
 
-export const Competencia = mongoose.model("Competencia", competenciaSchema)
+export default mongoose.model("Competencia", competenciaSchema)
