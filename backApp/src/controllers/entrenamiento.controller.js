@@ -2,14 +2,14 @@ import Entrenamiento from "../models/Entrenamiento.js"
 import Nadador from "../models/Nadadores.js"
 import { uploadToCloudinary } from "../middleware/multerMiddleware.js"
 import { v2 as cloudinary } from "cloudinary"
+import { crearNotificacion } from "./notificacion.controller.js"
 
 export const crearEntrenamiento = async (req, res) => {
   try {
     const { titulo, tipo, contenido, notas, destinatarios } = req.body
 
-    // FIX #9: uploadToCloudinary ahora retorna { url, publicId }
     let archivoUrl = null
-    let archivoPublicId = null  // ← guardamos esto para borrar limpiamente
+    let archivoPublicId = null
 
     if (req.file) {
       const resultado = await uploadToCloudinary(req.file)
@@ -17,18 +17,47 @@ export const crearEntrenamiento = async (req, res) => {
       archivoPublicId = resultado.publicId
     }
 
+    const listaDestinatarios = typeof destinatarios === "string"
+      ? JSON.parse(destinatarios)
+      : destinatarios
+
     const nuevoEntrenamiento = new Entrenamiento({
       titulo,
       tipo,
       contenido,
       notasProfesor: notas,
-      destinatarios: typeof destinatarios === "string" ? JSON.parse(destinatarios) : destinatarios,
+      destinatarios: listaDestinatarios,
       profesor: req.user._id,
       archivoUrl,
-      archivoPublicId  // campo nuevo en el modelo
+      archivoPublicId
     })
 
     await nuevoEntrenamiento.save()
+
+    // NOTIFICACIONES: buscar el User._id de cada nadador destinatario
+    // para enviarles la notificación correctamente
+    const nadadores = await Nadador.find({
+      _id: { $in: listaDestinatarios }
+    }).select("user")
+
+    const fechaHoy = new Date()
+
+    // Crear una notificación para cada nadador destinatario
+    await Promise.all(
+      nadadores.map(nadador =>
+        crearNotificacion({
+          destinatario: nadador.user, // User._id, no Nadador._id
+          tipo:         "entrenamiento_asignado",
+          titulo:       "Nuevo entrenamiento asignado",
+          mensaje:      `Tienes un nuevo entrenamiento: "${titulo}"`,
+          metadata: {
+            fecha:   fechaHoy,
+            entidad: titulo
+          }
+        })
+      )
+    )
+
     res.status(201).json({ message: "Entrenamiento enviado correctamente" })
 
   } catch (error) {
@@ -81,8 +110,23 @@ export const completarEntrenamiento = async (req, res) => {
       return res.status(400).json({ message: "Ya habías marcado este entrenamiento como completado" })
     }
 
-    await Entrenamiento.findByIdAndUpdate(id, {
-      $push: { completadoPor: { nadador: miPerfil._id, fechaCompletado: new Date() } }
+    const entrenamiento = await Entrenamiento.findByIdAndUpdate(
+      id,
+      { $push: { completadoPor: { nadador: miPerfil._id, fechaCompletado: new Date() } } },
+      { new: true }
+    )
+
+    // NOTIFICACIÓN AL PROFESOR: avisarle que un nadador completó el entrenamiento
+    await crearNotificacion({
+      destinatario: entrenamiento.profesor, // User._id del profesor
+      tipo:         "entrenamiento_completado",
+      titulo:       "Entrenamiento completado",
+      mensaje:      `${miPerfil.apellido || "Un atleta"} completó "${entrenamiento.titulo}"`,
+      metadata: {
+        fecha:         new Date(),
+        entidad:       entrenamiento.titulo,
+        nadadorNombre: miPerfil.apellido || ""
+      }
     })
 
     res.json({ message: "¡Entrenamiento completado! Buen trabajo." })
@@ -107,10 +151,10 @@ export const getReporteProfesor = async (req, res) => {
       .lean()
 
     const reporte = entrenamientos.map(ent => ({
-      _id: ent._id,
-      titulo: ent.titulo,
-      fecha: ent.fecha,
-      completados: ent.completadoPor?.length || 0,
+      _id:      ent._id,
+      titulo:   ent.titulo,
+      fecha:    ent.fecha,
+      completados:  ent.completadoPor?.length || 0,
       totalAlumnos: ent.destinatarios?.length || 0,
       detallesCompletados: ent.completadoPor?.map(c => ({
         nombre: c.nadador?.user?.nombre
@@ -138,12 +182,10 @@ export const eliminarEntrenamiento = async (req, res) => {
       return res.status(404).json({ message: "Entrenamiento no encontrado o no tienes permiso" })
     }
 
-    // FIX #9: Usamos archivoPublicId guardado en BD en vez de parsear la URL
     if (entrenamiento.archivoPublicId) {
       try {
         await cloudinary.uploader.destroy(entrenamiento.archivoPublicId)
       } catch (cloudError) {
-        // No bloqueamos el flujo si falla Cloudinary — el documento se borra igual
         console.error("Error al borrar en Cloudinary:", cloudError.message)
       }
     }

@@ -1,25 +1,22 @@
-import Competencia from "../models/Competencia.js";
-import Nadador from "../models/Nadadores.js";
+import Competencia from "../models/Competencia.js"
+import Nadador from "../models/Nadadores.js"
+import { crearNotificacion } from "./notificacion.controller.js"
 
 export const crearCompetencia = async (req, res) => {
   try {
-    const { nadadorId } = req.params;
-    const { nombre, fecha, piscina } = req.body;
+    const { nadadorId } = req.params
+    const { nombre, fecha, piscina } = req.body
 
-    // Validar piscina
     if (![25, 50].includes(Number(piscina))) {
-      return res.status(400).json({
-        message: "La piscina debe ser 25 o 50"
-      });
+      return res.status(400).json({ message: "La piscina debe ser 25 o 50" })
     }
 
-    // Verificar que exista el nadador
-    const nadador = await Nadador.findById(nadadorId);
+    const nadador = await Nadador.findById(nadadorId)
     if (!nadador) {
-      return res.status(404).json({ message: "Nadador no encontrado" });
+      return res.status(404).json({ message: "Nadador no encontrado" })
     }
 
-    const año = new Date(fecha).getFullYear();
+    const año = new Date(fecha).getFullYear()
 
     const nuevaCompetencia = new Competencia({
       nadador: nadadorId,
@@ -27,28 +24,45 @@ export const crearCompetencia = async (req, res) => {
       fecha,
       año,
       piscina: Number(piscina)
-    });
+    })
 
-    await nuevaCompetencia.save();
+    await nuevaCompetencia.save()
 
-    res.status(201).json(nuevaCompetencia);
+    // NOTIFICACIÓN AL NADADOR: nueva competencia registrada
+    const fechaFormateada = new Date(fecha).toLocaleDateString("es-ES", {
+      day: "2-digit", month: "long", year: "numeric"
+    })
+
+    await crearNotificacion({
+      destinatario: nadador.user, // User._id del nadador
+      tipo:         "competencia_creada",
+      titulo:       "Nueva competencia registrada",
+      mensaje:      `Se registró "${nombre}" el ${fechaFormateada} — Piscina ${piscina}m`,
+      metadata: {
+        fecha:   new Date(fecha),
+        entidad: nombre
+      }
+    })
+
+    res.status(201).json(nuevaCompetencia)
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
   }
-};
-
+}
 
 export const listarCompetenciasPorNadador = async (req, res) => {
   try {
-    const { nadadorId } = req.params;
+    const { nadadorId } = req.params
 
     const competencias = await Competencia.find({ nadador: nadadorId })
-      .sort({ año: -1, fecha: -1 });
+      .sort({ año: -1, fecha: -1 })
 
-    res.json(competencias);
+    res.json(competencias)
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
   }
-};
+}

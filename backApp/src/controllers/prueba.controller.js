@@ -1,143 +1,135 @@
-import Prueba from "../models/Prueba.js";
-import Competencia from "../models/Competencia.js";
+import Prueba from "../models/Prueba.js"
+import Competencia from "../models/Competencia.js"
+import Nadador from "../models/Nadadores.js"
+import { crearNotificacion } from "./notificacion.controller.js"
 
-// Convertir tiempo tipo 4"32.5 a número
 const convertirTiempoANumero = (tiempo) => {
-  if (!tiempo) return 0;
-
-  // Limpiamos espacios y cambiamos comas por puntos por si acaso
-  const tiempoLimpio = tiempo.toString().trim().replace(",", ".");
-
-  let totalSegundos = 0;
+  if (!tiempo) return 0
+  const tiempoLimpio = tiempo.toString().trim().replace(",", ".")
+  let totalSegundos = 0
 
   if (tiempoLimpio.includes(":")) {
-    // Formato 1:05.32
-    const [minutos, resto] = tiempoLimpio.split(":");
-    totalSegundos = Number(minutos) * 60 + Number(resto);
+    const [minutos, resto] = tiempoLimpio.split(":")
+    totalSegundos = Number(minutos) * 60 + Number(resto)
   } else {
-    // Formato 28.45
-    totalSegundos = Number(tiempoLimpio);
+    totalSegundos = Number(tiempoLimpio)
   }
 
-  if (isNaN(totalSegundos)) {
-    console.error("Fallo al convertir tiempo:", tiempoLimpio);
-    throw new Error("Formato de tiempo inválido. Use 1:05.32 o 28.45");
-  }
-
-  return totalSegundos;
-};
-
-
+  if (isNaN(totalSegundos)) throw new Error("Formato de tiempo inválido. Use 1:05.32 o 28.45")
+  return totalSegundos
+}
 
 export const crearPrueba = async (req, res) => {
   try {
-    const { competenciaId } = req.params;
-    // ERROR AQUÍ: Faltaba extraer 'fecha' del body
-    const { estilo, distancia, tiempo, parciales, fecha } = req.body; 
+    const { competenciaId } = req.params
+    const { estilo, distancia, tiempo, parciales, fecha } = req.body
 
-    const competencia = await Competencia.findById(competenciaId);
+    const competencia = await Competencia.findById(competenciaId)
     if (!competencia) {
-      return res.status(404).json({ message: "Competencia no encontrada" });
+      return res.status(404).json({ message: "Competencia no encontrada" })
     }
 
-    const tiempoNumerico = convertirTiempoANumero(tiempo);
+    const tiempoNumerico = convertirTiempoANumero(tiempo)
 
     const nuevaPrueba = new Prueba({
       competencia: competenciaId,
       estilo,
       distancia,
       tiempo,
-      tiempoNumerico, // Ahora sí se guardará en el modelo
+      tiempoNumerico,
       parciales,
-      fecha // Ahora sí está definida porque la extrajimos del body
-    });
+      fecha
+    })
 
-    const pruebaGuardada = await nuevaPrueba.save();
+    const pruebaGuardada = await nuevaPrueba.save()
 
-    // VITAL: Si tu modelo de Competencia tiene un array de pruebas, hay que pushearla
     await Competencia.findByIdAndUpdate(competenciaId, {
       $push: { pruebas: pruebaGuardada._id }
-    });
+    })
 
-    res.status(201).json(pruebaGuardada);
+    // NOTIFICACIÓN AL NADADOR: nueva marca registrada
+    // La competencia tiene el nadadorId (Nadador._id), necesitamos el User._id
+    const nadador = await Nadador.findById(competencia.nadador).select("user apellido")
+
+    if (nadador) {
+      const fechaFormateada = new Date(fecha).toLocaleDateString("es-ES", {
+        day: "2-digit", month: "long", year: "numeric"
+      })
+
+      await crearNotificacion({
+        destinatario: nadador.user, // User._id
+        tipo:         "marca_subida",
+        titulo:       "Nueva marca registrada",
+        mensaje:      `${distancia}m ${estilo} — ${tiempo} el ${fechaFormateada} en "${competencia.nombre}"`,
+        metadata: {
+          fecha:   new Date(fecha),
+          entidad: competencia.nombre
+        }
+      })
+    }
+
+    res.status(201).json(pruebaGuardada)
 
   } catch (error) {
-    console.error("Error en crearPrueba:", error); // Para que veas el error real en tu consola
-    res.status(500).json({ message: error.message });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
   }
-};
-
+}
 
 export const listarPruebasPorCompetencia = async (req, res) => {
   try {
-    const { competenciaId } = req.params;
-
-    const competencia = await Competencia.findById(competenciaId);
-
+    const { competenciaId } = req.params
+    const competencia = await Competencia.findById(competenciaId)
     if (!competencia) {
-      return res.status(404).json({ message: "Competencia no encontrada" });
+      return res.status(404).json({ message: "Competencia no encontrada" })
     }
 
     const pruebas = await Prueba.find({ competencia: competenciaId })
-      .sort({ tiempoNumerico: 1 });
+      .sort({ tiempoNumerico: 1 })
 
-    res.json({
-      pruebas,
-      nadadorId: competencia.nadador
-    });
+    res.json({ pruebas, nadadorId: competencia.nadador })
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
   }
-};
-
+}
 
 export const obtenerPruebasDisponibles = async (req, res) => {
   try {
-    const { nadadorId } = req.params;
-
-    const competencias = await Competencia.find({ nadador: nadadorId });
-    const competenciaIds = competencias.map(c => c._id);
+    const { nadadorId } = req.params
+    const competencias = await Competencia.find({ nadador: nadadorId })
+    const competenciaIds = competencias.map(c => c._id)
 
     const pruebas = await Prueba.aggregate([
-      {
-        $match: {
-          competencia: { $in: competenciaIds }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            estilo: "$estilo",
-            distancia: "$distancia"
-          }
-        }
-      }
-    ]);
+      { $match: { competencia: { $in: competenciaIds } } },
+      { $group: { _id: { estilo: "$estilo", distancia: "$distancia" } } }
+    ])
 
-    res.json(pruebas);
+    res.json(pruebas)
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
   }
-};
+}
 
 export const rankingIndividual = async (req, res) => {
   try {
-    const { nadadorId } = req.params;
-    const { estilo, distancia, orden, piscina } = req.query;
+    const { nadadorId } = req.params
+    const { estilo, distancia, orden, piscina } = req.query
 
     if (!estilo || !distancia) {
-      return res.status(400).json({
-        message: "Debes enviar estilo y distancia"
-      });
+      return res.status(400).json({ message: "Debes enviar estilo y distancia" })
     }
 
     const competencias = await Competencia.find({
-        nadador: nadadorId,
-        ...(piscina && { piscina: Number(piscina) })
-    });
+      nadador: nadadorId,
+      ...(piscina && { piscina: Number(piscina) })
+    })
 
-    const competenciaIds = competencias.map(c => c._id);
+    const competenciaIds = competencias.map(c => c._id)
+    if (competenciaIds.length === 0) return res.json([])
 
     const pruebas = await Prueba.find({
       competencia: { $in: competenciaIds },
@@ -145,66 +137,44 @@ export const rankingIndividual = async (req, res) => {
       distancia: Number(distancia)
     })
       .populate("competencia", "nombre fecha año")
-      .sort({
-        tiempoNumerico: orden === "desc" ? -1 : 1
-      });
+      .sort({ tiempoNumerico: orden === "desc" ? -1 : 1 })
 
-    if (pruebas.length === 0) {
-      return res.json([]);
-    }
+    if (pruebas.length === 0) return res.json([])
 
-    if (competenciaIds.length === 0) {
-        return res.json([]);
-    }
-
-    // Detectar mejor tiempo absoluto
-    const mejorTiempo = Math.min(...pruebas.map(p => p.tiempoNumerico));
-
-    // Agregar campo esRecordPersonal
+    const mejorTiempo = Math.min(...pruebas.map(p => p.tiempoNumerico))
     const pruebasConRecord = pruebas.map(prueba => ({
       ...prueba.toObject(),
       esRecordPersonal: prueba.tiempoNumerico === mejorTiempo
-    }));
+    }))
 
-    res.json(pruebasConRecord);
+    res.json(pruebasConRecord)
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
   }
-};
+}
 
 export const eliminarPrueba = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    // 1. Buscar y eliminar la prueba por su ID
-    const pruebaEliminada = await Prueba.findByIdAndDelete(id);
+    const { id } = req.params
+    const pruebaEliminada = await Prueba.findByIdAndDelete(id)
 
     if (!pruebaEliminada) {
-      return res.status(404).json({ message: "Prueba no encontrada" });
+      return res.status(404).json({ message: "Prueba no encontrada" })
     }
 
-    // 2. Limpiar la referencia en la Competencia (Altamente recomendado)
-    // Asumiendo que tu modelo 'Prueba' guarda el ID de la 'competencia'
-    // y tu modelo 'Competencia' tiene un array [{ type: ObjectId, ref: 'Prueba' }]
     if (pruebaEliminada.competencia) {
       await Competencia.findByIdAndUpdate(
         pruebaEliminada.competencia,
-        { $pull: { pruebas: id } }, // $pull saca el ID del array
-        { new: true }
-      );
+        { $pull: { pruebas: id } }
+      )
     }
 
-    res.status(200).json({ 
-      message: "Prueba eliminada exitosamente",
-      pruebaId: id 
-    });
+    res.status(200).json({ message: "Prueba eliminada exitosamente", pruebaId: id })
 
   } catch (error) {
-    console.error("Error al eliminar la prueba:", error);
-    res.status(500).json({ 
-      message: "Error en el servidor al intentar eliminar la prueba",
-      error: error.message 
-    });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: "Error al eliminar la prueba", ...(isDev && { error: error.message }) })
   }
-};
+}
