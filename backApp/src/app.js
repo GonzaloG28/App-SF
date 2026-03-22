@@ -18,6 +18,9 @@ import notificacionRoutes   from "./routes/notificacion.routes.js"  // NUEVO
 const app = express()
 connectDB()
 
+
+app.set("trust proxy", 1)
+
 app.use(helmet())
 
 const allowedOrigins = [
@@ -47,9 +50,11 @@ const apiLimiter = rateLimit({
   message: { message: "Demasiadas solicitudes, intenta más tarde." }
 })
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 10,
-  standardHeaders: true, legacyHeaders: false,
-  message: { message: "Demasiados intentos de acceso. Espera 15 minutos." }
+  windowMs: 1 * 60 * 1000,  // 1 minuto
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Demasiados intentos. Espera un momento e intenta de nuevo." }
 })
 
 app.use("/api/", apiLimiter)

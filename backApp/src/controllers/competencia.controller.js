@@ -2,6 +2,7 @@ import Competencia from "../models/Competencia.js"
 import Nadador from "../models/Nadadores.js"
 import { crearNotificacion } from "./notificacion.controller.js"
 
+//crear competencia
 export const crearCompetencia = async (req, res) => {
   try {
     const { nadadorId } = req.params
@@ -52,6 +53,7 @@ export const crearCompetencia = async (req, res) => {
   }
 }
 
+//filtrar competencia por nadador
 export const listarCompetenciasPorNadador = async (req, res) => {
   try {
     const { nadadorId } = req.params

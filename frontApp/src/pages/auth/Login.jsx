@@ -17,20 +17,34 @@ const Login = () => {
   }, [])
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setStatus({ loading: true, error: "" })
-    try {
-      const result = await login(formData)
-      if (result.success) {
-        const routes = { nadador: "/nadador/dashboard", profesor: "/profesor/nadadores" }
-        navigate(routes[result.rol] || "/")
-      } else {
-        setStatus({ loading: false, error: "Correo o contraseña incorrectos" })
-      }
-    } catch {
-      setStatus({ loading: false, error: "Correo o contraseña incorrectos" })
+  e.preventDefault()
+  setStatus({ loading: true, error: "" })
+  try {
+    const result = await login(formData)
+    if (result.success) {
+      const routes = { nadador: "/nadador/dashboard", profesor: "/profesor/nadadores" }
+      navigate(routes[result.rol] || "/")
+    } else {
+      setStatus({ loading: false, error: result.message || "Correo o contraseña incorrectos" })
+    }
+  } catch (error) {
+    // FIX: detectar específicamente el error 429 (rate limit)
+    const status  = error?.response?.status
+    const mensaje = error?.response?.data?.message
+
+    if (status === 429) {
+      setStatus({
+        loading: false,
+        error: "Demasiados intentos. Espera un momento e intenta de nuevo."
+      })
+    } else {
+      setStatus({
+        loading: false,
+        error: mensaje || "Correo o contraseña incorrectos"
+      })
     }
   }
+}
 
   return (
     // FIX: overflow-hidden en raíz para contener cualquier animación futura

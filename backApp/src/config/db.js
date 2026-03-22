@@ -1,3 +1,4 @@
+//configuracion base de datos
 import mongoose from "mongoose"
 import envs from "../utils/envs.utils.js"
 

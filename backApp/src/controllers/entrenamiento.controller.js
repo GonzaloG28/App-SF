@@ -4,6 +4,7 @@ import { uploadToCloudinary } from "../middleware/multerMiddleware.js"
 import { v2 as cloudinary } from "cloudinary"
 import { crearNotificacion } from "./notificacion.controller.js"
 
+//crea el entrenamiento(cloudinary para archivos)
 export const crearEntrenamiento = async (req, res) => {
   try {
     const { titulo, tipo, contenido, notas, destinatarios } = req.body
@@ -66,6 +67,7 @@ export const crearEntrenamiento = async (req, res) => {
   }
 }
 
+//filtra entrenamientos por nadador
 export const getMisEntrenamientos = async (req, res) => {
   try {
     const miPerfil = await Nadador.findOne({ user: req.user._id })
@@ -92,6 +94,7 @@ export const getMisEntrenamientos = async (req, res) => {
   }
 }
 
+//marca completado en perfil profesor
 export const completarEntrenamiento = async (req, res) => {
   try {
     const { id } = req.params
