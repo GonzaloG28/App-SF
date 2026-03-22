@@ -119,6 +119,15 @@ export const cambiarPassword = async (req, res) => {
   }
 }
 
+export const getMe = async (req, res) => {
+  // verificarToken ya validó la cookie — si llegamos aquí, el token es válido
+  res.json({
+    correo: req.user.correo,
+    rol:    req.user.rol,
+    _id:    req.user._id
+  })
+}
+
 // NUEVO: endpoint de logout — borra la cookie del servidor
 export const logoutUser = async (req, res) => {
   res.clearCookie("token", {

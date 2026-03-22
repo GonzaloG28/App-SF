@@ -20,29 +20,39 @@ export const AuthProvider = ({ children }) => {
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    // FIX: ya no leemos el token de localStorage porque no existe ahí.
-    // El token vive en una httpOnly cookie que el navegador maneja solo.
-    //
-    // Para saber si el usuario sigue autenticado al recargar la página,
-    // guardamos solo los datos NO sensibles en localStorage:
-    // nombre, correo, rol — nunca el token.
-    const rol    = localStorage.getItem("rol")
-    const correo = localStorage.getItem("correo")
-    const nombre = localStorage.getItem("nombre")
+  const verificarSesion = async () => {
+    const rol = localStorage.getItem("rol")
 
-    if (rol) {
-      // Hay datos en localStorage → el usuario estaba logueado.
-      // La cookie httpOnly sigue ahí (si no expiró), el primer request
-      // a la API lo confirmará. Si la cookie expiró, el interceptor
-      // de axios redirigirá al login automáticamente.
-      setUser({ rol, correo, nombre })
-      setIsAuthenticated(true)
-    } else {
+    if (!rol) {
+      // Sin datos locales — definitivamente no autenticado
       setUser(null)
       setIsAuthenticated(false)
+      setLoading(false)
+      return
     }
-    setLoading(false)
-  }, [])
+
+    try {
+      // Verificar con el servidor si la cookie sigue válida
+      const res = await api.get("/auth/me")
+      const { correo, rol } = res.data
+      const nombre = localStorage.getItem("nombre")
+
+      setUser({ rol, correo, nombre })
+      setIsAuthenticated(true)
+    } catch {
+      // Cookie expirada o inválida — limpiar todo y forzar login
+      localStorage.removeItem("rol")
+      localStorage.removeItem("correo")
+      localStorage.removeItem("nombre")
+      setUser(null)
+      setIsAuthenticated(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  verificarSesion()
+}, [])
 
   const login = useCallback(async (data) => {
     try {

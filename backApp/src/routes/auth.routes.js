@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { registerProfesor, loginUser, logoutUser } from "../controllers/user.controller.js"
+import { registerProfesor, loginUser, logoutUser, getMe } from "../controllers/user.controller.js"
 import { verificarToken } from "../middleware/authMiddleware.js"
 
 const router = Router()
@@ -13,9 +13,10 @@ const protegerRegister = (req, res, next) => {
   }
   next()
 }
-
+router.get("/me", verificarToken, getMe)
 router.post("/register", protegerRegister, registerProfesor)
 router.post("/login",    loginUser)
+
 
 // NUEVO: logout limpia la cookie desde el servidor
 router.post("/logout", verificarToken, logoutUser)
