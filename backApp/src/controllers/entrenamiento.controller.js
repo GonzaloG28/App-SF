@@ -1,210 +1,158 @@
-import Entrenamiento from "../models/Entrenamiento.js";
-import Nadador from "../models/Nadadores.js";
-import { uploadToCloudinary } from "../middleware/multerMiddleware.js";
-import { v2 as cloudinary } from 'cloudinary';
+import Entrenamiento from "../models/Entrenamiento.js"
+import Nadador from "../models/Nadadores.js"
+import { uploadToCloudinary } from "../middleware/multerMiddleware.js"
+import { v2 as cloudinary } from "cloudinary"
 
-// CREAR Y ENVIAR ENTRENAMIENTO (Para el Profesor)
 export const crearEntrenamiento = async (req, res) => {
-  
   try {
-    const { titulo, tipo, contenido, notas, destinatarios } = req.body;
-    
-    // 1. Inicializamos la URL como null
-    let archivoUrl = null;
+    const { titulo, tipo, contenido, notas, destinatarios } = req.body
 
-    // 2. Si hay un archivo, lo subimos a Firebase y esperamos la URL
+    // FIX #9: uploadToCloudinary ahora retorna { url, publicId }
+    let archivoUrl = null
+    let archivoPublicId = null  // ← guardamos esto para borrar limpiamente
+
     if (req.file) {
-      console.log("Subiendo archivo a Firebase...");
-      archivoUrl = await uploadToCloudinary(req.file);
+      const resultado = await uploadToCloudinary(req.file)
+      archivoUrl = resultado.url
+      archivoPublicId = resultado.publicId
     }
 
-    // 3. Creamos el entrenamiento usando la nueva URL de Firebase
     const nuevoEntrenamiento = new Entrenamiento({
       titulo,
       tipo,
       contenido,
       notasProfesor: notas,
-      // Manejamos si destinatarios llega como string (por FormData) o como objeto
-      destinatarios: typeof destinatarios === 'string' ? JSON.parse(destinatarios) : destinatarios,
+      destinatarios: typeof destinatarios === "string" ? JSON.parse(destinatarios) : destinatarios,
       profesor: req.user._id,
-      archivoUrl: archivoUrl // URL generada por Firebase
-    });
+      archivoUrl,
+      archivoPublicId  // campo nuevo en el modelo
+    })
 
-    await nuevoEntrenamiento.save();
-    res.status(201).json({ 
-      message: "Entrenamiento enviado correctamente",
-      url: archivoUrl 
-    });
+    await nuevoEntrenamiento.save()
+    res.status(201).json({ message: "Entrenamiento enviado correctamente" })
 
   } catch (error) {
-    console.error("Error en crearEntrenamiento:", error);
-    res.status(500).json({ 
-      message: "Error al crear entrenamiento", 
-      error: error.message 
-    });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: "Error al crear entrenamiento", ...(isDev && { error: error.message }) })
   }
-};
+}
 
-// OBTENER ENTRENAMIENTOS PARA UN NADADOR ESPECÍFICO
 export const getMisEntrenamientos = async (req, res) => {
   try {
-    // 1. Buscamos el perfil del nadador
-    const miPerfil = await Nadador.findOne({ user: req.user._id });
-
+    const miPerfil = await Nadador.findOne({ user: req.user._id })
     if (!miPerfil) {
-      return res.status(404).json({ message: "Perfil de nadador no encontrado" });
+      return res.status(404).json({ message: "Perfil de nadador no encontrado" })
     }
 
-    // 2. PRIMERO buscamos los entrenamientos en la base de datos
-    // Usamos .lean() para que nos devuelva objetos simples de JS y poder agregarles la propiedad .completado
-    const entrenamientos = await Entrenamiento.find({ 
-      destinatarios: miPerfil._id 
-    }).sort({ fecha: -1 }).lean();
+    const entrenamientos = await Entrenamiento.find({
+      destinatarios: miPerfil._id
+    }).sort({ fecha: -1 }).lean()
 
-    // 3. AHORA SÍ usamos .map sobre la variable 'entrenamientos' (que es un Array)
     const entrenamientosConEstado = entrenamientos.map(ent => ({
       ...ent,
       completado: ent.completadoPor?.some(
         c => c.nadador?.toString() === miPerfil._id.toString()
       ) || false
-    }));
+    }))
 
-    res.json(entrenamientosConEstado);
+    res.json(entrenamientosConEstado)
+
   } catch (error) {
-    console.error("Error al obtener entrenamientos:", error);
-    res.status(500).json({ 
-      message: "Error al obtener entrenamientos", 
-      error: error.message 
-    });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: "Error al obtener entrenamientos", ...(isDev && { error: error.message }) })
   }
-};
+}
 
 export const completarEntrenamiento = async (req, res) => {
   try {
-    const { id } = req.params; 
-    const miPerfil = await Nadador.findOne({ user: req.user._id });
+    const { id } = req.params
+    const miPerfil = await Nadador.findOne({ user: req.user._id })
 
     if (!miPerfil) {
-      return res.status(404).json({ message: "Perfil de nadador no encontrado" });
+      return res.status(404).json({ message: "Perfil de nadador no encontrado" })
     }
 
-    // 1. Verificamos si ya lo completó para no resetear su hora
     const yaCompletado = await Entrenamiento.findOne({
       _id: id,
       "completadoPor.nadador": miPerfil._id
-    });
+    })
 
     if (yaCompletado) {
-      return res.status(400).json({ message: "Ya habías marcado este entrenamiento como completado" });
+      return res.status(400).json({ message: "Ya habías marcado este entrenamiento como completado" })
     }
 
-    // 2. Usamos $push para añadir el objeto con el ID y la HORA ACTUAL
     await Entrenamiento.findByIdAndUpdate(id, {
-      $push: { 
-        completadoPor: { 
-          nadador: miPerfil._id, 
-          fechaCompletado: new Date() // <--- Esta es la clave
-        } 
-      }
-    });
+      $push: { completadoPor: { nadador: miPerfil._id, fechaCompletado: new Date() } }
+    })
 
-    res.json({ message: "¡Entrenamiento completado! Buen trabajo." });
+    res.json({ message: "¡Entrenamiento completado! Buen trabajo." })
+
   } catch (error) {
-    console.error("Error al completar:", error);
-    res.status(500).json({ message: "Error al marcar como completado" });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: "Error al marcar como completado", ...(isDev && { error: error.message }) })
   }
-};
+}
 
 export const getReporteProfesor = async (req, res) => {
   try {
-    const profesorId = req.user._id || req.user.id;
+    const profesorId = req.user._id
 
     const entrenamientos = await Entrenamiento.find({ profesor: profesorId })
       .populate({
-        path: 'completadoPor.nadador',
-        model: 'Nadador',
-        populate: {
-          path: 'user',
-          model: 'User',
-          select: 'nombre'
-        }
+        path: "completadoPor.nadador",
+        model: "Nadador",
+        populate: { path: "user", model: "User", select: "nombre" }
       })
       .sort({ fecha: -1 })
-      .lean();
+      .lean()
 
-    const reporte = entrenamientos.map(ent => {
-      // USAMOS EL CAMPO 'destinatarios' QUE DEFINISTE AL CREAR
-      // Si por algún error el array no existe, ponemos 0 para no romper el cálculo
-      const totalEsperados = ent.destinatarios?.length || 0; 
-      const totalConfirmados = ent.completadoPor?.length || 0;
+    const reporte = entrenamientos.map(ent => ({
+      _id: ent._id,
+      titulo: ent.titulo,
+      fecha: ent.fecha,
+      completados: ent.completadoPor?.length || 0,
+      totalAlumnos: ent.destinatarios?.length || 0,
+      detallesCompletados: ent.completadoPor?.map(c => ({
+        nombre: c.nadador?.user?.nombre
+          ? `${c.nadador.user.nombre} ${c.nadador.apellido || ""}`
+          : "Atleta Desconocido",
+        hora: c.fechaCompletado
+      })) || []
+    }))
 
-      return {
-        _id: ent._id,
-        titulo: ent.titulo,
-        fecha: ent.fecha,
-        completados: totalConfirmados,
-        // IMPORTANTE: Ahora el total es dinámico según lo que elegiste al crear
-        totalAlumnos: totalEsperados, 
-        detallesCompletados: ent.completadoPor?.map(c => ({
-          nombre: c.nadador?.user?.nombre 
-                  ? `${c.nadador.user.nombre} ${c.nadador.apellido || ''}` 
-                  : "Atleta Desconocido", 
-          hora: c.fechaCompletado
-        })) || []
-      };
-    });
+    res.json(reporte)
 
-    res.json(reporte);
   } catch (error) {
-    console.error("ERROR DETALLADO EN REPORTE:", error);
-    res.status(500).json({ message: "Error al obtener reporte" });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: "Error al obtener reporte", ...(isDev && { error: error.message }) })
   }
-};
+}
 
 export const eliminarEntrenamiento = async (req, res) => {
   try {
-    const { id } = req.params;
-    const profesorId = req.user._id || req.user.id;
+    const { id } = req.params
+    const profesorId = req.user._id
 
-    // 1. Buscamos el entrenamiento y verificamos propiedad
-    const entrenamiento = await Entrenamiento.findOne({ _id: id, profesor: profesorId });
-
+    const entrenamiento = await Entrenamiento.findOne({ _id: id, profesor: profesorId })
     if (!entrenamiento) {
-      return res.status(404).json({ 
-        message: "Entrenamiento no encontrado o no tienes permiso para eliminarlo" 
-      });
+      return res.status(404).json({ message: "Entrenamiento no encontrado o no tienes permiso" })
     }
 
-    // 2. Si el entrenamiento tiene un archivo adjunto, lo borramos de Cloudinary
-    if (entrenamiento.archivoUrl) {
+    // FIX #9: Usamos archivoPublicId guardado en BD en vez de parsear la URL
+    if (entrenamiento.archivoPublicId) {
       try {
-        // Las URLs de Cloudinary tienen este formato: 
-        // https://res.cloudinary.com/demo/image/upload/v12345/entrenamientos/nombre_archivo.jpg
-        
-        // Extraemos el public_id:
-        // 1. Obtenemos la última parte (nombre_archivo.jpg)
-        const urlParts = entrenamiento.archivoUrl.split('/');
-        const lastPart = urlParts[urlParts.length - 1]; 
-        
-        // 2. Quitamos la extensión (.jpg, .pdf, etc) para tener solo el ID
-        const publicId = lastPart.split('.')[0];
-        
-        // 3. El ID completo en Cloudinary incluye la carpeta: 'entrenamientos/ID'
-        const fullPublicId = `entrenamientos/${publicId}`;
-
-        await cloudinary.uploader.destroy(fullPublicId);
-        console.log("✅ Archivo eliminado de Cloudinary:", fullPublicId);
+        await cloudinary.uploader.destroy(entrenamiento.archivoPublicId)
       } catch (cloudError) {
-        console.error("⚠️ Error al borrar en Cloudinary:", cloudError.message);
+        // No bloqueamos el flujo si falla Cloudinary — el documento se borra igual
+        console.error("Error al borrar en Cloudinary:", cloudError.message)
       }
     }
 
-    // 3. Finalmente borramos de MongoDB
-    await Entrenamiento.findByIdAndDelete(id);
+    await Entrenamiento.findByIdAndDelete(id)
+    res.json({ message: "Entrenamiento eliminado correctamente" })
 
-    res.json({ message: "Entrenamiento y archivos eliminados correctamente" });
   } catch (error) {
-    console.error("Error al eliminar:", error);
-    res.status(500).json({ message: "Error al eliminar el entrenamiento" });
+    const isDev = process.env.NODE_ENV === "development"
+    res.status(500).json({ message: "Error al eliminar el entrenamiento", ...(isDev && { error: error.message }) })
   }
-};
+}
