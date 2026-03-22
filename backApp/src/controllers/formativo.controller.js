@@ -1,6 +1,6 @@
 import { NadadorFormativo } from "../models/NadadorFormativo.js"
-import { Nadador }          from "../models/Nadadores.js"
-import { User }             from "../models/User.js"
+import Nadador from "../models/Nadadores.js"
+import User from "../models/User.js"
 import bcrypt               from "bcrypt"
 import mongoose             from "mongoose"
 

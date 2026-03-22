@@ -1,5 +1,5 @@
 import { Convocatoria } from "../models/Convocatoria.js"
-import { Nadador }          from "../models/Nadadores.js"
+import Nadador from "../models/Nadadores.js"
 
 
 export const crearConvocatoria = async (req, res) => {

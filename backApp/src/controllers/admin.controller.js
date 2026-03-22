@@ -1,7 +1,7 @@
-import { Nadador }          from "../models/Nadadores.js"
+import Nadador from "../models/Nadadores.js"
 import { NadadorFormativo } from "../models/NadadorFormativo.js"
-import { Convocatoria }     from "../models/Convocatoria.js"
-import { User }             from "../models/User.js"
+import { Convocatoria } from "../models/Convocatoria.js"
+import User from "../models/User.js"
 import bcrypt               from "bcrypt"
 
 // GET /api/admin/stats
