@@ -108,12 +108,8 @@ const ProfesorLayout = () => {
   const notificationRef = useRef(null)
 
   const {
-    notificaciones,
-    cantidad,
-    hayNuevas,
-    panelAbierto,
-    abrirPanel,
-    cerrarPanel
+    notificaciones, cantidad, hayNuevas,
+    panelAbierto, abrirPanel, cerrarPanel
   } = useNotificaciones(isAuthenticated)
 
   useEffect(() => {
@@ -141,10 +137,8 @@ const ProfesorLayout = () => {
     return location.pathname.startsWith(path)
   }, [location.pathname])
 
-  const initials  = [user?.nombre?.charAt(0)].filter(Boolean).join("").toUpperCase() || "PR"
-  const fullName  = [user?.nombre, user?.apellido].filter(Boolean).join(" ")
-
-  const handleTogglePanel = () => panelAbierto ? cerrarPanel() : abrirPanel()
+  const initials = [user?.nombre?.charAt(0)].filter(Boolean).join("").toUpperCase() || "PR"
+  const fullName = [user?.nombre, user?.apellido].filter(Boolean).join(" ")
 
   return (
     <div className="flex min-h-screen bg-[#FDFDFD] font-sans text-slate-900 overflow-hidden">
@@ -176,14 +170,12 @@ const ProfesorLayout = () => {
             {/* NOTIFICACIONES */}
             <div className="relative" ref={notificationRef}>
               <button
-                onClick={handleTogglePanel}
+                onClick={() => panelAbierto ? cerrarPanel() : abrirPanel()}
                 className={`relative p-2.5 transition-all group rounded-xl ${
                   panelAbierto ? "text-orange-600 bg-orange-50" : "text-slate-400 hover:text-orange-500 hover:bg-orange-50"
                 }`}
               >
                 <Bell size={20} className={`${panelAbierto ? "" : "group-hover:rotate-12"} transition-transform`} />
-
-                {/* BADGE número */}
                 {hayNuevas && (
                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white leading-none">
                     {cantidad > 9 ? "9+" : cantidad}
@@ -193,26 +185,68 @@ const ProfesorLayout = () => {
 
               {panelAbierto && (
                 <>
-                  <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden" onClick={cerrarPanel} />
+                  {/* Overlay */}
+                  <div
+                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
+                    onClick={cerrarPanel}
+                  />
 
-                  <div className="z-50 bg-white border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/50 fixed bottom-0 left-0 right-0 rounded-t-[2rem] lg:absolute lg:bottom-auto lg:left-auto lg:right-0 lg:top-full lg:mt-3 lg:w-96 lg:rounded-3xl">
+                  {/* MOBILE — card centrada 80% altura */}
+                  <div className="lg:hidden fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none">
+                    <div
+                      className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl pointer-events-auto flex flex-col animate-fade-in"
+                      style={{ maxHeight: "80vh" }}
+                    >
+                      <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
+                          {notificaciones.length > 0 && (
+                            <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full">
+                              {notificaciones.length} {notificaciones.length === 1 ? "nueva" : "nuevas"}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={cerrarPanel}
+                          className="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl flex items-center justify-center transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
 
-                    <div className="flex justify-center pt-3 pb-1 lg:hidden">
-                      <div className="w-10 h-1 bg-slate-200 rounded-full" />
+                      <div className="flex-1 overflow-y-auto p-3">
+                        {notificaciones.length > 0 ? (
+                          notificaciones.map(n => <NotificacionItem key={n._id} notificacion={n} />)
+                        ) : (
+                          <div className="text-center py-12">
+                            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                              <Bell size={22} className="text-slate-300" />
+                            </div>
+                            <p className="text-xs font-bold text-slate-400">Sin avisos nuevos</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-4 border-t border-slate-100">
+                        <button
+                          onClick={cerrarPanel}
+                          className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95"
+                        >
+                          Cerrar
+                        </button>
+                        <div className="pb-[env(safe-area-inset-bottom)]" />
+                      </div>
                     </div>
+                  </div>
 
-                    <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                  {/* DESKTOP — dropdown */}
+                  <div className="hidden lg:block absolute right-0 top-full mt-3 w-96 bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/50 z-50">
+                    <div className="p-4 border-b border-slate-50 bg-slate-50/50">
                       <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Notificaciones</h3>
-                      <button onClick={cerrarPanel} className="lg:hidden p-1 text-slate-400 hover:text-slate-600 transition-colors">
-                        <X size={16} />
-                      </button>
                     </div>
-
                     <div className="max-h-[400px] overflow-y-auto p-2">
                       {notificaciones.length > 0 ? (
-                        notificaciones.map(n => (
-                          <NotificacionItem key={n._id} notificacion={n} />
-                        ))
+                        notificaciones.map(n => <NotificacionItem key={n._id} notificacion={n} />)
                       ) : (
                         <div className="text-center py-10">
                           <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -222,12 +256,9 @@ const ProfesorLayout = () => {
                         </div>
                       )}
                     </div>
-
                     <button onClick={cerrarPanel} className="w-full py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 border-t border-slate-50 transition-colors">
                       Cerrar
                     </button>
-
-                    <div className="lg:hidden pb-[env(safe-area-inset-bottom)]" />
                   </div>
                 </>
               )}
@@ -261,3 +292,4 @@ const ProfesorLayout = () => {
 }
 
 export default ProfesorLayout
+
