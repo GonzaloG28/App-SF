@@ -4,58 +4,45 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getNadadores, deleteNadador } from "../../api/profesor.api"
 import {
   UserPlus, Search, Filter, User, Edit3, Trash2,
-  Loader2, AlertCircle, Users, Target, Award, RefreshCcw,
-  ChevronRight,CheckCircle2, XCircle
+  Loader2, Users, Target, Award, RefreshCcw,
+  CheckCircle2, XCircle, GraduationCap, Trophy
 } from "lucide-react"
 
 const Nadadores = () => {
   const queryClient = useQueryClient()
-  const [categoria, setCategoria] = useState("")
-  const [nombre, setNombre] = useState("")
-  const [filters, setFilters] = useState({ categoria: "", nombre: "" })
+  const [categoria,  setCategoria]  = useState("")
+  const [nombre,     setNombre]     = useState("")
+  const [filters,    setFilters]    = useState({ categoria: "", nombre: "" })
   const [deletingId, setDeletingId] = useState(null)
 
   const { data = [], isLoading, isError, isFetching } = useQuery({
     queryKey: ["nadadores", filters],
-    queryFn: async () => {
-      const res = await getNadadores(filters)
-      return res.data
-    },
-    // FIX #12: keepPreviousData deprecado en TanStack Query v5 → placeholderData
+    queryFn:  async () => (await getNadadores(filters)).data,
     placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 5,
   })
 
-  const stats = useMemo(() => {
-    return data.reduce(
-      (acc, n) => {
-        acc.total++
-        if (n.categoria?.startsWith("J")) acc.juveniles++
-        else if (n.categoria === "Infantil") acc.infantiles++
-        else if (n.categoria === "Mayores") acc.mayores++
-        return acc
-      },
-      { total: 0, juveniles: 0, infantiles: 0, mayores: 0 }
-    )
-  }, [data])
+  const stats = useMemo(() => data.reduce(
+    (acc, n) => {
+      acc.total++
+      const cat = n.categoria || ""
+      if (n.rama === "formativo")        acc.formativos++
+      else if (cat.startsWith("J"))      acc.juveniles++
+      else if (cat === "Infantil")       acc.infantiles++
+      else if (cat === "Mayores")        acc.mayores++
+      return acc
+    },
+    { total: 0, juveniles: 0, infantiles: 0, mayores: 0, formativos: 0 }
+  ), [data])
 
   const deleteMutation = useMutation({
     mutationFn: deleteNadador,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["nadadores"])
-      setDeletingId(null)
-    },
-    onError: () => {
-      setDeletingId(null)
-      alert("Error al eliminar. Intenta de nuevo.")
-    }
+    onSuccess:  () => { queryClient.invalidateQueries(["nadadores"]); setDeletingId(null) },
+    onError:    () => { setDeletingId(null); alert("Error al eliminar. Intenta de nuevo.") }
   })
 
-  const handleBuscar = useCallback(() => {
-    setFilters({ categoria, nombre })
-  }, [categoria, nombre])
-
-  const handleDelete = useCallback((id) => {
+  const handleBuscar  = useCallback(() => setFilters({ categoria, nombre }), [categoria, nombre])
+  const handleDelete  = useCallback((id) => {
     if (window.confirm("¿Eliminar este atleta permanentemente?")) {
       setDeletingId(id)
       deleteMutation.mutate(id)
@@ -72,35 +59,32 @@ const Nadadores = () => {
             <span className="h-1 w-10 bg-blue-600 rounded-full" />
             <p className="text-blue-600 text-[12px] font-black uppercase tracking-[0.4em]">Gestión de Plantel</p>
           </div>
-          {/* FIX #10: text-5x1 (typo) → text-5xl */}
           <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">
             Team <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">ÑSF</span>
           </h1>
         </div>
-
         <Link
           to="/profesor/nadadores/nuevo"
           className="group relative inline-flex items-center justify-center gap-3 bg-slate-900 hover:bg-blue-600 text-white px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl shadow-slate-900/20 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <UserPlus size={18} className="relative z-10 group-hover:rotate-12 transition-transform" />
-          <span className="relative z-10">Registrar Atleta</span>
+          <UserPlus size={18} className="group-hover:rotate-12 transition-transform" />
+          Registrar Atleta
         </Link>
       </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatMiniCard label="Total Plantel" value={stats.total}     icon={Users}  color="blue"   />
-        <StatMiniCard label="Juveniles"     value={stats.juveniles} icon={Target} color="green"  />
-        <StatMiniCard label="Infantiles"    value={stats.infantiles}icon={Award}  color="orange" />
-        <StatMiniCard label="Mayores"       value={stats.mayores}   icon={User}   color="slate"  />
+      {/* STATS — ahora incluye formativos */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatMiniCard label="Total Plantel" value={stats.total}      icon={Users}        color="blue"   />
+        <StatMiniCard label="Juveniles"     value={stats.juveniles}  icon={Target}       color="green"  />
+        <StatMiniCard label="Infantiles"    value={stats.infantiles} icon={Award}        color="orange" />
+        <StatMiniCard label="Mayores"       value={stats.mayores}    icon={User}         color="slate"  />
+        <StatMiniCard label="Formativos"    value={stats.formativos} icon={GraduationCap} color="purple" />
       </div>
 
       {/* BUSCADOR */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-slate-100 p-2.5 flex flex-col md:flex-row gap-2 sticky top-4 z-40 transition-all hover:shadow-blue-900/10">
+      <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-slate-100 p-2.5 flex flex-col md:flex-row gap-2 sticky top-4 z-40">
         <div className="flex-1 relative group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
-          {/* FIX #8: pl-15 no existe en Tailwind → pl-14 */}
           <input
             type="text"
             placeholder="BUSCAR NADADOR POR NOMBRE..."
@@ -120,11 +104,12 @@ const Nadadores = () => {
             onChange={(e) => setCategoria(e.target.value)}
             className="bg-transparent border-none py-3 text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest min-w-[140px]"
           >
-            <option value="">Categorías</option>
+            <option value="">Todas las Categorías</option>
             <option value="Infantil">Infantil</option>
             <option value="JA">Juvenil A</option>
             <option value="JB">Juvenil B</option>
             <option value="Mayores">Mayores</option>
+            <option value="Formativo">Formativo</option>  {/* ← NUEVO */}
           </select>
         </div>
 
@@ -160,78 +145,101 @@ const Nadadores = () => {
   )
 }
 
-const AthleteCard = ({ nadador, onDelete, isDeleting }) => (
-  <div className="group bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
-    <div className="absolute -top-12 -right-12 w-32 h-32 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors duration-500" />
+const AthleteCard = ({ nadador, onDelete, isDeleting }) => {
+  const esFormativo = nadador.rama === "formativo"
 
-    <div className="relative z-10">
-      <div className="flex items-start justify-between mb-8">
-        <div className="w-16 h-16 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center text-2xl font-black italic shadow-lg group-hover:bg-blue-600 group-hover:rotate-6 transition-all duration-500">
-          {nadador.user?.nombre?.charAt(0) || "N"}
-        </div>
-        <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full border border-green-100 text-[11px] font-black uppercase tracking-widest">
-          {nadador.categoria || "S/C"}
-        </div>
-      </div>
+  return (
+    <div className="group bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
+      <div className="absolute -top-12 -right-12 w-32 h-32 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors duration-500" />
 
-      <div className="space-y-1 mb-8">
-        <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none group-hover:text-blue-600 transition-colors truncate">
-          {nadador.user?.nombre} {nadador.apellido}
-        </h3>
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          RUT {nadador.rut || "N/A"} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
-        </p>
-      </div>
-      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
-        nadador.pagoAlDia
-          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-          : "bg-orange-50 text-orange-600 border-orange-100"
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-6">
+          <div className={`w-16 h-16 text-white rounded-[1.5rem] flex items-center justify-center text-2xl font-black italic shadow-lg group-hover:rotate-6 transition-all duration-500 ${
+            esFormativo
+              ? "bg-gradient-to-br from-green-500 to-green-700"
+              : "bg-slate-900 group-hover:bg-blue-600"
+          }`}>
+            {nadador.user?.nombre?.charAt(0) || "N"}
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            {/* Badge categoría edad */}
+            <div className="px-3 py-1.5 bg-green-50 text-green-600 rounded-full border border-green-100 text-[10px] font-black uppercase tracking-widest">
+              {nadador.categoria || "S/C"}
+            </div>
+            {/* Badge rama */}
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase border ${
+              esFormativo
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-blue-50 text-blue-700 border-blue-200"
+            }`}>
+              {esFormativo ? <GraduationCap size={10} /> : <Trophy size={10} />}
+              {esFormativo ? "Formativo" : "Competitivo"}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1 mb-5">
+          <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none group-hover:text-blue-600 transition-colors truncate">
+            {nadador.user?.nombre} {nadador.apellido}
+          </h3>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            RUT {nadador.rut || "N/A"} <span className="h-1 w-1 bg-slate-200 rounded-full" /> {nadador.edad} años
+          </p>
+        </div>
+
+        {/* Badge pago */}
+        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
+          nadador.pagoAlDia
+            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+            : "bg-orange-50 text-orange-600 border-orange-100"
         }`}>
-        {nadador.pagoAlDia ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-        {nadador.pagoAlDia ? "Cuenta activa" : "Cuenta inactiva"}
+          {nadador.pagoAlDia ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+          {nadador.pagoAlDia ? "Cuenta activa" : "Cuenta inactiva"}
         </div>
-    </div>
+      </div>
 
-    <div className="relative z-10 flex items-center gap-2 pt-6 border-t border-slate-50">
-      <Link
-        to={`/profesor/nadador/${nadador._id}`}
-        className="flex-1 bg-slate-50 hover:bg-slate-900 text-slate-500 hover:text-white h-12 flex items-center justify-center rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
-      >
-        Ver Perfil
-      </Link>
-      <Link
-        to={`/profesor/nadadores/editar/${nadador._id}`}
-        className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center rounded-2xl transition-all hover:rotate-12"
-        title="Editar"
-      >
-        <Edit3 size={18} />
-      </Link>
-      <button
-        onClick={() => onDelete(nadador._id)}
-        disabled={isDeleting}
-        className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center rounded-2xl transition-all disabled:opacity-50"
-      >
-        {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-      </button>
+      <div className="relative z-10 flex items-center gap-2 pt-6 border-t border-slate-50 mt-5">
+        <Link
+          to={`/profesor/nadador/${nadador._id}`}
+          className="flex-1 bg-slate-50 hover:bg-slate-900 text-slate-500 hover:text-white h-12 flex items-center justify-center rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
+        >
+          Ver Perfil
+        </Link>
+        <Link
+          to={`/profesor/nadadores/editar/${nadador._id}`}
+          className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center rounded-2xl transition-all hover:rotate-12"
+          title="Editar"
+        >
+          <Edit3 size={18} />
+        </Link>
+        <button
+          onClick={() => onDelete(nadador._id)}
+          disabled={isDeleting}
+          className="w-12 h-12 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center rounded-2xl transition-all disabled:opacity-50"
+        >
+          {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+        </button>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 const StatMiniCard = memo(({ label, value, icon: Icon, color }) => {
   const themes = {
-    blue:   "text-blue-600 bg-blue-50 border-blue-100 shadow-blue-500/5",
-    green:  "text-green-600 bg-green-50 border-green-100 shadow-green-500/5",
-    orange: "text-orange-600 bg-orange-50 border-orange-100 shadow-orange-500/5",
-    slate:  "text-slate-600 bg-slate-50 border-slate-100 shadow-slate-500/5"
+    blue:   "text-blue-600 bg-blue-50 border-blue-100",
+    green:  "text-green-600 bg-green-50 border-green-100",
+    orange: "text-orange-600 bg-orange-50 border-orange-100",
+    slate:  "text-slate-600 bg-slate-50 border-slate-100",
+    purple: "text-purple-600 bg-purple-50 border-purple-100"
   }
   return (
-    <div className={`bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col items-start gap-4 hover:shadow-xl transition-all group ${themes[color]}`}>
+    <div className={`bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col items-start gap-3 hover:shadow-xl transition-all group ${themes[color]}`}>
       <div className={`p-3 rounded-2xl ${themes[color]} border shadow-inner group-hover:scale-110 transition-transform`}>
-        <Icon size={20} />
+        <Icon size={18} />
       </div>
       <div>
-        <p className="text-3xl font-black text-slate-900 leading-none tabular-nums italic">{value}</p>
-        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-2">{label}</p>
+        <p className="text-2xl font-black text-slate-900 leading-none tabular-nums italic">{value}</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5">{label}</p>
       </div>
     </div>
   )
@@ -260,3 +268,4 @@ const EmptyState = ({ onReset }) => (
 )
 
 export default Nadadores
+

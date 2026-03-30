@@ -1,12 +1,15 @@
-import { useQuery } from "@tanstack/react-query"
-import { Link }     from "react-router-dom"
-import api          from "../../api/axios"
-import { Users, UserCheck, Calendar, TrendingUp, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { useQuery }  from "@tanstack/react-query"
+import { Link }      from "react-router-dom"
+import api           from "../../api/axios"   // ← import faltante
+import {
+  Users, UserCheck, Calendar,
+  ChevronRight, CheckCircle2, AlertCircle, Loader2
+} from "lucide-react"
 
 export const AdminDashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["adminStats"],
-    queryFn: () => api.get("/admin/stats").then(r => r.data),
+    queryFn:  () => api.get("/admin/stats").then(r => r.data),
     staleTime: 1000 * 60 * 2,
   })
 
@@ -18,22 +21,22 @@ export const AdminDashboard = () => {
 
   const cards = [
     {
-      label:    "Nadadores Competitivos",
-      total:    stats?.competitivos?.total || 0,
-      pagados:  stats?.competitivos?.pagados || 0,
-      impagos:  stats?.competitivos?.impagos || 0,
-      icon:     Users,
-      color:    "blue",
-      to:       "/admin/nadadores?tipo=competitivo"
+      label:   "Nadadores Competitivos",
+      total:   stats?.competitivos?.total   || 0,
+      pagados: stats?.competitivos?.pagados || 0,
+      impagos: stats?.competitivos?.impagos || 0,
+      icon:    Users,
+      color:   "blue",
+      to:      "/admin/nadadores"
     },
     {
-      label:    "Rama Formativa",
-      total:    stats?.formativos?.total || 0,
-      pagados:  stats?.formativos?.pagados || 0,
-      impagos:  stats?.formativos?.impagos || 0,
-      icon:     UserCheck,
-      color:    "green",
-      to:       "/admin/formativos"
+      label:   "Rama Formativa",
+      total:   stats?.formativos?.total   || 0,
+      pagados: stats?.formativos?.pagados || 0,
+      impagos: stats?.formativos?.impagos || 0,
+      icon:    UserCheck,
+      color:   "green",
+      to:      "/admin/formativos"
     }
   ]
 
@@ -48,15 +51,17 @@ export const AdminDashboard = () => {
 
       {/* Stats principales */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatBig label="Total Miembros"      value={stats?.totalMiembros || 0}         color="slate"  />
-        <StatBig label="Convocatorias Activas" value={stats?.convocatoriasActivas || 0} color="blue"  />
-        <StatBig label="Pagos Pendientes"    value={(stats?.competitivos?.impagos || 0) + (stats?.formativos?.impagos || 0)} color="orange" />
+        <StatBig label="Total Miembros"       value={stats?.totalMiembros || 0}         color="slate"  />
+        <StatBig label="Convocatorias Activas" value={stats?.convocatoriasActivas || 0} color="blue"   />
+        <StatBig label="Pagos Pendientes"     value={(stats?.competitivos?.impagos || 0) + (stats?.formativos?.impagos || 0)} color="orange" />
       </div>
 
       {/* Cards de grupos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {cards.map((card) => (
-          <Link key={card.label} to={card.to} className="bg-white rounded-2xl md:rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+          <Link key={card.label} to={card.to}
+            className="bg-white rounded-2xl md:rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group"
+          >
             <div className="flex items-start justify-between mb-5">
               <div className={`p-3 rounded-2xl ${card.color === "blue" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600"}`}>
                 <card.icon size={22} />
@@ -65,9 +70,9 @@ export const AdminDashboard = () => {
             </div>
             <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{card.label}</p>
             <p className="text-4xl font-black text-slate-900 italic mb-5">{card.total}</p>
-            <div className="flex gap-3">
-              <PagoBadge tipo="pagado"  cantidad={card.pagados} />
-              <PagoBadge tipo="impago"  cantidad={card.impagos} />
+            <div className="flex gap-3 flex-wrap">
+              <PagoBadge tipo="pagado" cantidad={card.pagados} />
+              <PagoBadge tipo="impago" cantidad={card.impagos} />
             </div>
           </Link>
         ))}
@@ -75,9 +80,9 @@ export const AdminDashboard = () => {
 
       {/* Acceso rápido */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <QuickLink to="/admin/nadadores" icon={Users}      label="Gestionar Pagos Competitivos" />
-        <QuickLink to="/admin/formativos" icon={UserCheck} label="Gestionar Pagos Formativos"   />
-        <QuickLink to="/admin/convocatorias" icon={Calendar} label="Ver Convocatorias Activas"  />
+        <QuickLink to="/admin/nadadores"     icon={Users}     label="Gestionar Pagos Competitivos" />
+        <QuickLink to="/admin/formativos"    icon={UserCheck} label="Gestionar Pagos Formativos"   />
+        <QuickLink to="/admin/convocatorias" icon={Calendar}  label="Ver Convocatorias Activas"    />
       </div>
     </div>
   )
@@ -98,10 +103,10 @@ const StatBig = ({ label, value, color }) => {
 }
 
 const PagoBadge = ({ tipo, cantidad }) => (
-  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase ${
+  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border ${
     tipo === "pagado"
-      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-      : "bg-orange-50 text-orange-700 border border-orange-100"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+      : "bg-orange-50 text-orange-700 border-orange-100"
   }`}>
     {tipo === "pagado" ? <CheckCircle2 size={11} /> : <AlertCircle size={11} />}
     {cantidad} {tipo === "pagado" ? "Pagados" : "Pendientes"}

@@ -64,7 +64,7 @@ export const actualizarNadadorProfesor = async (req, res) => {
     const nadador = await Nadador.findById(id)
     if (!nadador) return res.status(404).json({ message: "Nadador no encontrado" })
 
-    const camposNadador = ["fechaNacimiento", "peso", "altura", "rut", "pruebasEspecialidad", "apellido"]
+    const camposNadador = ["fechaNacimiento", "peso", "altura", "rut", "pruebasEspecialidad", "apellido", "rama"]
     const camposUser    = ["nombre", "correo"]
 
     const datosNadador = {}

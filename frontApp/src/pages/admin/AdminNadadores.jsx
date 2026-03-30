@@ -1,16 +1,22 @@
-import { useState } from "react"
+import { useState }  from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Search, CheckCircle2, XCircle,Loader2, RefreshCcw, Filter } from "lucide-react"
+import api           from "../../api/axios"   // ← import faltante
+import {
+  Search, CheckCircle2, XCircle,
+  Loader2, RefreshCcw, Filter
+} from "lucide-react"
 
 export const AdminNadadores = () => {
-  const queryClient = useQueryClient()
-  const [buscar,    setBuscar]    = useState("")
+  const queryClient  = useQueryClient()
+  const [buscar,     setBuscar]     = useState("")
   const [filtroPago, setFiltroPago] = useState("")
-  const [tipo,      setTipo]      = useState("competitivo")
+  const [tipo,       setTipo]       = useState("competitivo")
 
   const { data = [], isLoading, isFetching } = useQuery({
     queryKey: ["adminNadadores", tipo, filtroPago],
-    queryFn:  () => api.get("/admin/nadadores", { params: { tipo, pago: filtroPago || undefined } }).then(r => r.data),
+    queryFn:  () => api.get("/admin/nadadores", {
+      params: { tipo, pago: filtroPago || undefined }
+    }).then(r => r.data),
     staleTime: 1000 * 60 * 2,
   })
 
@@ -34,18 +40,20 @@ export const AdminNadadores = () => {
 
   return (
     <div className="space-y-5 pb-8">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">Gestión de Pagos</p>
           <h1 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">
-            Nadadores <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
+            Nadadores{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
               {tipo === "formativo" ? "Formativos" : "Competitivos"}
             </span>
           </h1>
         </div>
         {/* Toggle tipo */}
         <div className="flex gap-2">
-          {["competitivo","formativo"].map(t => (
+          {["competitivo", "formativo"].map(t => (
             <button key={t} onClick={() => setTipo(t)}
               className={`px-4 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${
                 tipo === t ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
@@ -65,13 +73,15 @@ export const AdminNadadores = () => {
             value={buscar}
             onChange={e => setBuscar(e.target.value)}
             placeholder="Buscar por nombre..."
-            className="w-full pl-11 pr-4 py-3 bg-transparent border-none text-[11px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
+            className="w-full pl-11 pr-4 py-3 bg-transparent border-none text-[11px] font-black text-slate-700 focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest outline-none"
           />
         </div>
-        <div className="flex items-center gap-2 px-3">
-          <Filter size={14} className="text-blue-500" />
-          <select value={filtroPago} onChange={e => setFiltroPago(e.target.value)}
-            className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest"
+        <div className="flex items-center gap-2 px-3 border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0">
+          <Filter size={14} className="text-blue-500 shrink-0" />
+          <select
+            value={filtroPago}
+            onChange={e => setFiltroPago(e.target.value)}
+            className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest outline-none"
           >
             <option value="">Todos</option>
             <option value="si">Al día</option>
@@ -98,7 +108,7 @@ export const AdminNadadores = () => {
                 nadador={n}
                 tipo={tipo}
                 onToggle={() => toggleMutation.mutate(n._id)}
-                isToggling={toggleMutation.isPending}
+                isToggling={toggleMutation.isPending && toggleMutation.variables === n._id}
               />
             ))
           )}
@@ -109,12 +119,12 @@ export const AdminNadadores = () => {
 }
 
 const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
-  const nombre   = tipo === "formativo"
+  const nombre    = tipo === "formativo"
     ? `${nadador.nombre} ${nadador.apellido}`
     : `${nadador.user?.nombre} ${nadador.apellido}`
-  const inicial  = nombre.charAt(0).toUpperCase()
-  const pagado   = nadador.pagoAlDia
-  const categoria = tipo === "formativo" ? "Formativo" : nadador.categoria
+  const inicial   = nombre.charAt(0).toUpperCase()
+  const pagado    = nadador.pagoAlDia
+  const categoria = tipo === "formativo" ? "Formativo" : (nadador.categoria || "S/C")
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-4 hover:shadow-md transition-all">
@@ -127,16 +137,22 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-black text-slate-900 uppercase italic tracking-tight text-sm truncate">{nombre}</p>
-          <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded uppercase tracking-widest">{categoria}</span>
+          <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded uppercase tracking-widest shrink-0">
+            {categoria}
+          </span>
         </div>
-        {nadador.fechaUltimoPago && (
+        {nadador.fechaUltimoPago ? (
           <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-            Último pago: {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", { day:"2-digit", month:"short", year:"numeric" })}
+            Último pago: {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
+              day: "2-digit", month: "short", year: "numeric"
+            })}
           </p>
+        ) : (
+          <p className="text-[10px] text-slate-300 font-bold mt-0.5">Sin pagos registrados</p>
         )}
       </div>
 
-      {/* Badge estado */}
+      {/* Badge estado — oculto en mobile muy pequeño */}
       <div className={`shrink-0 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-1.5 ${
         pagado
           ? "bg-emerald-50 text-emerald-700 border-emerald-100"
@@ -146,7 +162,7 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
         {pagado ? "Al día" : "Pendiente"}
       </div>
 
-      {/* Toggle */}
+      {/* Toggle pago */}
       <button
         onClick={onToggle}
         disabled={isToggling}

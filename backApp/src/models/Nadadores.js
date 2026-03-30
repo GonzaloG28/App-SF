@@ -20,6 +20,11 @@ const nadadorSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
+  rama: {
+  type:    String,
+  enum:    ["competitivo", "formativo"],
+  default: "competitivo"
+ },
   pagoAlDia:        { type: Boolean, default: false },
   fechaUltimoPago:  { type: Date,    default: null }
 }, {

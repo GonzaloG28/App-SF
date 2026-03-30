@@ -8,7 +8,7 @@ import es from "date-fns/locale/es"
 import {
   User, Mail, Calendar, Weight, Ruler, Fingerprint,
   Waves, ArrowLeft, Save, Loader2, Info, AlertTriangle,
-  CheckCircle2, Edit3, Lock
+  CheckCircle2, Edit3, Lock, Trophy, GraduationCap
 } from "lucide-react"
 
 registerLocale("es", es)
@@ -23,19 +23,17 @@ const formatRut = (value) => {
 }
 
 const NadadorForm = () => {
-  const { id }     = useParams()
-  const isEdit     = !!id
-  const navigate   = useNavigate()
+  const { id }      = useParams()
+  const isEdit      = !!id
+  const navigate    = useNavigate()
   const queryClient = useQueryClient()
 
   const [errors,      setErrors]      = useState({})
   const [serverError, setServerError] = useState("")
-
-  // En modo edición el formulario empieza vacío.
-  // Los valores originales se guardan en originalData para comparar.
   const [form, setForm] = useState({
     nombre: "", apellido: "", correo: "", fechaNacimiento: null,
-    peso: "", altura: "", rut: "", pruebasEspecialidad: ""
+    peso: "", altura: "", rut: "", pruebasEspecialidad: "",
+    rama: "competitivo"   // ← nuevo campo: "competitivo" o "formativo"
   })
   const originalData = useRef(null)
 
@@ -56,11 +54,12 @@ const NadadorForm = () => {
         peso:                data.peso?.toString()    || "",
         altura:              data.altura?.toString()  || "",
         rut:                 data.rut                 || "",
-        pruebasEspecialidad: data.pruebasEspecialidad?.join(", ") || ""
+        pruebasEspecialidad: data.pruebasEspecialidad?.join(", ") || "",
+        rama:                data.rama               || "competitivo"
       }
       originalData.current = original
-      // En modo edición NO prellenamos el form — el usuario solo toca lo que quiere cambiar
-      // Los placeholders mostrarán el valor actual
+      // Prellenamos SOLO el campo rama para que se vea correctamente
+      setForm(prev => ({ ...prev, rama: original.rama }))
     }
   }, [data])
 
@@ -84,25 +83,25 @@ const NadadorForm = () => {
   })
 
   const validate = useCallback(() => {
-    const newErrors = {}
+    const newErrors  = {}
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     if (isEdit) {
-      // En modo edición: solo validar los campos que el usuario tocó
       if (form.correo && !emailRegex.test(form.correo)) newErrors.correo = "Email inválido"
-      // Al menos un campo debe tener valor
-      const algoCambio = Object.values(form).some(v => v !== "" && v !== null)
-      if (!algoCambio) {
+      // rama siempre tiene valor, así que algoCambio siempre será true en edición
+      const algoCambio = Object.entries(form).some(([k, v]) => k !== "rama" && v !== "" && v !== null)
+      // Permitir guardar solo si cambió algo O si la rama cambió
+      const ramaCambio = form.rama !== originalData.current?.rama
+      if (!algoCambio && !ramaCambio) {
         setServerError("Modifica al menos un campo para guardar.")
         return false
       }
     } else {
-      // En modo creación: todos los campos son obligatorios
-      if (!form.nombre.trim())            newErrors.nombre          = "Requerido"
-      if (!form.apellido.trim())          newErrors.apellido        = "Requerido"
-      if (!emailRegex.test(form.correo))  newErrors.correo          = "Email inválido"
-      if (!form.fechaNacimiento)          newErrors.fechaNacimiento = "Falta fecha"
-      if (!form.rut.trim())               newErrors.rut             = "RUT requerido"
+      if (!form.nombre.trim())           newErrors.nombre          = "Requerido"
+      if (!form.apellido.trim())         newErrors.apellido        = "Requerido"
+      if (!emailRegex.test(form.correo)) newErrors.correo          = "Email inválido"
+      if (!form.fechaNacimiento)         newErrors.fechaNacimiento = "Falta fecha"
+      if (!form.rut.trim())              newErrors.rut             = "RUT requerido"
     }
 
     setErrors(newErrors)
@@ -115,19 +114,20 @@ const NadadorForm = () => {
     if (!validate()) return
 
     if (isEdit) {
-      // Solo enviar los campos que tienen valor (los que el usuario cambió)
       const cambios = {}
       Object.entries(form).forEach(([key, val]) => {
-        if (val !== "" && val !== null) {
+        if (key === "rama") {
+          // Siempre enviar rama — puede ser el único cambio
+          cambios.rama = val
+        } else if (val !== "" && val !== null) {
           cambios[key] = val
         }
       })
-      // Procesar pruebasEspecialidad si viene
       if (cambios.pruebasEspecialidad) {
         cambios.pruebasEspecialidad = cambios.pruebasEspecialidad
           .split(",").map(p => p.trim()).filter(p => p !== "")
       }
-      if (cambios.fechaNacimiento) {
+      if (cambios.fechaNacimiento instanceof Date) {
         cambios.fechaNacimiento = cambios.fechaNacimiento.toISOString()
       }
       mutation.mutate(cambios)
@@ -168,7 +168,9 @@ const NadadorForm = () => {
         <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/20 rounded-full blur-[60px] -mr-20 -mt-20 pointer-events-none" />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4 w-full sm:w-auto">
-            <div className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] flex items-center justify-center shadow-xl shrink-0 ${isEdit ? "bg-gradient-to-br from-emerald-400 to-emerald-600" : "bg-gradient-to-br from-blue-500 to-blue-700"}`}>
+            <div className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] flex items-center justify-center shadow-xl shrink-0 ${
+              isEdit ? "bg-gradient-to-br from-emerald-400 to-emerald-600" : "bg-gradient-to-br from-blue-500 to-blue-700"
+            }`}>
               {isEdit ? <Save size={28} /> : <User size={28} />}
             </div>
             <div>
@@ -176,22 +178,68 @@ const NadadorForm = () => {
                 {isEdit ? "Editar" : "Nuevo"}{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent not-italic">Atleta</span>
               </h2>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">
-                  {isEdit ? "Solo llena los campos que quieres cambiar" : "Ficha de Rendimiento"}
-                </span>
-                {isEdit && <span className="bg-slate-800 text-[10px] px-2 py-0.5 rounded-full text-blue-400 font-mono">...{id.slice(-6)}</span>}
-              </div>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">
+                {isEdit ? "Solo llena los campos que quieres cambiar" : "Ficha de Rendimiento"}
+              </p>
             </div>
           </div>
-          <Link to="/profesor/nadadores" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 transition-all self-start sm:self-auto">
+          <Link to="/profesor/nadadores"
+            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 transition-all self-start sm:self-auto"
+          >
             <ArrowLeft size={15} className="text-slate-400" />
             <span className="text-[11px] font-black uppercase tracking-widest">Volver</span>
           </Link>
         </div>
       </div>
 
-      {/* Banner informativo en modo edición */}
+      {/* SELECTOR DE RAMA — siempre visible y prellenado */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+          <Waves size={14} className="text-blue-500" /> Rama del Nadador
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Competitivo */}
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, rama: "competitivo" }))}
+            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+              form.rama === "competitivo"
+                ? "border-blue-600 bg-blue-50 text-blue-700"
+                : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+            }`}
+          >
+            <Trophy size={22} className={form.rama === "competitivo" ? "text-blue-600" : "text-slate-300"} />
+            <div className="text-center">
+              <p className="text-[11px] font-black uppercase tracking-wider">Competitivo</p>
+              <p className="text-[10px] font-medium opacity-70 mt-0.5">Compite en torneos</p>
+            </div>
+            {form.rama === "competitivo" && (
+              <CheckCircle2 size={14} className="text-blue-600" />
+            )}
+          </button>
+
+          {/* Formativo */}
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, rama: "formativo" }))}
+            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+              form.rama === "formativo"
+                ? "border-green-500 bg-green-50 text-green-700"
+                : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+            }`}
+          >
+            <GraduationCap size={22} className={form.rama === "formativo" ? "text-green-600" : "text-slate-300"} />
+            <div className="text-center">
+              <p className="text-[11px] font-black uppercase tracking-wider">Formativo</p>
+              <p className="text-[10px] font-medium opacity-70 mt-0.5">Aprendiendo a nadar</p>
+            </div>
+            {form.rama === "formativo" && (
+              <CheckCircle2 size={14} className="text-green-600" />
+            )}
+          </button>
+        </div>
+      </div>
+
       {isEdit && (
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
           <Edit3 size={16} className="text-blue-600 shrink-0 mt-0.5" />
@@ -210,7 +258,7 @@ const NadadorForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* IDENTIDAD */}
+        {/* IDENTIDAD + BIOMETRÍA */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5 relative overflow-hidden">
             <div className="absolute -top-4 -right-4 text-slate-50 rotate-12 pointer-events-none">
@@ -220,10 +268,8 @@ const NadadorForm = () => {
               <Fingerprint size={14} /> Identidad
             </h3>
             <div className="space-y-4 relative z-10">
-              {/* RUT — siempre deshabilitado en edición */}
               <Field
-                label="RUT"
-                name="rut"
+                label="RUT" name="rut"
                 icon={isEdit ? Lock : Fingerprint}
                 form={form} errors={errors}
                 placeholder={isEdit ? (orig?.rut || "No editable") : "12.345.678-9"}
@@ -232,17 +278,13 @@ const NadadorForm = () => {
                 hint={isEdit ? "El RUT no puede modificarse" : undefined}
               />
               <Field
-                label="Email"
-                name="correo"
-                type="email"
-                icon={Mail}
+                label="Email" name="correo" type="email" icon={Mail}
                 form={form} setForm={setForm} errors={errors}
                 placeholder={isEdit ? (orig?.correo || "correo@ejemplo.com") : "atleta@club.cl"}
               />
             </div>
           </div>
 
-          {/* BIOMETRÍA */}
           <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5">
             <h3 className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
               <Info size={14} /> Biometría
@@ -262,7 +304,11 @@ const NadadorForm = () => {
             <div className="flex flex-col space-y-2">
               <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
                 Fecha de Nacimiento
-                {isEdit && <span className="ml-2 text-slate-300 normal-case font-bold">({orig?.fechaNacimiento ? new Date(orig.fechaNacimiento).toLocaleDateString("es-ES") : "no registrada"})</span>}
+                {isEdit && orig?.fechaNacimiento && (
+                  <span className="ml-2 text-slate-300 normal-case font-bold">
+                    ({new Date(orig.fechaNacimiento).toLocaleDateString("es-ES")})
+                  </span>
+                )}
               </label>
               <div className="relative group">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 z-10 transition-colors" size={17} />
