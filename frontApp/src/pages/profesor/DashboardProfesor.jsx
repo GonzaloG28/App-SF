@@ -1,182 +1,480 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getNadadores } from "../../api/profesor.api";
-import { 
-  Users, Trophy, Calendar, TrendingUp, 
-  UserPlus, Clock, ChevronRight, Loader2, Waves 
-} from "lucide-react";
-import { Link } from "react-router-dom";
-
-const MOCK_DATA = {
-  recordsMes: 4,
-  proximosTorneos: 1,
-  mejoraPromedio: "1.2s",
-  competencias: [
-    { mes: "JLO", dia: "6", nombre: "Clasificatorio Nacional Categorias", lugar: "Santiago" }
-  ],
-  recentRecords: [
-    { nombre: "Gonzalo", prueba: "50m Libre", tiempo: "25.42s" },
-    { nombre: "Sofia", prueba: "200 pecho", tiempo: "2:45.10s" }
-  ]
-};
+import { useMemo }                       from "react"
+import { useQuery }                      from "@tanstack/react-query"
+import { Link }                          from "react-router-dom"
+import { getNadadores }                  from "../../api/profesor.api"
+import api                               from "../../api/axios"
+import {
+  Users, Trophy, Calendar, UserPlus,
+  CheckCircle2, Clock, ChevronRight,
+  Loader2, Waves, MapPin, AlertCircle,
+  Dumbbell, GraduationCap, Zap, TrendingUp
+} from "lucide-react"
 
 const DashboardProfesor = () => {
-  const { data: response, isLoading, isError } = useQuery({
+
+  // ── Nadadores ───────────────────────────────────────────────────────
+  const { data: nadadoresRes, isLoading: loadingNad } = useQuery({
     queryKey: ["nadadores-dashboard"],
-    queryFn: () => getNadadores({}),
+    queryFn:  () => getNadadores({}),
     staleTime: 1000 * 60 * 5,
-  });
+  })
 
-  const nadadores = response?.data || [];
-  const totalNadadores = nadadores.length;
+  // ── Convocatorias próximas ──────────────────────────────────────────
+  const { data: convocatorias = [], isLoading: loadingConv } = useQuery({
+    queryKey: ["convocatorias"],
+    queryFn:  () => api.get("/convocatorias").then(r => r.data),
+    staleTime: 1000 * 60 * 5,
+  })
 
-  // Actualización de colores para las stats (Azul, Verde, Naranja)
-  const stats = useMemo(() => [
-    { label: "Nadadores Activos", value: totalNadadores, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Récords del Mes", value: MOCK_DATA.recordsMes, icon: Trophy, color: "text-orange-600", bg: "bg-orange-50" },
-    { label: "Próximos Torneos", value: MOCK_DATA.proximosTorneos, icon: Calendar, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Mejora Promedio", value: MOCK_DATA.mejoraPromedio, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50" },
-  ], [totalNadadores]);
+  // ── Entrenamientos ─────────────────────────────────────────────────
+  const { data: entrenamientos = [], isLoading: loadingEnt } = useQuery({
+    queryKey: ["entrenamientos-dashboard"],
+    queryFn:  () => api.get("/entrenamiento").then(r => r.data),
+    staleTime: 1000 * 60 * 5,
+  })
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400">
-        <Loader2 className="animate-spin mb-4 text-blue-600" size={48} />
-        <p className="font-black tracking-[0.2em] text-[11px] uppercase italic text-slate-500">Sincronizando Sistema ÑSF...</p>
+  const isLoading = loadingNad || loadingConv || loadingEnt
+
+  // ── Cálculos ────────────────────────────────────────────────────────
+  const nadadores = nadadoresRes?.data || []
+
+  const stats = useMemo(() => {
+    const total        = nadadores.length
+    const competitivos = nadadores.filter(n => n.rama !== "formativo").length
+    const formativos   = nadadores.filter(n => n.rama === "formativo").length
+    const pagados      = nadadores.filter(n => n.pagoAlDia).length
+    const pctPago      = total > 0 ? Math.round((pagados / total) * 100) : 0
+
+    return { total, competitivos, formativos, pagados, pctPago }
+  }, [nadadores])
+
+  const entStats = useMemo(() => {
+    const hoy      = new Date()
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+
+    const delMes       = entrenamientos.filter(e => new Date(e.fecha || e.createdAt) >= inicioMes)
+    const completados  = delMes.filter(e => {
+      // Un entrenamiento está "completado" si todos sus destinatarios lo completaron
+      if (!e.destinatarios?.length) return false
+      return e.destinatarios.every(d => d.completado)
+    })
+    const pendientes   = delMes.filter(e => !completados.includes(e))
+    const pct          = delMes.length > 0 ? Math.round((completados.length / delMes.length) * 100) : 0
+
+    return {
+      total:       delMes.length,
+      completados: completados.length,
+      pendientes:  pendientes.length,
+      pct
+    }
+  }, [entrenamientos])
+
+  // Próximas 3 convocatorias
+  const proximasConvocatorias = useMemo(() =>
+    [...convocatorias]
+      .filter(c => new Date(c.fechaFin) >= new Date())
+      .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
+      .slice(0, 3),
+    [convocatorias]
+  )
+
+  // Entrenamientos recientes (últimos 4)
+  const entrenamientosRecientes = useMemo(() =>
+    [...entrenamientos]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 4),
+    [entrenamientos]
+  )
+
+  if (isLoading) return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
+        <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-orange-600">
-        <p className="font-black italic mb-4 text-center tracking-tighter uppercase">Error de sincronización</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="text-[11px] font-black uppercase tracking-widest bg-orange-50 hover:bg-orange-100 text-orange-600 px-8 py-4 rounded-2xl transition-all active:scale-95 border border-orange-100"
-        >
-          Reintentar Conexión
-        </button>
-      </div>
-    );
-  }
+      <p className="font-black tracking-[0.2em] text-[11px] uppercase italic text-slate-400">
+        Sincronizando Sistema ÑSF...
+      </p>
+    </div>
+  )
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
-      {/* HEADER Y ACCIONES - Gradiente de marca */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div className="space-y-6 md:space-y-8 animate-fade-in pb-8">
+
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 border-b border-slate-100 pb-6">
         <div>
+          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">High Performance Center</p>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic uppercase">
             Panel de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Gestión</span>
           </h1>
-          <p className="text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em] mt-1">High Performance Center</p>
         </div>
-        
-        <Link 
-          to="/profesor/nadadores/nuevo" 
-          className="w-full sm:w-auto flex items-center justify-center gap-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] italic"
+        <Link
+          to="/profesor/nadadores/nuevo"
+          className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-slate-900 text-white px-7 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] self-start sm:self-auto"
         >
-          <UserPlus size={18} strokeWidth={3} />
+          <UserPlus size={18} strokeWidth={2.5} />
           Nuevo Nadador
         </Link>
       </div>
 
-      {/* MÉTRICAS PRINCIPALES */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 group">
-            <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 group-hover:scale-110 transition-all shadow-sm`}>
-              <stat.icon size={28} strokeWidth={2.5} />
-            </div>
-            <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.25em]">{stat.label}</p>
-            <h3 className="text-4xl font-black text-slate-900 mt-1 tracking-tighter italic">{stat.value}</h3>
-          </div>
-        ))}
+      {/* ── STATS PRINCIPALES ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+
+        {/* Total nadadores */}
+        <StatCard
+          label="Total Plantel"
+          value={stats.total}
+          sub={`${stats.competitivos} comp. · ${stats.formativos} form.`}
+          icon={Users}
+          color="blue"
+        />
+
+        {/* Cuentas al día */}
+        <StatCard
+          label="Cuentas al Día"
+          value={`${stats.pctPago}%`}
+          sub={`${stats.pagados} de ${stats.total} nadadores`}
+          icon={CheckCircle2}
+          color={stats.pctPago >= 80 ? "green" : stats.pctPago >= 50 ? "orange" : "red"}
+        />
+
+        {/* Próximas convocatorias */}
+        <StatCard
+          label="Convocatorias"
+          value={proximasConvocatorias.length}
+          sub={proximasConvocatorias.length > 0 ? "eventos próximos" : "sin eventos"}
+          icon={Calendar}
+          color="purple"
+        />
+
+        {/* Entrenamientos del mes */}
+        <StatCard
+          label="Entrenos del Mes"
+          value={entStats.total}
+          sub={`${entStats.pct}% completados`}
+          icon={Dumbbell}
+          color="orange"
+        />
       </div>
 
-      {/* ÁREA DE CONTENIDO INFERIOR */}
-      <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
-        
-        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
-          {/* PRÓXIMAS CITAS */}
-          <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-7 sm:p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] flex items-center gap-3">
-                <Clock className="text-blue-600" size={18} />
-                Próximas Citas
+      {/* ── CONTENIDO PRINCIPAL ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-8">
+
+        {/* Columna izquierda — 2/3 */}
+        <div className="lg:col-span-2 space-y-5">
+
+          {/* PRÓXIMAS CONVOCATORIAS — datos reales */}
+          <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-50 flex justify-between items-center">
+              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] flex items-center gap-2">
+                <Calendar size={15} className="text-blue-600" /> Próximas Convocatorias
               </h3>
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <Link
+                to="/profesor/calendario"
+                className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all"
+              >
+                Ver todas
+              </Link>
             </div>
-            
-            <div className="divide-y divide-slate-50">
-              {MOCK_DATA.competencias.map((comp, i) => (
-                <div key={i} className="p-7 sm:p-8 hover:bg-blue-50/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group cursor-pointer">
-                  <div className="flex items-center gap-5">
-                    <div className="text-center bg-gradient-to-br from-blue-600 to-green-500 text-white rounded-2xl p-4 min-w-[75px] shadow-lg shadow-blue-500/10 transform group-hover:rotate-3 transition-transform">
-                      <p className="text-[11px] font-black uppercase tracking-tighter opacity-80">{comp.mes}</p>
-                      <p className="text-2xl font-black italic leading-none mt-1">{comp.dia}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-900 group-hover:text-blue-600 transition-colors italic uppercase text-sm tracking-tight">{comp.nombre}</h4>
-                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{comp.lugar}</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={18} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-2 transition-all hidden sm:block" />
-                </div>
-              ))}
-            </div>
+
+            {proximasConvocatorias.length === 0 ? (
+              <div className="py-12 text-center">
+                <Calendar size={28} className="mx-auto text-slate-200 mb-3" />
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Sin convocatorias próximas</p>
+                <Link to="/profesor/convocatoria/nueva"
+                  className="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-[11px] font-black uppercase tracking-widest hover:underline"
+                >
+                  + Crear convocatoria
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {proximasConvocatorias.map((c) => {
+                  const inicio   = new Date(c.fechaInicio)
+                  const fin      = new Date(c.fechaFin)
+                  const dias     = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1
+                  const hoy      = new Date()
+                  const enCurso  = inicio <= hoy && fin >= hoy
+                  const diasHasta = Math.ceil((inicio - hoy) / (1000 * 60 * 60 * 24))
+
+                  return (
+                    <Link
+                      key={c._id}
+                      to={`/profesor/convocatoria/${c._id}`}
+                      className="flex items-center gap-4 px-6 py-4 hover:bg-blue-50/30 transition-all group"
+                    >
+                      {/* Fecha */}
+                      <div className={`shrink-0 w-12 text-center p-1.5 rounded-xl ${enCurso ? "bg-green-500 text-white" : "bg-blue-50 text-blue-700"}`}>
+                        <p className="text-[9px] font-black uppercase">{inicio.toLocaleString("es-ES",{month:"short"})}</p>
+                        <p className="text-xl font-black leading-none">{inicio.getDate()}</p>
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                          <p className="font-black text-slate-900 uppercase italic text-sm tracking-tight truncate">
+                            {c.nombre}
+                          </p>
+                          {enCurso && (
+                            <span className="text-[9px] font-black bg-green-500 text-white px-2 py-0.5 rounded-full uppercase shrink-0">En curso</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                          <span className="flex items-center gap-1"><MapPin size={10} /> {c.lugar}</span>
+                          <span className="flex items-center gap-1"><Clock size={10} /> {dias} {dias === 1 ? "día" : "días"}</span>
+                          <span className="flex items-center gap-1"><Users size={10} /> {c.nadadores?.length || 0}</span>
+                        </div>
+                      </div>
+
+                      {/* Días restantes */}
+                      {!enCurso && diasHasta > 0 && (
+                        <div className="shrink-0 text-right">
+                          <p className="text-xl font-black text-blue-600 italic leading-none">{diasHasta}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase">días</p>
+                        </div>
+                      )}
+                      <ChevronRight size={14} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-1 transition-all shrink-0" />
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </section>
 
-          {/* HITOS RECIENTES (DISEÑO MARCA) */}
-          <section className="bg-slate-900 rounded-[2.5rem] p-7 sm:p-10 text-white shadow-2xl relative overflow-hidden border border-slate-800">
-            {/* Elemento decorativo de fondo */}
-            <div className="absolute -right-10 -bottom-10 opacity-10 text-white rotate-12">
-              <Waves size={200} />
+          {/* ENTRENAMIENTOS RECIENTES — datos reales */}
+          <section className="bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 text-white shadow-2xl relative overflow-hidden">
+            <div className="absolute -right-8 -bottom-8 opacity-5 pointer-events-none">
+              <Waves size={180} />
             </div>
-
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="font-black uppercase tracking-[0.3em] text-green-500 text-[11px]">Hitos Recientes</h3>
-                <Trophy size={22} className="text-orange-500 animate-bounce" />
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-black uppercase tracking-[0.3em] text-green-400 text-[11px] flex items-center gap-2">
+                  <Dumbbell size={14} /> Entrenamientos Recientes
+                </h3>
+                <Link to="/profesor/entrenamientos"
+                  className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+                >
+                  Ver todos →
+                </Link>
               </div>
-              <div className="grid sm:grid-cols-2 gap-5">
-                {MOCK_DATA.recentRecords.map((record, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white/5 p-5 rounded-[2rem] backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all hover:scale-[1.02]">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-xs font-black shadow-lg shrink-0 italic">
-                        {record.nombre[0]}
+
+              {entrenamientosRecientes.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Sin entrenamientos registrados</p>
+                  <Link to="/profesor/crear-entrenamiento"
+                    className="mt-3 inline-flex items-center gap-1.5 text-green-400 text-[11px] font-black uppercase tracking-widest hover:underline"
+                  >
+                    + Crear entrenamiento
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {entrenamientosRecientes.map((e, i) => {
+                    const totalDest   = e.destinatarios?.length || 0
+                    const completados = e.destinatarios?.filter(d => d.completado).length || 0
+                    const pct         = totalDest > 0 ? Math.round((completados / totalDest) * 100) : 0
+                    const fecha       = new Date(e.fecha || e.createdAt)
+
+                    return (
+                      <div key={e._id || i}
+                        className="flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-all"
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                          <Dumbbell size={15} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black uppercase italic tracking-tight truncate">{e.titulo || "Entrenamiento"}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                            {fecha.toLocaleDateString("es-ES",{day:"2-digit",month:"short"})} · {totalDest} atletas
+                          </p>
+                          {/* Barra de progreso */}
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-green-500 rounded-full transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-400 shrink-0">{pct}%</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="overflow-hidden">
-                        <p className="text-sm font-black uppercase italic tracking-tight">{record.nombre}</p>
-                        <p className="text-[11px] text-blue-400 font-black uppercase tracking-widest mt-1">
-                          {record.prueba} <span className="text-white">|</span> {record.tiempo}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </section>
         </div>
 
-        {/* MÓDULO DE ASISTENCIA - Colores suaves */}
-        <aside className="space-y-6">
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 flex flex-col items-center justify-center text-center h-full min-h-[300px] group border-dashed border-2">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-              <TrendingUp className="text-slate-200" size={40} />
-            </div>
-            <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest leading-relaxed">
-              Módulo de asistencia <br />
-              <span className="text-blue-500/50 italic">Próximamente disponible</span>
-            </p>
-          </div>
-        </aside>
+        {/* ── Columna derecha — 1/3 ── */}
+        <div className="space-y-5">
 
+          {/* RESUMEN DE PAGOS */}
+          <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm p-6">
+            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] flex items-center gap-2 mb-5">
+              <CheckCircle2 size={15} className="text-emerald-600" /> Estado de Cuentas
+            </h3>
+
+            {/* Barra visual */}
+            <div className="mb-4">
+              <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-2">
+                <span>{stats.pagados} al día</span>
+                <span>{stats.total - stats.pagados} pendientes</span>
+              </div>
+              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    stats.pctPago >= 80 ? "bg-emerald-500" :
+                    stats.pctPago >= 50 ? "bg-orange-400" : "bg-red-500"
+                  }`}
+                  style={{ width: `${stats.pctPago}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-50 rounded-2xl p-3 text-center">
+                <p className="text-2xl font-black text-emerald-700 italic">{stats.pagados}</p>
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-0.5">Al día</p>
+              </div>
+              <div className="bg-orange-50 rounded-2xl p-3 text-center">
+                <p className="text-2xl font-black text-orange-700 italic">{stats.total - stats.pagados}</p>
+                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-0.5">Pendientes</p>
+              </div>
+            </div>
+
+            <Link to="/profesor/nadadores"
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+            >
+              Ver plantel completo
+            </Link>
+          </section>
+
+          {/* RESUMEN DE ENTRENAMIENTOS */}
+          <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm p-6">
+            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] flex items-center gap-2 mb-5">
+              <TrendingUp size={15} className="text-blue-600" /> Entrenos Este Mes
+            </h3>
+
+            <div className="space-y-3">
+              <ProgressRow
+                label="Completados"
+                value={entStats.completados}
+                total={entStats.total}
+                color="green"
+              />
+              <ProgressRow
+                label="Pendientes"
+                value={entStats.pendientes}
+                total={entStats.total}
+                color="orange"
+              />
+            </div>
+
+            {/* % cumplimiento */}
+            <div className={`mt-4 rounded-2xl p-4 text-center ${
+              entStats.pct >= 80 ? "bg-emerald-50" :
+              entStats.pct >= 50 ? "bg-orange-50" : "bg-slate-50"
+            }`}>
+              <p className={`text-3xl font-black italic ${
+                entStats.pct >= 80 ? "text-emerald-700" :
+                entStats.pct >= 50 ? "text-orange-700" : "text-slate-500"
+              }`}>{entStats.pct}%</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                {entStats.total === 0 ? "Sin entrenos este mes" : "Tasa de cumplimiento"}
+              </p>
+            </div>
+
+            <Link to="/profesor/crear-entrenamiento"
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+            >
+              <Zap size={12} /> Nuevo entrenamiento
+            </Link>
+          </section>
+
+          {/* DISTRIBUCIÓN DEL PLANTEL */}
+          <section className="bg-gradient-to-br from-blue-600 to-emerald-500 rounded-2xl md:rounded-[2.5rem] p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden">
+            <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
+              <Waves size={120} />
+            </div>
+            <div className="relative z-10">
+              <h3 className="font-black uppercase tracking-[0.3em] text-white/80 text-[10px] mb-4">Distribución Plantel</h3>
+              <div className="space-y-2.5">
+                <DistRow label="Competitivos" value={stats.competitivos} total={stats.total} icon={Trophy} />
+                <DistRow label="Formativos"   value={stats.formativos}   total={stats.total} icon={GraduationCap} />
+              </div>
+              <div className="mt-5 pt-4 border-t border-white/20 flex justify-between items-center">
+                <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Total</p>
+                <p className="text-2xl font-black italic">{stats.total}</p>
+              </div>
+            </div>
+          </section>
+
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardProfesor;
+// ── Sub-componentes ─────────────────────────────────────────────────
+
+const StatCard = ({ label, value, sub, icon: Icon, color }) => {
+  const themes = {
+    blue:   "text-blue-600 bg-blue-50 border-blue-100",
+    green:  "text-emerald-600 bg-emerald-50 border-emerald-100",
+    orange: "text-orange-600 bg-orange-50 border-orange-100",
+    red:    "text-red-600 bg-red-50 border-red-100",
+    purple: "text-purple-600 bg-purple-50 border-purple-100",
+  }
+  return (
+    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform border ${themes[color]}`}>
+        <Icon size={18} />
+      </div>
+      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{label}</p>
+      <p className="text-2xl md:text-3xl font-black text-slate-900 italic leading-none">{value}</p>
+      {sub && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">{sub}</p>}
+    </div>
+  )
+}
+
+const ProgressRow = ({ label, value, total, color }) => {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0
+  const colors = {
+    green:  "bg-emerald-500",
+    orange: "bg-orange-400",
+  }
+  return (
+    <div>
+      <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase mb-1.5">
+        <span>{label}</span>
+        <span>{value} / {total}</span>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${colors[color]}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
+const DistRow = ({ label, value, total, icon: Icon }) => {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0
+  return (
+    <div className="flex items-center gap-3">
+      <Icon size={13} className="text-white/60 shrink-0" />
+      <div className="flex-1">
+        <div className="flex justify-between text-[10px] font-black text-white/80 mb-1">
+          <span>{label}</span>
+          <span>{value}</span>
+        </div>
+        <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+          <div className="h-full bg-white rounded-full transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default DashboardProfesor

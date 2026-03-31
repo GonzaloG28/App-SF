@@ -29,7 +29,7 @@ import CrearCompetencia     from '../pages/profesor/CrearCompetencia'
 import CrearPrueba          from '../pages/profesor/CrearPrueba'
 import RankingNadador       from '../pages/rankingNadador'
 import { CrearConvocatoria }  from '../pages/profesor/CrearConvocatoria'
-import { ConvocatoriaDetalle } from '../pages/profesor/ConvocatoriaDetalle'
+import ConvocatoriaDetalle from '../pages/profesor/ConvocatoriaDetalle'
 import CalendarioProfesor   from '../pages/profesor/CalendarioProfesor'
 
 // Páginas Nadador
@@ -116,9 +116,6 @@ const AppRouter = () => {
         <Route path="calendario"                  element={<CalendarioProfesor />} />      {/* ← relativo */}
       </Route>
 
-      {/* ── ADMIN ───────────────────────────────────── */}
-      {/* FIX: AdminLayout dentro de ProtectedRouter directamente,
-          no como Route separado envolviendo otro Route */}
       <Route
         path='/admin'
         element={
