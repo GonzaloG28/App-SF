@@ -7,7 +7,7 @@ import { useNotificaciones } from "../hooks/useNotificaciones"
 import NotificacionesPanel from "../components/NotificacionesPanel"
 import {
   LayoutDashboard, Trophy, User, LogOut,
-  Menu, X, Waves, ChevronRight, ClipboardList, Calendar
+  Menu, X, Waves, ChevronRight, ClipboardList, Calendar, MessageSquare
 } from "lucide-react"
 
 export const PERFIL_QUERY_KEY = ["miPerfil"]
@@ -57,6 +57,7 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
           <NavItem to="/nadador/competencias"   label="Competencias"   Icon={Trophy}          isActive={isActive} />
           <NavItem to="/nadador/calendario"     label="Calendario"     Icon={Calendar}        isActive={isActive} />
           <NavItem to="/nadador/perfil"         label="Ficha Técnica"  Icon={User}            isActive={isActive} />
+          <NavItem to="/nadador/chat" label="Mensajería" Icon={MessageSquare} isActive={isActive} />
         </nav>
       </div>
       <div className="mt-auto pt-6 px-1 space-y-3">

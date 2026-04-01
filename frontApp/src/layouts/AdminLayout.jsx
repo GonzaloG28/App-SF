@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "../context/AuthContext"
 import {
   LayoutDashboard, Users, UserCheck, Calendar,
-  LogOut, Menu, X, Waves, ChevronRight, Shield
+  LogOut, Menu, X, Waves, ChevronRight, Shield, MessageSquare
 } from "lucide-react"
 
 const NavItem = ({ to, label, Icon, isActive, exact = false }) => {
@@ -105,6 +105,21 @@ const AdminLayout = () => {
               <span className="font-bold tracking-tight text-sm">Rama Formativa</span>
             </div>
             {location.pathname.startsWith("/admin/formativos") && <ChevronRight size={14} className="opacity-70" />}
+          </Link>
+
+          <Link
+            to="/admin/chat"
+            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
+              location.pathname.startsWith("/admin/chat")
+                ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
+                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <MessageSquare size={19} strokeWidth={location.pathname.startsWith("/admin/nadadores") ? 2.5 : 2} />
+              <span className="font-bold tracking-tight text-sm">Chat</span>
+            </div>
+            {location.pathname.startsWith("/admin/chat") && <ChevronRight size={14} className="opacity-70" />}
           </Link>
 
           <Link
