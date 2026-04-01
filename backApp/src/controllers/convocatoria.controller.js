@@ -20,6 +20,29 @@ export const crearConvocatoria = async (req, res) => {
       creadoPor: req.user._id
     })
 
+    for (const nadadorId of (nadadores || [])) {
+   const nadador = await Nadador.findById(nadadorId).populate("user", "_id nombre")
+   if (nadador?.user?._id) {
+     await crearNotificacion({
+       destinatario: nadador.user._id,
+       tipo:    "convocatoria_publicada",
+       titulo:  "Fuiste convocado",
+       mensaje: `Has sido convocado para "${nombre}" en ${lugar}`,
+       metadata: { entidad: nueva._id, nadadorNombre: nadador.user.nombre }
+     })
+    }
+  }
+  const admins = await User.find({ rol: "admin" }).select("_id")
+  for (const admin of admins) {
+    await crearNotificacion({
+      destinatario: admin._id,
+      tipo:    "convocatoria_admin",
+      titulo:  "Nueva convocatoria publicada",
+      mensaje: `${req.user.nombre} publicó la convocatoria "${nombre}" para ${lugar}`,
+      metadata: { entidad: nueva._id }
+    })
+  }
+
     res.status(201).json(nueva)
   } catch (error) {
     const isDev = process.env.NODE_ENV === "development"

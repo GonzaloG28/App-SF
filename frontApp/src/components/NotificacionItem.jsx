@@ -1,4 +1,4 @@
-import { Activity, Trophy, Dumbbell, CheckCircle2 } from "lucide-react"
+import { Activity, Trophy, Dumbbell, CheckCircle2, Calendar, UserPlus, MessageSquare } from "lucide-react"
 
 // Mapa de tipo → icono y color
 const TIPO_CONFIG = {
@@ -7,6 +7,11 @@ const TIPO_CONFIG = {
     color: "text-blue-600",
     bg:    "bg-blue-50"
   },
+  mensaje_recibido: {
+   Icon:  MessageSquare,  // import desde lucide-react
+   color: "text-purple-600",
+   bg:    "bg-purple-50"
+ },
   entrenamiento_completado: {
     Icon:  CheckCircle2,
     color: "text-green-600",
@@ -21,7 +26,22 @@ const TIPO_CONFIG = {
     Icon:  Activity,
     color: "text-blue-600",
     bg:    "bg-blue-50"
-  }
+  },
+  convocatoria_publicada: {
+   Icon:  Calendar,
+   color: "text-blue-600",
+   bg:    "bg-blue-50"
+ },
+ convocatoria_admin: {
+   Icon:  Calendar,
+   color: "text-orange-500",
+   bg:    "bg-orange-50"
+ },
+ nadador_creado: {
+   Icon:  UserPlus,  
+   color: "text-green-600",
+   bg:    "bg-green-50"
+ }
 }
 
 const NotificacionItem = ({ notificacion }) => {

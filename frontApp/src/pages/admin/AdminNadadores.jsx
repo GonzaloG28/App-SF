@@ -1,9 +1,9 @@
 import { useState }  from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import api           from "../../api/axios"   // ← import faltante
+import api           from "../../api/axios"
 import {
-  Search, CheckCircle2, XCircle,
-  Loader2, RefreshCcw, Filter
+  Search, CheckCircle2, XCircle, Loader2,
+  RefreshCcw, Filter, GraduationCap, Trophy
 } from "lucide-react"
 
 export const AdminNadadores = () => {
@@ -40,7 +40,6 @@ export const AdminNadadores = () => {
 
   return (
     <div className="space-y-5 pb-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">Gestión de Pagos</p>
@@ -51,7 +50,6 @@ export const AdminNadadores = () => {
             </span>
           </h1>
         </div>
-        {/* Toggle tipo */}
         <div className="flex gap-2">
           {["competitivo", "formativo"].map(t => (
             <button key={t} onClick={() => setTipo(t)}
@@ -90,7 +88,6 @@ export const AdminNadadores = () => {
         </div>
       </div>
 
-      {/* Lista */}
       {isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="animate-spin text-blue-600" size={32} />
@@ -101,17 +98,15 @@ export const AdminNadadores = () => {
             <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
               <p className="text-slate-400 font-black text-[11px] uppercase tracking-widest">Sin resultados</p>
             </div>
-          ) : (
-            filtrados.map(n => (
-              <NadadorPagoCard
-                key={n._id}
-                nadador={n}
-                tipo={tipo}
-                onToggle={() => toggleMutation.mutate(n._id)}
-                isToggling={toggleMutation.isPending && toggleMutation.variables === n._id}
-              />
-            ))
-          )}
+          ) : filtrados.map(n => (
+            <NadadorPagoCard
+              key={n._id}
+              nadador={n}
+              tipo={tipo}
+              onToggle={() => toggleMutation.mutate(n._id)}
+              isToggling={toggleMutation.isPending}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -124,60 +119,75 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
     : `${nadador.user?.nombre} ${nadador.apellido}`
   const inicial   = nombre.charAt(0).toUpperCase()
   const pagado    = nadador.pagoAlDia
-  const categoria = tipo === "formativo" ? "Formativo" : (nadador.categoria || "S/C")
+  // FIX: distinguir tipo real — usar campo rama si existe, sino el tipo del filtro
+  const ramaReal  = nadador.rama || tipo
+  const esFormativo = ramaReal === "formativo"
+  const categoria = esFormativo ? "Formativo" : (nadador.categoria || "S/C")
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-4 hover:shadow-md transition-all">
-      {/* Avatar */}
-      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-green-500 flex items-center justify-center text-white font-black text-base italic shrink-0">
-        {inicial}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-black text-slate-900 uppercase italic tracking-tight text-sm truncate">{nombre}</p>
-          <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded uppercase tracking-widest shrink-0">
-            {categoria}
-          </span>
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-all">
+      <div className="flex items-center gap-3">
+        {/* Avatar */}
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white font-black text-base italic shrink-0 ${
+          esFormativo
+            ? "bg-gradient-to-br from-green-500 to-blue-500"
+            : "bg-gradient-to-br from-blue-600 to-green-500"
+        }`}>
+          {inicial}
         </div>
-        {nadador.fechaUltimoPago ? (
-          <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-            Último pago: {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
-              day: "2-digit", month: "short", year: "numeric"
-            })}
-          </p>
-        ) : (
-          <p className="text-[10px] text-slate-300 font-bold mt-0.5">Sin pagos registrados</p>
-        )}
-      </div>
 
-      {/* Badge estado — oculto en mobile muy pequeño */}
-      <div className={`shrink-0 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-1.5 ${
-        pagado
-          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-          : "bg-orange-50 text-orange-700 border-orange-100"
-      }`}>
-        {pagado ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-        {pagado ? "Al día" : "Pendiente"}
-      </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <p className="font-black text-slate-900 uppercase italic tracking-tight text-sm truncate">{nombre}</p>
+            {/* Badge tipo — siempre visible */}
+            <span className={`flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shrink-0 border ${
+              esFormativo
+                ? "bg-green-50 text-green-700 border-green-100"
+                : "bg-blue-50 text-blue-700 border-blue-100"
+            }`}>
+              {esFormativo ? <GraduationCap size={9} /> : <Trophy size={9} />}
+              {categoria}
+            </span>
+          </div>
 
-      {/* Toggle pago */}
-      <button
-        onClick={onToggle}
-        disabled={isToggling}
-        className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${
-          pagado
-            ? "bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
-            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-        }`}
-        title={pagado ? "Marcar como pendiente" : "Confirmar pago"}
-      >
-        {isToggling
-          ? <RefreshCcw size={16} className="animate-spin" />
-          : pagado ? <XCircle size={18} /> : <CheckCircle2 size={18} />
-        }
-      </button>
+          {/* Badge pago — SIEMPRE visible en mobile y desktop */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase border ${
+              pagado
+                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                : "bg-orange-50 text-orange-600 border-orange-100"
+            }`}>
+              {pagado ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+              {pagado ? "Al día" : "Pago pendiente"}
+            </span>
+            {nadador.fechaUltimoPago && (
+              <span className="text-[10px] text-slate-400 font-bold">
+                {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
+                  day: "2-digit", month: "short", year: "numeric"
+                })}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Toggle pago */}
+        <button
+          onClick={onToggle}
+          disabled={isToggling}
+          className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${
+            pagado
+              ? "bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
+              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+          }`}
+          title={pagado ? "Marcar como pendiente" : "Confirmar pago"}
+        >
+          {isToggling
+            ? <RefreshCcw size={16} className="animate-spin" />
+            : pagado ? <XCircle size={18} /> : <CheckCircle2 size={18} />
+          }
+        </button>
+      </div>
     </div>
   )
 }

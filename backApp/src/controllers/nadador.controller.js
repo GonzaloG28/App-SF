@@ -35,6 +35,16 @@ export const crearNadador = async (req, res) => {
     }], { session })
 
     await session.commitTransaction(); session.endSession()
+    const admins = await User.find({ rol: "admin" }).select("_id")
+      for (const admin of admins) {
+        await crearNotificacion({
+          destinatario: admin._id,
+          tipo:    "nadador_creado",
+          titulo:  "Nuevo nadador registrado",
+          mensaje: `${nombre} ${apellido} fue registrado como nadador ${rama === "formativo" ? "formativo" : "competitivo"}`,
+          metadata: { nadadorNombre: `${nombre} ${apellido}` }
+        })
+      }
     res.status(201).json({ message: "Nadador creado correctamente" })
 
   } catch (error) {

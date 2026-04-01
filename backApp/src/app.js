@@ -14,6 +14,7 @@ import pruebaRoutes       from "./routes/prueba.routes.js"
 import entrenamientoRoutes from "./routes/entrenamiento.routes.js"
 import notificacionRoutes from "./routes/notificacion.routes.js"
 import adminRoutes        from "./routes/admin.routes.js"
+import mensajeRoutes from "./routes/mensaje.routes.js"
 import { formativoRoutes }    from "./routes/formativo.routes.js"
 import { convocatoriaRoutes } from "./routes/convocatoria.routes.js"
 
@@ -60,6 +61,7 @@ app.use("/api/notificaciones",notificacionRoutes)
 app.use("/api/admin",         adminRoutes)
 app.use("/api/formativos",    formativoRoutes)
 app.use("/api/convocatorias", convocatoriaRoutes)
+app.use("/api/mensajes", mensajeRoutes)
 
 app.get("/", (req, res) => res.json({ status: "ok", message: "API Club Natacion" }))
 

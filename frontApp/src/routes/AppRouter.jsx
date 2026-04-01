@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Home from '../pages/Home'
 import Login from '../pages/auth/Login'
 import ProtectedRouter from './ProtectedRoute'
+import Chat from '../pages/Chat'
 
 // Layouts
 import ProfesorLayout from '../layouts/ProfesorLayout'
@@ -88,6 +89,7 @@ const AppRouter = () => {
         <Route path="competencias"  element={<MisCompetencias />} />
         <Route path="calendario"    element={<CalendarioNadador />} />  {/* ← path relativo, sin /nadador/ */}
         <Route path="perfil"        element={<MiPerfil />} />
+        <Route path="chat" element={<Chat />} />
       </Route>
 
       {/* ── PROFESOR ────────────────────────────────── */}
@@ -114,6 +116,7 @@ const AppRouter = () => {
         <Route path="convocatoria/nueva"          element={<CrearConvocatoria />} />       {/* ← relativo */}
         <Route path="convocatoria/:id"            element={<ConvocatoriaDetalle />} />     {/* ← relativo */}
         <Route path="calendario"                  element={<CalendarioProfesor />} />      {/* ← relativo */}
+        <Route path="chat" element={<Chat />} />
       </Route>
 
       <Route
@@ -129,6 +132,7 @@ const AppRouter = () => {
         <Route path="formativos"   element={<AdminFormativos />} />
         <Route path="convocatorias"          element={<AdminConvocatorias />} />
         <Route path="convocatorias/:id"      element={<ConvocatoriaDetalle />} />
+        <Route path="chat" element={<Chat />} />
       </Route>
 
       {/* COMODÍN */}
