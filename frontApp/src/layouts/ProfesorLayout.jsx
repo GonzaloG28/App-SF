@@ -39,15 +39,15 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
           <Waves size={20} className="text-white" />
         </div>
         <div>
-          <p className="text-green-600 text-[11px] font-black uppercase tracking-[0.3em] leading-none mb-0.5">Admin</p>
+          <p className="text-green-600 text-[11px] font-black uppercase tracking-[0.3em] leading-none mb-0.5">Coach</p>
           <h2 className="text-xl font-black tracking-tighter text-slate-900">App<span className="text-blue-600 italic">ÑSF</span></h2>
         </div>
       </div>
       <nav className="flex flex-col gap-1">
-        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Métricas & Gestión</p>
+        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Panel Profesor</p>
         <NavItem to="/profesor"            label="Dashboard"   Icon={LayoutDashboard} isActive={isActive} />
-        <NavItem to="/profesor/calendario" label="Calendario"  Icon={Calendar}        isActive={isActive} />
         <NavItem to="/profesor/nadadores"  label="Nadadores"   Icon={Users}           isActive={isActive} />
+        <NavItem to="/profesor/chat" label="Mensajería" Icon={MessageSquare} isActive={isActive} />
         <div className="flex flex-col">
           <button
             onClick={() => setShowEntrenamientos(!showEntrenamientos)}
@@ -70,7 +70,7 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
             </div>
           )}
         </div>
-        <NavItem to="/profesor/chat" label="Mensajería" Icon={MessageSquare} isActive={isActive} />
+        <NavItem to="/profesor/calendario" label="Calendario"  Icon={Calendar}        isActive={isActive} />
       </nav>
     </div>
     <div className="mt-auto pt-6 px-1 space-y-3">
@@ -150,7 +150,7 @@ const ProfesorLayout = () => {
           <div className="flex items-center gap-4">
             <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl"><Menu size={20} /></button>
             <div className="hidden sm:block">
-              <span className="text-[11px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">High Performance</span>
+              <span className="text-[11px] font-black text-green-500 uppercase tracking-[0.3em] block mb-0.5 leading-none">Club ÑSF</span>
               <h1 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter">Panel de Control</h1>
             </div>
           </div>

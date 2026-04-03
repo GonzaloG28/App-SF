@@ -7,7 +7,7 @@ export const crearNadador = async (req, res) => {
   const session = await mongoose.startSession()
   session.startTransaction()
   try {
-    const { nombre, apellido, correo, fechaNacimiento, peso, altura, rut, pruebasEspecialidad } = req.body
+    const { nombre, apellido, correo, fechaNacimiento, peso, altura, rut, pruebasEspecialidad, rama } = req.body
 
     if (!nombre || !apellido || !correo || !fechaNacimiento || !rut) {
       await session.abortTransaction(); session.endSession()
