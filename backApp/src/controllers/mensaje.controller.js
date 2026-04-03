@@ -37,14 +37,14 @@ export const enviarMensaje = async (req, res) => {
       contenido: contenido.trim()
     })
 
-    // Notificación al receptor
-    await crearNotificacion({
-      destinatario: receptorId,
-      tipo:         "mensaje_recibido",
-      titulo:       "Nuevo mensaje",
-      mensaje:      `${req.user.nombre}: ${contenido.trim().slice(0, 60)}${contenido.length > 60 ? "..." : ""}`,
-      metadata:     { entidad: mensaje._id, nadadorNombre: req.user.nombre }
-    })
+    const emisor = await User.findById(req.user._id).select("nombre").lean()
+       await crearNotificacion({
+         destinatario: receptorId,
+         tipo:         "mensaje_recibido",
+         titulo:       "Nuevo mensaje",
+         mensaje:      `${emisor?.nombre || "Alguien"}: ${contenido.trim().slice(0, 60)}${contenido.length > 60 ? "..." : ""}`,
+         metadata:     { entidad: mensaje._id, nadadorNombre: emisor?.nombre || "" }
+       })
 
     res.status(201).json(mensaje)
   } catch (error) {
