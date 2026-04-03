@@ -206,14 +206,6 @@ const AdminConvocatorias = () => {
                 {expandido && (
                   <div className="px-4 pb-4">
                     <PanelConvocados convocatoriaId={c._id} />
-
-                    {/* Botón eliminar al final del panel */}
-                    <button
-                      onClick={() => { if (confirm(`¿Eliminar "${c.nombre}"?`)) eliminarMutation.mutate(c._id) }}
-                      className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
-                    >
-                      <Trash2 size={14} /> Eliminar convocatoria
-                    </button>
                   </div>
                 )}
               </div>

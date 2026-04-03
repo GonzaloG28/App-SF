@@ -8,33 +8,23 @@ import bcrypt               from "bcrypt"
 export const getStats = async (req, res) => {
   try {
     const [
-      totalCompetitivos,
-      pagadosCompetitivos,
-      totalFormativos,
-      pagadosFormativos,
+      totalCompetitivos, pagadosCompetitivos,
+      totalFormativos, pagadosFormativos,
       totalConvocatorias
     ] = await Promise.all([
-      Nadador.countDocuments(),
-      Nadador.countDocuments({ pagoAlDia: true }),
-      NadadorFormativo.countDocuments(),
-      NadadorFormativo.countDocuments({ pagoAlDia: true }),
+      Nadador.countDocuments({ $or: [{ rama: "competitivo" }, { rama: { $exists: false } }] }),
+      Nadador.countDocuments({ pagoAlDia: true, $or: [{ rama: "competitivo" }, { rama: { $exists: false } }] }),
+      Nadador.countDocuments({ rama: "formativo" }),
+      Nadador.countDocuments({ rama: "formativo", pagoAlDia: true }),
       Convocatoria.countDocuments({ fechaFin: { $gte: new Date() } })
-    ])
+    ]);
 
     res.json({
-      competitivos: {
-        total:    totalCompetitivos,
-        pagados:  pagadosCompetitivos,
-        impagos:  totalCompetitivos - pagadosCompetitivos
-      },
-      formativos: {
-        total:    totalFormativos,
-        pagados:  pagadosFormativos,
-        impagos:  totalFormativos - pagadosFormativos
-      },
+      competitivos: { total: totalCompetitivos, pagados: pagadosCompetitivos, impagos: totalCompetitivos - pagadosCompetitivos },
+      formativos: { total: totalFormativos, pagados: pagadosFormativos, impagos: totalFormativos - pagadosFormativos },
       convocatoriasActivas: totalConvocatorias,
       totalMiembros: totalCompetitivos + totalFormativos
-    })
+    });
   } catch (error) {
     const isDev = process.env.NODE_ENV === "development"
     res.status(500).json({ message: "Error al obtener estadísticas", ...(isDev && { error: error.message }) })
@@ -46,52 +36,35 @@ export const getNadadoresAdmin = async (req, res) => {
   try {
     const { tipo = "competitivo", buscar, pago } = req.query;
 
-    if (tipo === "formativo") {
-      let query = {};
-      // Búsqueda directa en MongoDB (más eficiente que .filter)
-      if (buscar) {
-        query.$or = [
-          { nombre: { $regex: buscar, $options: "i" } },
-          { apellido: { $regex: buscar, $options: "i" } }
-        ];
-      }
-      if (pago === "si") query.pagoAlDia = true;
-      if (pago === "no") query.pagoAlDia = false;
-
-      const formativos = await NadadorFormativo.find(query)
-        .populate("profesor", "nombre")
-        .sort({ apellido: 1 })
-        .lean();
-
-      return res.json(formativos.map(n => ({ ...n, rama: "formativo", user: { nombre: n.nombre }, categoria: "Formativo"})));
-    }
-
-    // Lógica para Competitivos
-    let queryComp = {
-      $or: [{ rama: "competitivo" }, { rama: { $exists: false } }, { rama: null }]
+    // Filtro base unificado
+    let query = {
+      ...(tipo === "formativo" 
+        ? { rama: "formativo" } 
+        : { $or: [{ rama: "competitivo" }, { rama: { $exists: false } }] }
+      )
     };
-    
-    // El filtro de pago para competitivos se puede hacer directo en la query de Mongo
-    if (pago === "si") queryComp.pagoAlDia = true;
-    if (pago === "no") queryComp.pagoAlDia = false;
 
-    const nadadores = await Nadador.find(queryComp)
+    if (pago === "si") query.pagoAlDia = true;
+    if (pago === "no") query.pagoAlDia = false;
+
+    // NO usar .lean() para que 'categoria' (Virtual) se incluya en la respuesta
+    const nadadores = await Nadador.find(query)
       .populate("user", "nombre correo")
       .populate("profesor", "nombre")
-      .sort({ apellido: 1 })
-      .lean();
+      .sort({ apellido: 1 });
 
-    // Filtro manual solo para el nombre que está dentro del objeto "user"
     let filtrados = nadadores;
     if (buscar) {
       const b = buscar.toLowerCase();
-      filtrados = nadadores.filter(n => 
-        n.user?.nombre?.toLowerCase().includes(b) || 
-        n.apellido?.toLowerCase().includes(b)
-      );
+      filtrados = nadadores.filter(n => {
+        const nombreUser = n.user?.nombre?.toLowerCase() || n.nombre?.toLowerCase() || "";
+        const apellido = n.apellido?.toLowerCase() || "";
+        return nombreUser.includes(b) || apellido.includes(b);
+      });
     }
 
-    res.json(filtrados);
+    // Convertimos a JSON manualmente manteniendo los virtuals
+    res.json(filtrados.map(n => n.toJSON({ virtuals: true })));
   } catch (error) {
     const isDev = process.env.NODE_ENV === "development"
     res.status(500).json({ message: "Error al obtener nadadores", ...(isDev && { error: error.message }) })

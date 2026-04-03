@@ -22,9 +22,7 @@ export const AdminNadadores = () => {
   })
 
   const toggleMutation = useMutation({
-    mutationFn: (id) => api.patch(
-      tipo === "formativo" ? `/admin/pago-formativo/${id}` : `/admin/pago/${id}`
-    ),
+    mutationFn: (id) => api.patch(`/admin/pago/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(["adminNadadores"])
       queryClient.invalidateQueries(["adminStats"])
@@ -115,15 +113,16 @@ export const AdminNadadores = () => {
 }
 
 const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
-  const nombre    = tipo === "formativo"
-    ? `${nadador.nombre} ${nadador.apellido}`
-    : `${nadador.user?.nombre} ${nadador.apellido}`
-  const inicial   = nombre.charAt(0).toUpperCase()
-  const pagado    = nadador.pagoAlDia
-  // FIX: distinguir tipo real — usar campo rama si existe, sino el tipo del filtro
-  const ramaReal  = nadador.rama || tipo
-  const esFormativo = ramaReal === "formativo"
-  const categoria = esFormativo ? "Formativo" : (nadador.categoria || "S/C")
+  const nombreBase = nadador.user?.nombre || nadador.nombre || "Sin Nombre";
+  const nombre = `${nombreBase} ${nadador.apellido || ""}`.trim();
+  const inicial = nombre.charAt(0).toUpperCase();
+  
+  const pagado = nadador.pagoAlDia;
+  const ramaReal = nadador.rama || tipo;
+  const esFormativo = ramaReal === "formativo";
+  
+  // Ahora la categoría vendrá del backend gracias a toJSON({ virtuals: true })
+  const categoria = nadador.categoria || "S/C";
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-all">
@@ -141,7 +140,6 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <p className="font-black text-slate-900 uppercase italic tracking-tight text-sm truncate">{nombre}</p>
-            {/* Badge tipo — siempre visible */}
             <span className={`flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shrink-0 border ${
               esFormativo
                 ? "bg-green-50 text-green-700 border-green-100"
@@ -152,7 +150,7 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
             </span>
           </div>
 
-          {/* Badge pago — SIEMPRE visible en mobile y desktop */}
+          {/* Badge pago */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase border ${
               pagado

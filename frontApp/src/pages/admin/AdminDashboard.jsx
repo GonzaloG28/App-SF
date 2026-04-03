@@ -80,8 +80,7 @@ export const AdminDashboard = () => {
 
       {/* Acceso rápido */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <QuickLink to="/admin/nadadores"     icon={Users}     label="Gestionar Pagos Competitivos" />
-        <QuickLink to="/admin/formativos"    icon={UserCheck} label="Gestionar Pagos Formativos"   />
+        <QuickLink to="/admin/nadadores"     icon={Users}     label="Gestionar Pagos Nadadores" />
         <QuickLink to="/admin/convocatorias" icon={Calendar}  label="Ver Convocatorias Activas"    />
       </div>
     </div>
