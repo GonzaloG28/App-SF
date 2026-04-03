@@ -63,7 +63,7 @@ export const getNadadoresAdmin = async (req, res) => {
         .sort({ apellido: 1 })
         .lean();
 
-      return res.json(formativos.map(n => ({ ...n, rama: "formativo" })));
+      return res.json(formativos.map(n => ({ ...n, rama: "formativo", user: { nombre: n.nombre }, categoria: "Formativo"})));
     }
 
     // Lógica para Competitivos
