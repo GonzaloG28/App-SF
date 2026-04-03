@@ -29,7 +29,7 @@ const DashboardProfesor = () => {
   // ── Entrenamientos ─────────────────────────────────────────────────
   const { data: entrenamientos = [], isLoading: loadingEnt } = useQuery({
     queryKey: ["entrenamientos-dashboard"],
-    queryFn:  () => api.get("/entrenamiento").then(r => r.data),
+    queryFn:  () => api.get("/entrenamiento/reporte-profesor").then(r => r.data),
     staleTime: 1000 * 60 * 5,
   })
 
@@ -104,9 +104,9 @@ const DashboardProfesor = () => {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 border-b border-slate-100 pb-6">
         <div>
-          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">Club ÑSF</p>
+          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">High Performance Center</p>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic uppercase">
-            Panel de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Control</span>
+            Panel de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Gestión</span>
           </h1>
         </div>
         <Link
@@ -478,3 +478,4 @@ const DistRow = ({ label, value, total, icon: Icon }) => {
 }
 
 export default DashboardProfesor
+

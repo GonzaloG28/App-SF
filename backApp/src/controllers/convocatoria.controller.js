@@ -7,13 +7,12 @@ export const crearConvocatoria = async (req, res) => {
   try {
     const { nombre, descripcion, lugar, fechaInicio, fechaFin, nadadores } = req.body
 
+    // 1. Validaciones iniciales
     if (!nombre || !lugar || !fechaInicio || !fechaFin) {
       return res.status(400).json({ message: "Faltan campos requeridos" })
     }
-    if (new Date(fechaFin) < new Date(fechaInicio)) {
-      return res.status(400).json({ message: "La fecha fin debe ser posterior a la fecha inicio" })
-    }
 
+    // 2. Crear la convocatoria primero
     const nueva = await Convocatoria.create({
       nombre, descripcion: descripcion || "", lugar,
       fechaInicio, fechaFin,
@@ -21,30 +20,48 @@ export const crearConvocatoria = async (req, res) => {
       creadoPor: req.user._id
     })
 
-    for (const nadadorId of (nadadores || [])) {
-   const nadador = await Nadador.findById(nadadorId).populate("user", "_id nombre")
-   if (nadador?.user?._id) {
-     await crearNotificacion({
-       destinatario: nadador.user._id,
-       tipo:    "convocatoria_publicada",
-       titulo:  "Fuiste convocado",
-       mensaje: `Has sido convocado para "${nombre}" en ${lugar}`,
-       metadata: { entidad: nueva._id, nadadorNombre: nadador.user.nombre }
-     })
-    }
-  }
-  const admins = await User.find({ rol: "admin" }).select("_id")
-  for (const admin of admins) {
-    await crearNotificacion({
-      destinatario: admin._id,
-      tipo:    "convocatoria_admin",
-      titulo:  "Nueva convocatoria publicada",
-      mensaje: `${req.user.nombre} publicó la convocatoria "${nombre}" para ${lugar}`,
-      metadata: { entidad: nueva._id }
-    })
-  }
+    // 3. Notificaciones (en paralelo para evitar timeout)
+    // Ejecutamos esto sin bloquear la respuesta principal si es necesario, 
+    // o usamos Promise.all para que sea rápido.
+    const enviarNotificaciones = async () => {
+      try {
+        // Notificaciones a nadadores
+        const promesasNadadores = (nadadores || []).map(async (id) => {
+          const n = await Nadador.findById(id).populate("user", "_id nombre")
+          if (n?.user?._id) {
+            return crearNotificacion({
+              destinatario: n.user._id,
+              tipo: "convocatoria_publicada",
+              titulo: "Fuiste convocado",
+              mensaje: `Has sido convocado para "${nombre}" en ${lugar}`,
+              metadata: { entidad: nueva._id, nadadorNombre: n.user.nombre }
+            })
+          }
+        })
 
-    res.status(201).json(nueva)
+        // Notificaciones a admins
+        const admins = await User.find({ rol: "admin" }).select("_id")
+        const promesasAdmins = admins.map(admin => 
+          crearNotificacion({
+            destinatario: admin._id,
+            tipo: "convocatoria_admin",
+            titulo: "Nueva convocatoria publicada",
+            mensaje: `${req.user.nombre} publicó la convocatoria "${nombre}"`,
+            metadata: { entidad: nueva._id }
+          })
+        )
+
+        await Promise.all([...promesasNadadores, ...promesasAdmins])
+      } catch (err) {
+        console.error("Error enviando notificaciones:", err)
+      }
+    }
+
+    // Ejecutar notificaciones
+    enviarNotificaciones() 
+
+    // 4. RESPUESTA INMEDIATA para evitar que el profesor clickee de nuevo
+    return res.status(201).json(nueva)
   } catch (error) {
     const isDev = process.env.NODE_ENV === "development"
     res.status(500).json({ message: "Error al crear convocatoria", ...(isDev && { error: error.message }) })

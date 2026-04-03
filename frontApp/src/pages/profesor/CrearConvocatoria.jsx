@@ -53,6 +53,10 @@ export const CrearConvocatoria = () => {
   const [seleccionados, setSeleccionados] = useState([])
   const [buscar,        setBuscar]        = useState("")
   const [errors,        setErrors]        = useState({})
+  const [filtroNivel, setFiltroNivel] = useState("todos")
+  const [filtroCat, setFiltroCat] = useState("todos")
+
+
 
   const { data: nadadores = [], isLoading } = useQuery({
     queryKey: ["nadadores-convocatoria"],
@@ -60,14 +64,23 @@ export const CrearConvocatoria = () => {
     staleTime: 1000 * 60 * 5,
   })
 
+  const categoriasUnicas = useMemo(() => {
+  const cats = nadadores.map(n => n.categoria).filter(Boolean)
+  return ["todos", ...new Set(cats)]
+}, [nadadores])
+
   const filtrados = useMemo(() => {
-    if (!buscar) return nadadores
-    const b = buscar.toLowerCase()
-    return nadadores.filter(n =>
-      `${n.user?.nombre} ${n.apellido}`.toLowerCase().includes(b) ||
-      n.categoria?.toLowerCase().includes(b)
-    )
-  }, [nadadores, buscar])
+  return nadadores.filter(n => {
+    const coincideBusqueda = !buscar || 
+      `${n.user?.nombre} ${n.apellido}`.toLowerCase().includes(buscar.toLowerCase())
+    
+    // Asumiendo que el modelo Nadador tiene un campo 'nivel' o 'tipo'
+    const coincideNivel = filtroNivel === "todos" || n.rama === filtroNivel
+    const coincideCat = filtroCat === "todos" || n.categoria === filtroCat
+
+    return coincideBusqueda && coincideNivel && coincideCat
+  })
+}, [nadadores, buscar, filtroNivel, filtroCat])
 
   const toggleNadador = useCallback((id) => {
     setSeleccionados(prev =>
@@ -82,12 +95,17 @@ export const CrearConvocatoria = () => {
   }
 
   const mutation = useMutation({
-    mutationFn: (data) => api.post("/convocatorias", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["convocatorias"])
-      navigate(-1)
-    }
-  })
+  mutationFn: (data) => api.post("/convocatorias", data),
+  onSuccess: () => {
+    queryClient.invalidateQueries(["convocatorias"])
+    // Usar un alert o un toast antes de navegar
+    alert("¡Convocatoria creada con éxito!") 
+    navigate("/convocatorias") // O a la lista
+  },
+  onError: (error) => {
+    alert("Error al crear: " + (error.response?.data?.message || "Error del servidor"))
+  }
+})
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -252,6 +270,30 @@ export const CrearConvocatoria = () => {
               placeholder="Buscar nadador..."
               className="w-full pl-9 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-[11px] font-bold outline-none focus:bg-white/10 transition-all placeholder:text-slate-500 uppercase"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <select 
+              value={filtroNivel} 
+              onChange={e => setFiltroNivel(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase p-2 outline-none"
+            >
+              <option value="todos" className="text-slate-900">Todos los Niveles</option>
+              <option value="formativo" className="text-slate-900">Formativo</option>
+              <option value="competitivo" className="text-slate-900">Competitivo</option>
+            </select>
+
+            <select 
+              value={filtroCat} 
+              onChange={e => setFiltroCat(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase p-2 outline-none"
+            >
+              {categoriasUnicas.map(cat => (
+                <option key={cat} value={cat} className="text-slate-900">
+                  {cat === "todos" ? "Todas las Categorías" : cat}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button type="button" onClick={seleccionarTodos}

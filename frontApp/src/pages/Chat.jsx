@@ -26,7 +26,7 @@ const RolBadge = ({ rol }) => {
 }
 
 // Inicial de avatar
-const Avatar = ({ nombre, rol, size = "md" }) => {
+const Avatar = ({ nombre, apellido, rol, size = "md" }) => {
   const colors = {
     profesor: "from-blue-600 to-blue-800",
     admin:    "from-orange-500 to-orange-700",
@@ -116,7 +116,7 @@ const Conversacion = ({ contacto, onVolver, miId, miNombre }) => {
         <Avatar nombre={contacto.nombre} rol={contacto.rol} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-black text-slate-900 uppercase italic text-sm truncate">{contacto.nombre}{contacto.nadador?.apellido}</p>
+            <p className="font-black text-slate-900 uppercase italic text-sm truncate">{contacto.nombre} {contacto.apellido}</p>
             <RolBadge rol={contacto.rol} />
           </div>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{contacto.correo}</p>
@@ -198,9 +198,10 @@ const ListaContactos = ({ contactoActivo, onSeleccionar }) => {
     refetchInterval: 10000,
   })
 
-  const filtrados = contactos.filter(c =>
-    !buscar || c.nombre.toLowerCase().includes(buscar.toLowerCase())
-  )
+  const filtrados = contactos.filter(c => {
+    const nombreCompleto = `${c.nombre} ${c.apellido || ""}`.toLowerCase()
+    return !buscar || nombreCompleto.includes(buscar.toLowerCase())
+  })
 
   return (
     <div className="flex flex-col h-full">
@@ -247,7 +248,7 @@ const ListaContactos = ({ contactoActivo, onSeleccionar }) => {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <p className={`text-[11px] font-black uppercase italic truncate ${c.noLeidos > 0 ? "text-slate-900" : "text-slate-700"}`}>
-                    {c.nombre}
+                    {c.nombre} {c.apellido}
                   </p>
                   <RolBadge rol={c.rol} />
                 </div>
