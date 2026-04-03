@@ -4,6 +4,8 @@ import User from "../models/User.js"
 import Nadador from "../models/Nadadores.js"
 import { crearNotificacion } from "./notificacion.controller.js"
 
+
+// Crear perfil nadador 
 export const crearNadador = async (req, res) => {
   const session = await mongoose.startSession()
   session.startTransaction()
@@ -56,6 +58,9 @@ export const crearNadador = async (req, res) => {
   }
 }
 
+
+// Obtener perfil nadador 
+
 export const obtenerMiPerfil = async (req, res) => {
   try {
     const nadador = await Nadador.findOne({ user: req.user._id })
@@ -70,6 +75,7 @@ export const obtenerMiPerfil = async (req, res) => {
   }
 }
 
+// Actualizar perfil nadador Profesor
 export const actualizarNadadorProfesor = async (req, res) => {
   try {
     const { id } = req.params
@@ -107,6 +113,8 @@ export const actualizarNadadorProfesor = async (req, res) => {
   }
 }
 
+
+// Actualizar perfil nadador Nadador
 export const actualizarMiPerfil = async (req, res) => {
   try {
     const userId = req.user._id
@@ -142,7 +150,7 @@ export const actualizarMiPerfil = async (req, res) => {
           }
         }
 
-        datosUser.correo          = req.body.correo
+        datosUser.correo = req.body.correo
         datosUser.lastEmailChange = new Date()
       }
     }
@@ -162,21 +170,43 @@ export const actualizarMiPerfil = async (req, res) => {
   }
 }
 
+
+
 export const obtenerNadadores = async (req, res) => {
   try {
-    const { categoria, nombre } = req.query
-    const nadadores = await Nadador.find().populate("user", "nombre apellido correo rol rama")
+    // 1. Extraemos 'rama' de la query junto a los otros filtros
+    const { categoria, nombre, rama } = req.query;
+
+    // 2. Traemos todos los nadadores (necesario para filtrar por 'categoria' 
+    // ya que es un Virtual de Mongoose y no se puede filtrar directamente en el .find)
+    const nadadores = await Nadador.find()
+      .populate("user", "nombre correo rol"); // 'apellido' y 'rama' suelen estar en el modelo Nadador, no en User
+
     const filtrados = nadadores.filter(n => {
-      const coincideCategoria = categoria ? n.categoria === categoria : true
-      const coincideNombre    = nombre    ? n.user.nombre.toLowerCase().includes(nombre.toLowerCase()) : true
-      return coincideCategoria && coincideNombre
-    })
-    res.status(200).json(filtrados)
+      // Filtro por Categoría (Virtual: Infantil, JA, JB, Mayores)
+      const coincideCategoria = categoria ? n.categoria === categoria : true;
+      
+      // Filtro por Rama (competitivo / formativo)
+      const coincideRama = rama ? n.rama === rama : true;
+
+      // Filtro por Nombre o Apellido (incluimos ambos para mejor UX)
+      const busqueda = nombre ? nombre.toLowerCase() : "";
+      const nombreCompleto = `${n.user?.nombre} ${n.apellido}`.toLowerCase();
+      const coincideNombre = nombre ? nombreCompleto.includes(busqueda) : true;
+
+      // Solo retorna si cumple las TRES condiciones
+      return coincideCategoria && coincideNombre && coincideRama;
+    });
+
+    res.status(200).json(filtrados);
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error con el servidor", ...(isDev && { error: error.message }) })
+    const isDev = process.env.NODE_ENV === "development";
+    res.status(500).json({ 
+      message: "Error con el servidor", 
+      ...(isDev && { error: error.message }) 
+    });
   }
-}
+};
 
 export const obtenerNadadorPorId = async (req, res) => {
   try {

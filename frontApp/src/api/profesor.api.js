@@ -1,6 +1,6 @@
 import api from "./axios";
 
-export const getNadadores = (params) => api.get("/nadadores", { params })
+export const getNadadores = (filters) => api.get("/nadadores", { params: filters })
 
 export const createNadador = (data) => api.post("/nadadores", data)
 

@@ -12,7 +12,8 @@ const Nadadores = () => {
   const queryClient = useQueryClient()
   const [categoria,  setCategoria]  = useState("")
   const [nombre,     setNombre]     = useState("")
-  const [filters,    setFilters]    = useState({ categoria: "", nombre: "" })
+  const [rama, setRama] = useState("")
+  const [filters,    setFilters]    = useState({ categoria: "", nombre: "", rama: "" })
   const [deletingId, setDeletingId] = useState(null)
 
   const { data = [], isLoading, isError, isFetching } = useQuery({
@@ -25,14 +26,16 @@ const Nadadores = () => {
   const stats = useMemo(() => data.reduce(
     (acc, n) => {
       acc.total++
+      if (n.rama === "formativo") acc.formativos++
+      else acc.competitivos++
+
       const cat = n.categoria || ""
-      if (n.rama === "formativo")        acc.formativos++
-      else if (cat.startsWith("J"))      acc.juveniles++
+      if (cat.startsWith("J"))      acc.juveniles++
       else if (cat === "Infantil")       acc.infantiles++
       else if (cat === "Mayores")        acc.mayores++
       return acc
     },
-    { total: 0, juveniles: 0, infantiles: 0, mayores: 0, formativos: 0 }
+    { total: 0, juveniles: 0, infantiles: 0, mayores: 0, formativos: 0, competitivos: 0 }
   ), [data])
 
   const deleteMutation = useMutation({
@@ -41,7 +44,7 @@ const Nadadores = () => {
     onError:    () => { setDeletingId(null); alert("Error al eliminar. Intenta de nuevo.") }
   })
 
-  const handleBuscar  = useCallback(() => setFilters({ categoria, nombre }), [categoria, nombre])
+  const handleBuscar  = useCallback(() => setFilters({ categoria, nombre, rama }), [categoria, nombre, rama])
   const handleDelete  = useCallback((id) => {
     if (window.confirm("¿Eliminar este atleta permanentemente?")) {
       setDeletingId(id)
@@ -72,13 +75,13 @@ const Nadadores = () => {
         </Link>
       </div>
 
-      {/* STATS — ahora incluye formativos */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatMiniCard label="Total Plantel" value={stats.total}      icon={Users}        color="blue"   />
-        <StatMiniCard label="Juveniles"     value={stats.juveniles}  icon={Target}       color="green"  />
         <StatMiniCard label="Infantiles"    value={stats.infantiles} icon={Award}        color="orange" />
+        <StatMiniCard label="Juveniles"     value={stats.juveniles}  icon={Target}       color="green"  />
         <StatMiniCard label="Mayores"       value={stats.mayores}    icon={User}         color="slate"  />
         <StatMiniCard label="Formativos"    value={stats.formativos} icon={GraduationCap} color="purple" />
+        <StatMiniCard label="Competitivos"    value={stats.competitivos} icon={Trophy} color="purple" />
       </div>
 
       {/* BUSCADOR */}
@@ -97,19 +100,31 @@ const Nadadores = () => {
 
         <div className="hidden md:block w-px h-10 bg-slate-100 self-center mx-2" />
 
-        <div className="flex items-center bg-slate-50/50 rounded-2xl px-6 py-2 md:py-0 border border-transparent focus-within:border-blue-100 transition-all">
-          <Filter size={16} className="text-blue-500 mr-3" />
+        <div className="flex items-center bg-slate-50/50 rounded-2xl px-4 border border-transparent focus-within:border-blue-100 transition-all">
+            <Trophy size={14} className="text-blue-500 mr-2" />
+              <select
+                value={rama}
+                onChange={(e) => setRama(e.target.value)}
+                className="bg-transparent border-none py-3 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest"
+              >
+                <option value="">Todas las Ramas</option>
+                <option value="competitivo">Competitivo</option>
+                <option value="formativo">Formativo</option>
+              </select>
+            </div>
+
+        <div className="flex items-center bg-slate-50/50 rounded-2xl px-4 border border-transparent focus-within:border-blue-100 transition-all">
+          <Filter size={14} className="text-green-500 mr-2" />
           <select
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
-            className="bg-transparent border-none py-3 text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest min-w-[140px]"
+            className="bg-transparent border-none py-3 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-widest"
           >
-            <option value="">Todas las Categorías</option>
+            <option value="">Todas las Edades</option>
             <option value="Infantil">Infantil</option>
             <option value="JA">Juvenil A</option>
             <option value="JB">Juvenil B</option>
             <option value="Mayores">Mayores</option>
-            <option value="formativos">Formativos</option>
           </select>
         </div>
 
