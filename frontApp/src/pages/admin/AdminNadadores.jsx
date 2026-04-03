@@ -152,7 +152,7 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
 
           {/* Badge pago */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase border ${
+            <span className={`flex items-center gap-1 text-[8px] font-black px-2.5 py-1 rounded-lg uppercase border ${
               pagado
                 ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                 : "bg-orange-50 text-orange-600 border-orange-100"
@@ -160,33 +160,46 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
               {pagado ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
               {pagado ? "Al día" : "Pago pendiente"}
             </span>
-            <p className="text-[10px] text-slate-400 font-bold">Ultimo pago:</p>
-            {nadador.fechaUltimoPago && (
-              <span className="text-[10px] text-slate-400 font-bold">
-                {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
-                  day: "2-digit", month: "short", year: "numeric"
-                })}
-              </span>
+            {pagado && nadador.fechaUltimoPago && (
+              <p className="text-[10px] text-slate-400 font-bold">
+                Ultimo pago:{" "}
+                <span className="font-black text-slate-500">
+                  {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                  })}
+                </span>
+              </p>
             )}
           </div>
         </div>
 
         {/* Toggle pago */}
-        <button
-          onClick={onToggle}
-          disabled={isToggling}
-          className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${
-            pagado
-              ? "bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
-              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-          }`}
-          title={pagado ? "Marcar como pendiente" : "Confirmar pago"}
-        >
-          {isToggling
-            ? <RefreshCcw size={16} className="animate-spin" />
-            : pagado ? <XCircle size={18} /> : <CheckCircle2 size={18} />
-          }
-        </button>
+        <div className="flex flex-col items-center gap-1">
+  {/* El texto cambia dinámicamente y el tamaño ahora es text-[10px] */}
+  <p className={`font-black uppercase italic tracking-tight text-[10px] truncate ${
+    pagado ? "text-emerald-600" : "text-slate-500"
+  }`}>
+    {pagado ? "Pago realizado" : "Confirmación de pago"}
+  </p>
+
+  <button
+    onClick={onToggle}
+    disabled={isToggling}
+    className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${
+      pagado
+        ? "bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
+        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+    }`}
+    title={pagado ? "Marcar como pendiente" : "Confirmar pago"}
+  >
+    {isToggling
+      ? <RefreshCcw size={16} className="animate-spin" />
+      : pagado ? <XCircle size={18} /> : <CheckCircle2 size={18} />
+    }
+  </button>
+</div>
       </div>
     </div>
   )

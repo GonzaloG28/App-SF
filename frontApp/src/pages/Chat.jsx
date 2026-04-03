@@ -116,7 +116,7 @@ const Conversacion = ({ contacto, onVolver, miId, miNombre }) => {
         <Avatar nombre={contacto.nombre} rol={contacto.rol} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-black text-slate-900 uppercase italic text-sm truncate">{contacto.nombre}</p>
+            <p className="font-black text-slate-900 uppercase italic text-sm truncate">{contacto.nombre}{contacto.nadador?.apellido}</p>
             <RolBadge rol={contacto.rol} />
           </div>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{contacto.correo}</p>
@@ -167,7 +167,7 @@ const Conversacion = ({ contacto, onVolver, miId, miNombre }) => {
             value={texto}
             onChange={e => setTexto(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Escribe un mensaje... (Enter para enviar)"
+            placeholder="Escribe un mensaje..."
             rows={1}
             className="flex-1 px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all resize-none"
             style={{ maxHeight: "120px" }}

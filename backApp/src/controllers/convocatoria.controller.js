@@ -1,5 +1,6 @@
 import { Convocatoria } from "../models/Convocatoria.js"
 import Nadador from "../models/Nadadores.js"
+import { crearNotificacion } from "./notificacion.controller.js"
 
 
 export const crearConvocatoria = async (req, res) => {

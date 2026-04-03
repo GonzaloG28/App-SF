@@ -36,7 +36,7 @@ export const AdminDashboard = () => {
       impagos: stats?.formativos?.impagos || 0,
       icon:    UserCheck,
       color:   "green",
-      to:      "/admin/formativos"
+      to:      "/admin/nadadores"
     }
   ]
 

@@ -6,7 +6,7 @@ import {
   ArrowLeft, Trophy, BarChart3, Calendar, Weight,
   Ruler, Fingerprint, Waves, ExternalLink,
   ShieldCheck, RefreshCcw, Target, Zap, AlertCircle,
-  GraduationCap, CheckCircle2, XCircle
+  GraduationCap, Mail, XCircle
 } from "lucide-react"
 
 const NadadorDetalle = () => {
@@ -104,11 +104,12 @@ const NadadorDetalle = () => {
             <div className="flex flex-wrap justify-center sm:justify-start gap-3 pt-3 border-t border-slate-100">
               <DataLabel icon={Fingerprint} label="RUT"  value={nadador.rut || "N/A"} />
               <DataLabel icon={Calendar}    label="Edad" value={`${nadador.edad || "--"} años`} />
+              <DataLabel icon={Mail}    label="Correo" value={`${nadador.user?.correo || "--"}`} />
             </div>
           </div>
 
           {/* Badge estado de pago */}
-          <div className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-[11px] font-black uppercase self-start sm:self-center ${
+          <div className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-[11px] font-black uppercase  sm:self-center ${
             nadador.pagoAlDia
               ? "bg-emerald-50 border-emerald-200 text-emerald-700"
               : "bg-orange-50 border-orange-200 text-orange-700"

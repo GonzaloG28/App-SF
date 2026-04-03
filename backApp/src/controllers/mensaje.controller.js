@@ -102,6 +102,14 @@ export const getContactos = async (req, res) => {
     // Para cada contacto calcular mensajes no leídos
     const contactosConNoLeidos = await Promise.all(
       contactos.map(async (c) => {
+
+        let apellido = "";
+        if (c.rol === "nadador") {
+          const perfilNadador = await Nadador.findOne({ user: c._id }).select("apellido").lean();
+          apellido = perfilNadador?.apellido || "";
+        }
+
+
         const noLeidos = await Mensaje.countDocuments({
           emisor:   c._id,
           receptor: _id,
@@ -115,7 +123,7 @@ export const getContactos = async (req, res) => {
           ]
         }).sort({ createdAt: -1 }).select("contenido createdAt")
 
-        return { ...c, noLeidos, ultimoMensaje }
+        return { ...c, apellido, noLeidos, ultimoMensaje }
       })
     )
 
