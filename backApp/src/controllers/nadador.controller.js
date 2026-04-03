@@ -2,6 +2,7 @@ import bcrypt from "bcrypt"
 import mongoose from "mongoose"
 import User from "../models/User.js"
 import Nadador from "../models/Nadadores.js"
+import { crearNotificacion } from "./notificacion.controller.js"
 
 export const crearNadador = async (req, res) => {
   const session = await mongoose.startSession()
@@ -164,7 +165,7 @@ export const actualizarMiPerfil = async (req, res) => {
 export const obtenerNadadores = async (req, res) => {
   try {
     const { categoria, nombre } = req.query
-    const nadadores = await Nadador.find().populate("user", "nombre apellido correo rol")
+    const nadadores = await Nadador.find().populate("user", "nombre apellido correo rol rama")
     const filtrados = nadadores.filter(n => {
       const coincideCategoria = categoria ? n.categoria === categoria : true
       const coincideNombre    = nombre    ? n.user.nombre.toLowerCase().includes(nombre.toLowerCase()) : true

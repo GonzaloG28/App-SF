@@ -109,7 +109,7 @@ const Nadadores = () => {
             <option value="JA">Juvenil A</option>
             <option value="JB">Juvenil B</option>
             <option value="Mayores">Mayores</option>
-            <option value="Formativo">Formativo</option>  {/* ← NUEVO */}
+            <option value="formativos">Formativos</option>
           </select>
         </div>
 
