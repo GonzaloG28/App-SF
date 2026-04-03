@@ -13,10 +13,11 @@ export const AdminNadadores = () => {
   const [tipo,       setTipo]       = useState("competitivo")
 
   const { data = [], isLoading, isFetching } = useQuery({
-    queryKey: ["adminNadadores", tipo, filtroPago],
+    queryKey: ["adminNadadores", tipo, filtroPago, buscar],
     queryFn:  () => api.get("/admin/nadadores", {
-      params: { tipo, pago: filtroPago || undefined }
+      params: { tipo, pago: filtroPago || undefined, buscar: buscar || undefined }
     }).then(r => r.data),
+    keepPreviusData: true,
     staleTime: 1000 * 60 * 2,
   })
 
@@ -161,6 +162,7 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
               {pagado ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
               {pagado ? "Al día" : "Pago pendiente"}
             </span>
+            <p className="text-[10px] text-slate-400 font-bold">Ultimo pago:</p>
             {nadador.fechaUltimoPago && (
               <span className="text-[10px] text-slate-400 font-bold">
                 {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {

@@ -44,52 +44,54 @@ export const getStats = async (req, res) => {
 // GET /api/admin/nadadores — todos los nadadores con estado de pago
 export const getNadadoresAdmin = async (req, res) => {
   try {
-    const { tipo = "competitivo", buscar, pago } = req.query
+    const { tipo = "competitivo", buscar, pago } = req.query;
 
     if (tipo === "formativo") {
-      // Formativos = NadadorFormativo (sin cuenta, gestionados por profesor)
-      let query = {}
-      if (buscar) query.$or = [
-        { nombre:   { $regex: buscar, $options: "i" } },
-        { apellido: { $regex: buscar, $options: "i" } }
-      ]
-      if (pago === "si")  query.pagoAlDia = true
-      if (pago === "no")  query.pagoAlDia = false
+      let query = {};
+      // Búsqueda directa en MongoDB (más eficiente que .filter)
+      if (buscar) {
+        query.$or = [
+          { nombre: { $regex: buscar, $options: "i" } },
+          { apellido: { $regex: buscar, $options: "i" } }
+        ];
+      }
+      if (pago === "si") query.pagoAlDia = true;
+      if (pago === "no") query.pagoAlDia = false;
 
       const formativos = await NadadorFormativo.find(query)
         .populate("profesor", "nombre")
         .sort({ apellido: 1 })
-        .lean()
+        .lean();
 
-      // Añadir rama explícita para que el frontend lo detecte
-      return res.json(formativos.map(n => ({ ...n, rama: "formativo" })))
+      return res.json(formativos.map(n => ({ ...n, rama: "formativo" })));
     }
 
-    // Competitivos = Nadador con cuenta, filtrar por rama="competitivo" (o sin rama definida)
-    const nadadores = await Nadador.find({
-      $or: [
-        { rama: "competitivo" },
-        { rama: { $exists: false } },  // retrocompatibilidad con docs sin el campo
-        { rama: null }
-      ]
-    })
-      .populate("user",    "nombre correo")
-      .populate("profesor","nombre")
+    // Lógica para Competitivos
+    let queryComp = {
+      $or: [{ rama: "competitivo" }, { rama: { $exists: false } }, { rama: null }]
+    };
+    
+    // El filtro de pago para competitivos se puede hacer directo en la query de Mongo
+    if (pago === "si") queryComp.pagoAlDia = true;
+    if (pago === "no") queryComp.pagoAlDia = false;
+
+    const nadadores = await Nadador.find(queryComp)
+      .populate("user", "nombre correo")
+      .populate("profesor", "nombre")
       .sort({ apellido: 1 })
-      .lean()
+      .lean();
 
-    let filtrados = nadadores
+    // Filtro manual solo para el nombre que está dentro del objeto "user"
+    let filtrados = nadadores;
     if (buscar) {
-      const b = buscar.toLowerCase()
-      filtrados = filtrados.filter(n =>
-        n.user?.nombre?.toLowerCase().includes(b) ||
+      const b = buscar.toLowerCase();
+      filtrados = nadadores.filter(n => 
+        n.user?.nombre?.toLowerCase().includes(b) || 
         n.apellido?.toLowerCase().includes(b)
-      )
+      );
     }
-    if (pago === "si") filtrados = filtrados.filter(n => n.pagoAlDia)
-    if (pago === "no") filtrados = filtrados.filter(n => !n.pagoAlDia)
 
-    res.json(filtrados)
+    res.json(filtrados);
   } catch (error) {
     const isDev = process.env.NODE_ENV === "development"
     res.status(500).json({ message: "Error al obtener nadadores", ...(isDev && { error: error.message }) })
