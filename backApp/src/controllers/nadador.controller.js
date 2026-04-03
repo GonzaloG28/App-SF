@@ -31,7 +31,8 @@ export const crearNadador = async (req, res) => {
     await Nadador.create([{
       user: nuevoUser[0]._id,
       apellido, fechaNacimiento, peso, altura, rut,
-      pruebasEspecialidad, profesor: req.user._id
+      pruebasEspecialidad, profesor: req.user._id,
+      rama:    rama || "competitivo"
     }], { session })
 
     await session.commitTransaction(); session.endSession()

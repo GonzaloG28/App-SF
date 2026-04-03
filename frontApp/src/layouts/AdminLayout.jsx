@@ -2,33 +2,9 @@ import { Link, Outlet, useLocation } from "react-router-dom"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "../context/AuthContext"
 import {
-  LayoutDashboard, Users, UserCheck, Calendar,
+  LayoutDashboard, Users, Calendar,
   LogOut, Menu, X, Waves, ChevronRight, Shield, MessageSquare
 } from "lucide-react"
-
-const NavItem = ({ to, label, Icon, isActive, exact = false }) => {
-  const active = exact
-    ? useLocation().pathname === to
-    : useLocation().pathname.startsWith(to)
-  return (
-    <Link
-      to={to}
-      className={`
-        group flex items-center justify-between px-4 py-3.5 rounded-2xl
-        transition-all duration-300 ease-out mb-1.5
-        ${active
-          ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-          : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"}
-      `}
-    >
-      <div className="flex items-center gap-3">
-        <Icon size={19} strokeWidth={active ? 2.5 : 2} className={active ? "" : "group-hover:scale-110 transition-transform"} />
-        <span className="font-bold tracking-tight text-sm">{label}</span>
-      </div>
-      {active && <ChevronRight size={14} className="opacity-70" />}
-    </Link>
-  )
-}
 
 const AdminLayout = () => {
   const { logout, user } = useAuth()
@@ -42,14 +18,17 @@ const AdminLayout = () => {
     return () => { document.body.style.overflow = "" }
   }, [isMobileMenuOpen])
 
-  const isActive = useCallback((path, exact = false) => {
-    if (exact) return location.pathname === path
-    return location.pathname.startsWith(path)
-  }, [location.pathname])
+  const nav = [
+    { to: "/admin",              label: "Dashboard",      Icon: LayoutDashboard, exact: true },
+    { to: "/admin/nadadores",    label: "Nadadores",      Icon: Users            },
+    { to: "/admin/chat",         label: "Mensajes",       Icon: MessageSquare    },
+    { to: "/admin/convocatorias",label: "Convocatorias",  Icon: Calendar         },
+  ]
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex-1">
+        {/* Logo */}
         <div className="mb-10 px-2 flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-green-500 rounded-xl flex items-center justify-center shadow-lg rotate-3 shrink-0">
             <Waves size={20} className="text-white" />
@@ -62,83 +41,30 @@ const AdminLayout = () => {
 
         <nav className="flex flex-col gap-1">
           <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Panel Admin</p>
-          <Link
-            to="/admin"
-            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
-              location.pathname === "/admin"
-                ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <LayoutDashboard size={19} strokeWidth={location.pathname === "/admin" ? 2.5 : 2} />
-              <span className="font-bold tracking-tight text-sm">Dashboard</span>
-            </div>
-            {location.pathname === "/admin" && <ChevronRight size={14} className="opacity-70" />}
-          </Link>
-
-          <Link
-            to="/admin/nadadores"
-            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
-              location.pathname.startsWith("/admin/nadadores")
-                ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Users size={19} strokeWidth={location.pathname.startsWith("/admin/nadadores") ? 2.5 : 2} />
-              <span className="font-bold tracking-tight text-sm">Nadadores</span>
-            </div>
-            {location.pathname.startsWith("/admin/nadadores") && <ChevronRight size={14} className="opacity-70" />}
-          </Link>
-
-          <Link
-            to="/admin/formativos"
-            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
-              location.pathname.startsWith("/admin/formativos")
-                ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <UserCheck size={19} strokeWidth={location.pathname.startsWith("/admin/formativos") ? 2.5 : 2} />
-              <span className="font-bold tracking-tight text-sm">Rama Formativa</span>
-            </div>
-            {location.pathname.startsWith("/admin/formativos") && <ChevronRight size={14} className="opacity-70" />}
-          </Link>
-
-          <Link
-            to="/admin/chat"
-            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
-              location.pathname.startsWith("/admin/chat")
-                ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <MessageSquare size={19} strokeWidth={location.pathname.startsWith("/admin/nadadores") ? 2.5 : 2} />
-              <span className="font-bold tracking-tight text-sm">Chat</span>
-            </div>
-            {location.pathname.startsWith("/admin/chat") && <ChevronRight size={14} className="opacity-70" />}
-          </Link>
-
-          <Link
-            to="/admin/convocatorias"
-            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
-              location.pathname.startsWith("/admin/convocatorias")
-                ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Calendar size={19} strokeWidth={location.pathname.startsWith("/admin/convocatorias") ? 2.5 : 2} />
-              <span className="font-bold tracking-tight text-sm">Convocatorias</span>
-            </div>
-            {location.pathname.startsWith("/admin/convocatorias") && <ChevronRight size={14} className="opacity-70" />}
-          </Link>
+          {nav.map(({ to, label, Icon, exact }) => {
+            const active = exact
+              ? location.pathname === to
+              : location.pathname.startsWith(to)
+            return (
+              <Link key={to} to={to}
+                className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ease-out mb-1.5 ${
+                  active
+                    ? "bg-gradient-to-r from-blue-600 to-green-500 text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon size={19} strokeWidth={active ? 2.5 : 2} className={active ? "" : "group-hover:scale-110 transition-transform"} />
+                  <span className="font-bold tracking-tight text-sm">{label}</span>
+                </div>
+                {active && <ChevronRight size={14} className="opacity-70" />}
+              </Link>
+            )
+          })}
         </nav>
       </div>
 
+      {/* Footer */}
       <div className="mt-auto pt-6 px-1 space-y-3">
         <div className="relative group overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-3 transition-all duration-300 hover:shadow-md">
           <div className="flex items-center gap-3">

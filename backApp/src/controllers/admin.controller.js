@@ -47,6 +47,7 @@ export const getNadadoresAdmin = async (req, res) => {
     const { tipo = "competitivo", buscar, pago } = req.query
 
     if (tipo === "formativo") {
+      // Formativos = NadadorFormativo (sin cuenta, gestionados por profesor)
       let query = {}
       if (buscar) query.$or = [
         { nombre:   { $regex: buscar, $options: "i" } },
@@ -58,14 +59,24 @@ export const getNadadoresAdmin = async (req, res) => {
       const formativos = await NadadorFormativo.find(query)
         .populate("profesor", "nombre")
         .sort({ apellido: 1 })
-      return res.json(formativos)
+        .lean()
+
+      // Añadir rama explícita para que el frontend lo detecte
+      return res.json(formativos.map(n => ({ ...n, rama: "formativo" })))
     }
 
-    // Competitivos
-    const nadadores = await Nadador.find()
+    // Competitivos = Nadador con cuenta, filtrar por rama="competitivo" (o sin rama definida)
+    const nadadores = await Nadador.find({
+      $or: [
+        { rama: "competitivo" },
+        { rama: { $exists: false } },  // retrocompatibilidad con docs sin el campo
+        { rama: null }
+      ]
+    })
       .populate("user",    "nombre correo")
       .populate("profesor","nombre")
-      .sort({ "user.nombre": 1 })
+      .sort({ apellido: 1 })
+      .lean()
 
     let filtrados = nadadores
     if (buscar) {
