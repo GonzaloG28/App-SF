@@ -7,7 +7,7 @@ import {
   Users, Trophy, Calendar, UserPlus,
   CheckCircle2, Clock, ChevronRight,
   Loader2, Waves, MapPin, AlertCircle,
-  Dumbbell, GraduationCap, Zap, TrendingUp
+  Dumbbell, GraduationCap
 } from "lucide-react"
 
 const DashboardProfesor = () => {
@@ -48,26 +48,38 @@ const DashboardProfesor = () => {
     return { total, competitivos, formativos, pagados, pctPago }
   }, [nadadores])
 
+
+
+
   const entStats = useMemo(() => {
-    const hoy      = new Date()
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const hoy = new Date()
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const delMes = entrenamientos.filter(e => new Date(e.fecha) >= inicioMes)
 
-    const delMes       = entrenamientos.filter(e => new Date(e.fecha || e.createdAt) >= inicioMes)
-    const completados  = delMes.filter(e => {
-      // Un entrenamiento está "completado" si todos sus destinatarios lo completaron
-      if (!e.destinatarios?.length) return false
-      return e.destinatarios.every(d => d.completado)
-    })
-    const pendientes   = delMes.filter(e => !completados.includes(e))
-    const pct          = delMes.length > 0 ? Math.round((completados.length / delMes.length) * 100) : 0
+  const entrenosTerminadosAl100 = delMes.filter(e => {
+    const terminados = e.completados || 0
+    const total = e.totalAlumnos || 0
+    
+    return total > 0 && terminados === total
+  })
 
-    return {
-      total:       delMes.length,
-      completados: completados.length,
-      pendientes:  pendientes.length,
-      pct
-    }
-  }, [entrenamientos])
+  const totalDelMes = delMes.length
+  const cantCompletados = entrenosTerminadosAl100.length
+  const cantPendientes = totalDelMes - cantCompletados
+  
+  const pct = totalDelMes > 0 
+    ? Math.round((cantCompletados / totalDelMes) * 100) 
+    : 0
+
+  return {
+    total: totalDelMes,
+    completados: cantCompletados,
+    pendientes: cantPendientes,
+    pct
+  }
+}, [entrenamientos])
+
+
 
   // Próximas 3 convocatorias
   const proximasConvocatorias = useMemo(() =>
@@ -78,11 +90,10 @@ const DashboardProfesor = () => {
     [convocatorias]
   )
 
-  // Entrenamientos recientes (últimos 4)
-  const entrenamientosRecientes = useMemo(() =>
+  // Último entrenamiento solamente
+  const ultimoEntrenamiento = useMemo(() =>
     [...entrenamientos]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 4),
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] || null,
     [entrenamientos]
   )
 
@@ -152,7 +163,8 @@ const DashboardProfesor = () => {
         <StatCard
           label="Entrenos del Mes"
           value={entStats.total}
-          sub={`${entStats.pct}% completados`}
+          // FIX: Ahora mostrará "X comp. · Y pend." en la tarjeta
+          sub={`${entStats.completados} comp. · ${entStats.pendientes} pend.`}
           icon={Dumbbell}
           color="orange"
         />
@@ -242,70 +254,74 @@ const DashboardProfesor = () => {
             )}
           </section>
 
-          {/* ENTRENAMIENTOS RECIENTES — datos reales */}
-          <section className="bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute -right-8 -bottom-8 opacity-5 pointer-events-none">
-              <Waves size={180} />
+          {/* ÚLTIMO ENTRENAMIENTO — estilo igual al nadador */}
+          <Link
+            to="/profesor/entrenamientos"
+            className="block bg-white rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 group hover:shadow-2xl hover:border-blue-200 transition-all duration-500"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-3">
+                <Dumbbell size={15} className="text-green-500" strokeWidth={2.5} /> Último Entrenamiento
+              </h3>
+              <div className="p-2.5 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <ChevronRight size={16} strokeWidth={3} />
+              </div>
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black uppercase tracking-[0.3em] text-green-400 text-[11px] flex items-center gap-2">
-                  <Dumbbell size={14} /> Entrenamientos Recientes
-                </h3>
-                <Link to="/profesor/entrenamientos"
-                  className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors"
+
+            {ultimoEntrenamiento ? (() => {
+              const listaAtletas = ultimoEntrenamiento.totalAlumnos || []
+              const completados = ultimoEntrenamiento.completados
+              const pct         = listaAtletas > 0 ? Math.round((completados / listaAtletas) * 100) : 0
+              const fecha       = new Date(ultimoEntrenamiento.fecha || ultimoEntrenamiento.createdAt)
+              return (
+                <div>
+                  <h4 className="text-2xl md:text-3xl font-black italic text-slate-900 uppercase leading-none tracking-tighter mb-5 group-hover:text-blue-600 transition-colors">
+                    {ultimoEntrenamiento.titulo || "Sesión General"}
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-3 mb-5">
+                    <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
+                      <Calendar size={13} className="text-blue-600" />
+                      <p className="text-[11px] font-black italic text-blue-800 uppercase tracking-widest">
+                        {fecha.toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"})}
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                      <Users size={13} className="text-slate-500" />
+                      <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest">
+                        {listaAtletas} atletas
+                      </p>
+                    </div>
+                  </div>
+                  {/* Barra de progreso grande */}
+                  <div>
+                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-2">
+                      <span>{completados} completados</span>
+                      <span className={`font-black text-sm italic ${pct === 100 ? "text-emerald-600" : pct >= 50 ? "text-orange-500" : "text-slate-500"}`}>{pct}%</span>
+                    </div>
+                    <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : pct >= 50 ? "bg-orange-400" : "bg-blue-500"}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+                      {pct === 100 ? "✓ Completado al 100%" : `${listaAtletas - completados} pendientes`}
+                    </p>
+                  </div>
+                </div>
+              )
+            })() : (
+              <div className="py-8 text-center">
+                <Waves className="mx-auto mb-4 text-slate-100" size={36} />
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-300">Sin entrenamientos registrados</p>
+                <Link to="/profesor/crear-entrenamiento" onClick={e => e.stopPropagation()}
+                  className="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-[11px] font-black uppercase tracking-widest hover:underline"
                 >
-                  Ver todos →
+                  + Crear entrenamiento
                 </Link>
               </div>
-
-              {entrenamientosRecientes.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Sin entrenamientos registrados</p>
-                  <Link to="/profesor/crear-entrenamiento"
-                    className="mt-3 inline-flex items-center gap-1.5 text-green-400 text-[11px] font-black uppercase tracking-widest hover:underline"
-                  >
-                    + Crear entrenamiento
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {entrenamientosRecientes.map((e, i) => {
-                    const totalDest   = e.destinatarios?.length || 0
-                    const completados = e.destinatarios?.filter(d => d.completado).length || 0
-                    const pct         = totalDest > 0 ? Math.round((completados / totalDest) * 100) : 0
-                    const fecha       = new Date(e.fecha || e.createdAt)
-
-                    return (
-                      <div key={e._id || i}
-                        className="flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-all"
-                      >
-                        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 mt-0.5">
-                          <Dumbbell size={15} className="text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black uppercase italic tracking-tight truncate">{e.titulo || "Entrenamiento"}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                            {fecha.toLocaleDateString("es-ES",{day:"2-digit",month:"short"})} · {totalDest} atletas
-                          </p>
-                          {/* Barra de progreso */}
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-green-500 rounded-full transition-all"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] font-black text-slate-400 shrink-0">{pct}%</span>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </section>
+            )}
+          </Link>
         </div>
 
         {/* ── Columna derecha — 1/3 ── */}
@@ -349,48 +365,6 @@ const DashboardProfesor = () => {
               className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
             >
               Ver plantel completo
-            </Link>
-          </section>
-
-          {/* RESUMEN DE ENTRENAMIENTOS */}
-          <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm p-6">
-            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] flex items-center gap-2 mb-5">
-              <TrendingUp size={15} className="text-blue-600" /> Entrenos Este Mes
-            </h3>
-
-            <div className="space-y-3">
-              <ProgressRow
-                label="Completados"
-                value={entStats.completados}
-                total={entStats.total}
-                color="green"
-              />
-              <ProgressRow
-                label="Pendientes"
-                value={entStats.pendientes}
-                total={entStats.total}
-                color="orange"
-              />
-            </div>
-
-            {/* % cumplimiento */}
-            <div className={`mt-4 rounded-2xl p-4 text-center ${
-              entStats.pct >= 80 ? "bg-emerald-50" :
-              entStats.pct >= 50 ? "bg-orange-50" : "bg-slate-50"
-            }`}>
-              <p className={`text-3xl font-black italic ${
-                entStats.pct >= 80 ? "text-emerald-700" :
-                entStats.pct >= 50 ? "text-orange-700" : "text-slate-500"
-              }`}>{entStats.pct}%</p>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                {entStats.total === 0 ? "Sin entrenos este mes" : "Tasa de cumplimiento"}
-              </p>
-            </div>
-
-            <Link to="/profesor/crear-entrenamiento"
-              className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
-            >
-              <Zap size={12} /> Nuevo entrenamiento
             </Link>
           </section>
 
@@ -440,25 +414,6 @@ const StatCard = ({ label, value, sub, icon: Icon, color }) => {
   )
 }
 
-const ProgressRow = ({ label, value, total, color }) => {
-  const pct = total > 0 ? Math.round((value / total) * 100) : 0
-  const colors = {
-    green:  "bg-emerald-500",
-    orange: "bg-orange-400",
-  }
-  return (
-    <div>
-      <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase mb-1.5">
-        <span>{label}</span>
-        <span>{value} / {total}</span>
-      </div>
-      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${colors[color]}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  )
-}
-
 const DistRow = ({ label, value, total, icon: Icon }) => {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
@@ -478,4 +433,3 @@ const DistRow = ({ label, value, total, icon: Icon }) => {
 }
 
 export default DashboardProfesor
-
