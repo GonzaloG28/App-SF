@@ -33,8 +33,8 @@ const MisEntrenamientos = () => {
       <header className="flex justify-between items-end border-b border-slate-100 pb-8">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">Live</span>
-            <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em]">Performance Data</p>
+            <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span>
+            <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em]">Panel de Entrenamientos</p>
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">
             Mis <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">Rutinas</span>

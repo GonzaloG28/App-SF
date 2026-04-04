@@ -52,12 +52,12 @@ const SidebarContent = ({ perfil, isLoading, onLogout, isActive }) => {
         <nav className="flex flex-col gap-1">
           <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-4">Rendimiento</p>
           <NavItem to="/nadador/dashboard"      label="Mi Panel"      Icon={LayoutDashboard} isActive={isActive} />
+          <NavItem to="/nadador/chat" label="Mensajería" Icon={MessageSquare} isActive={isActive} />
           <NavItem to="/nadador/entrenamientos" label="Entrenamientos" Icon={ClipboardList}   isActive={isActive} />
           <NavItem to="/nadador/mis-tiempos"    label="Mis Marcas"     Icon={Waves}           isActive={isActive} />
           <NavItem to="/nadador/competencias"   label="Competencias"   Icon={Trophy}          isActive={isActive} />
           <NavItem to="/nadador/calendario"     label="Calendario"     Icon={Calendar}        isActive={isActive} />
           <NavItem to="/nadador/perfil"         label="Ficha Técnica"  Icon={User}            isActive={isActive} />
-          <NavItem to="/nadador/chat" label="Mensajería" Icon={MessageSquare} isActive={isActive} />
         </nav>
       </div>
       <div className="mt-auto pt-6 px-1 space-y-3">

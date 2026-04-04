@@ -56,11 +56,11 @@ const RankingNadador = () => {
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-200">
             <Zap size={10} fill="currentColor" />
-            <span className="text-[11px] font-black uppercase tracking-widest">Performance</span>
+            <span className="text-[11px] font-black uppercase tracking-widest">ñsf</span>
           </div>
-          <h1 className="text-5xl md:text-8xl font-black text-slate-900 italic tracking-tighter leading-[0.85]">
+          <h1 className="text-5xl md:text-6xl font-black text-slate-900 italic tracking-tighter leading-[0.85]">
             RANKING <br className="md:hidden" />
-            <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent not-italic">TECHNICAL</span>
+            <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent not-italic">NADADOR</span>
           </h1>
         </div>
         
@@ -68,7 +68,7 @@ const RankingNadador = () => {
           <div className="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 transition-all">
             <ChevronLeft size={16} />
           </div>
-          <span className="hidden md:inline">Volver</span>
+          <span className="md:inline">Volver</span>
         </button>
       </header>
 
@@ -208,10 +208,10 @@ const RankingNadador = () => {
       <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto z-20">
         <div className="bg-slate-900/95 backdrop-blur-md px-8 py-4 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-between md:justify-center gap-6">
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-            Database Sync: <span className="text-emerald-500">Active</span>
+            actualizacion momentanea: <span className="text-emerald-500">Active</span>
           </p>
           <div className="flex -space-x-2">
-            {[1,2].map(i => <div key={i} className="w-6 h-6 rounded-full bg-blue-600 border-2 border-slate-900" />)}
+            {[1,2].map(i => <div key={i} className="w-6 h-6 rounded-full bg-emerald-600 border-2 border-slate-900" />)}
           </div>
         </div>
       </footer>

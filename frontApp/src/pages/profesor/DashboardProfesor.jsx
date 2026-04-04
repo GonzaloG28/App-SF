@@ -115,7 +115,7 @@ const DashboardProfesor = () => {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 border-b border-slate-100 pb-6">
         <div>
-          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">High Performance Center</p>
+          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">Panel principal Profesor</p>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic uppercase">
             Panel de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Gestión</span>
           </h1>

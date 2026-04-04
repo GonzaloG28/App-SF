@@ -68,8 +68,8 @@ const MisTiempos = () => {
       {/* HEADER DINÁMICO */}
       <header className="relative pt-10">
         <div className="flex items-center gap-3 mb-4">
-          <div className="h-[2px] w-12 bg-blue-600"></div>
-          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em]">Analisis de marcas</p>
+          <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span>
+          <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em]">Registro de marcas</p>
         </div>
         <h1 className="text-6xl md:text-8xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">
           Mis <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">Marcas</span>

@@ -99,12 +99,13 @@ export const CalendarioNadador = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-8 animate-fade-in">
 
-      <div>
-        <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">Mis Convocatorias</p>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">
-          Calendario <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">de Eventos</span>
-        </h1>
+      <div className="flex items-center gap-2">
+        <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span>
+        <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mb-1">Proximas competencias</p>
       </div>
+      <h1 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">
+          Calendario <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">de Competencias</span>
+        </h1>
 
       {/* Navegación mes */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -172,7 +173,7 @@ export const CalendarioNadador = () => {
       {/* Lista de convocatorias del mes */}
       <div className="space-y-4">
         <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-          Eventos en {MESES[mesActual]}
+          Competencias en {MESES[mesActual]}
         </h3>
 
         {convocatoriasMes.length === 0 ? (

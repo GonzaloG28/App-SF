@@ -6,7 +6,7 @@ import {
   Send, FileText, Type, Link as LinkIcon, 
   Users, Search, CheckCircle2, 
   Circle, Loader2, ChevronRight, UploadCloud,
-  X, Zap, Info, Trash2
+  X, Info, Trash2
 } from "lucide-react";
 
 // --- COMPONENTE HIJO OPTIMIZADO ---
@@ -44,38 +44,46 @@ const CrearEntrenamiento = () => {
   const [tipoCarga, setTipoCarga] = useState("texto");
   const [form, setForm] = useState({ titulo: "", contenido: "", notas: "" });
   const [archivo, setArchivo] = useState(null);
-  const [search, setSearch] = useState("");
-  const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
-  const [seleccionados, setSeleccionados] = useState([]);
+  const [buscar,        setBuscar]        = useState("")
+  const [filtroCat, setFiltroCat] = useState("todos")
+  const [filtroNivel, setFiltroNivel] = useState("todos")
+  const [seleccionados, setSeleccionados] = useState([])
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: "", tipo: "success" });
 
-  const { data: nadadores, isLoading } = useQuery({
-    queryKey: ["nadadores-entrenamiento"],
-    queryFn: async () => {
-      const res = await api.get("/nadadores");
-      return res.data;
-    },
+  const { data: nadadores = [], isLoading } = useQuery({
+    queryKey: ["nadadores-convocatoria"],
+    queryFn:  () => api.get("/nadadores").then(r => r.data),
     staleTime: 1000 * 60 * 5,
-  });
+  })
 
-  const nadadoresFiltrados = useMemo(() => {
-    if (!nadadores) return [];
-    const term = search.toLowerCase();
-    return nadadores.filter(n => 
-      n.user.nombre.toLowerCase().includes(term) && 
-      (categoriaFiltro === "Todas" || n.categoria === categoriaFiltro)
-    );
-  }, [nadadores, search, categoriaFiltro]);
+  const filtrados = useMemo(() => {
+  return nadadores.filter(n => {
+    const coincideBusqueda = !buscar || 
+      `${n.user?.nombre} ${n.apellido}`.toLowerCase().includes(buscar.toLowerCase())
+    
+    const coincideNivel = filtroNivel === "todos" || n.rama === filtroNivel
+    const coincideCat = filtroCat === "todos" || n.categoria === filtroCat
+
+    return coincideBusqueda && coincideNivel && coincideCat
+  })
+}, [nadadores, buscar, filtroNivel, filtroCat])
+
+const categoriasUnicas = useMemo(() => {
+  const cats = nadadores.map(n => n.categoria).filter(Boolean)
+  return ["todos", ...new Set(cats)]
+}, [nadadores])
 
   const toggleNadador = useCallback((id) => {
-    setSeleccionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  }, []);
+    setSeleccionados(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }, [])
 
-  const seleccionarTodosFiltrados = () => {
-    const ids = nadadoresFiltrados.map(n => n._id);
-    const todosEnListaEstan = ids.every(id => seleccionados.includes(id));
-    setSeleccionados(prev => todosEnListaEstan ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])]);
-  };
+  const seleccionarTodos = () => {
+    const ids = filtrados.map(n => n._id)
+    const todos = ids.every(id => seleccionados.includes(id))
+    setSeleccionados(prev => todos ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
+  }
 
   const mutation = useMutation({
     mutationFn: enviarEntrenamiento,
@@ -126,11 +134,11 @@ const CrearEntrenamiento = () => {
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div className="w-full lg:w-auto">
           <div className="flex items-center gap-2 mb-2">
-            <div className="bg-blue-600 p-1.5 rounded-lg shrink-0"><Zap size={12} className="text-white fill-white" /></div>
-            <p className="text-[11px] md:text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Coach Workspace</p>
+            <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span>
+            <p className="text-[11px] md:text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">panel creación entrenamientos</p>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 italic tracking-tighter uppercase leading-none break-words">
-            Training <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Builder</span>
+            Crear <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Entrenamiento</span>
           </h1>
         </div>
         
@@ -262,48 +270,49 @@ const CrearEntrenamiento = () => {
                   type="text" 
                   placeholder="BUSCAR..." 
                   className="w-full pl-10 pr-4 py-3 md:py-4 bg-white/5 border border-white/5 rounded-xl md:rounded-2xl text-white text-[11px] md:text-[11px] font-bold outline-none focus:bg-white/10 transition-all uppercase"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  value={buscar}
+                  onChange={e => setBuscar(e.target.value)}
                 />
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
-                {["Todas", "Infantil", "Juvenil", "Mayores"].map(c => (
-                  <button key={c} onClick={() => setCategoriaFiltro(c)} 
-                    className={`shrink-0 px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[11px] md:text-[11px] font-black uppercase transition-all border ${
-                        categoriaFiltro === c 
-                        ? "bg-green-600 border-green-500 text-white shadow-lg" 
-                        : "bg-white/5 border-transparent text-slate-500 hover:text-white"
-                    }`}>
-                    {c}
-                  </button>
-                ))}
               </div>
             </div>
 
             {/* LISTA CON SCROLL */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar-dark">
-              <button 
-                onClick={seleccionarTodosFiltrados} 
-                className="w-full py-3 border-2 border-dashed border-blue-500/30 text-blue-400 text-[11px] md:text-[11px] font-black uppercase rounded-xl md:rounded-2xl mb-4 hover:bg-blue-600 hover:text-white transition-all shrink-0"
-              >
-                {nadadoresFiltrados.every(n => seleccionados.includes(n._id)) ? "Quitar Todos" : "Seleccionar Todo"}
-              </button>
-              
-              {isLoading ? (
-                <div className="py-10 text-center"><Loader2 className="animate-spin text-blue-500 mx-auto" /></div>
-              ) : (
-                <div className="grid grid-cols-1 gap-2 md:gap-3">
-                    {nadadoresFiltrados.map(n => (
-                    <NadadorRow 
-                        key={n._id} 
-                        n={n} 
-                        isSelected={seleccionados.includes(n._id)} 
-                        onToggle={toggleNadador} 
-                    />
-                    ))}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+                        <select 
+                          value={filtroNivel} 
+                          onChange={e => setFiltroNivel(e.target.value)}
+                          className="bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase p-2 outline-none"
+                        >
+                          <option value="todos" className="text-slate-900">Todos los Niveles</option>
+                          <option value="formativo" className="text-slate-900">Formativo</option>
+                          <option value="competitivo" className="text-slate-900">Competitivo</option>
+                        </select>
+            
+                        <select 
+                          value={filtroCat} 
+                          onChange={e => setFiltroCat(e.target.value)}
+                          className="bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase p-2 outline-none"
+                        >
+                          {categoriasUnicas.map(cat => (
+                            <option key={cat} value={cat} className="text-slate-900">
+                              {cat === "todos" ? "Todas las Categorías" : cat}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+            
+                      <button type="button" onClick={seleccionarTodos}
+                        className="mb-3 shrink-0 w-full py-2.5 border-2 border-dashed border-blue-500/30 text-blue-400 text-[10px] font-black uppercase rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+                      >
+                        {filtrados.every(n => seleccionados.includes(n._id)) ? "Quitar todos" : "Seleccionar todos"}
+                      </button>
+                      <div className="flex-1 overflow-y-auto space-y-2">
+                        {isLoading ? (
+                          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-blue-500" size={24} /></div>
+                        ) : filtrados.map(n => (
+                          <NadadorRow key={n._id} n={n} isSelected={seleccionados.includes(n._id)} onToggle={toggleNadador} />
+                        ))}
                 </div>
-              )}
-            </div>
           </aside>
         </div>
       </div>

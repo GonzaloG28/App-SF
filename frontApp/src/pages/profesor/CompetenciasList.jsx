@@ -23,7 +23,7 @@ const ListHeader = memo(({ id }) => (
         Volver a la ficha
       </Link>
       <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter italic leading-none uppercase">
-        Bitácora de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Torneos</span>
+        Registro de <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Competencias</span>
       </h2>
     </div>
 
@@ -49,7 +49,7 @@ const HighlightCard = memo(({ destacada, id }) => {
         <div className="space-y-4 min-w-0 flex-1">
           <div className="flex items-center gap-3">
             <span className="bg-emerald-500 text-white px-3 py-1 rounded-md text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5">
-              <Trophy size={10} /> Actuación Reciente
+              <Trophy size={10} /> ultima registrada
             </span>
             <TrendingUp size={14} className="text-blue-400 animate-pulse" />
           </div>

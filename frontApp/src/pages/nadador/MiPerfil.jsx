@@ -4,8 +4,8 @@ import api                                            from "../../api/axios"
 import { useState, useMemo, memo }                   from "react"
 import {
   Trophy, BarChart3, Calendar, Weight, Dumbbell,
-  Ruler, Fingerprint, Waves, Target, ShieldCheck,
-  Clock, ArrowUpRight, Zap, ChevronRight,
+  Ruler, Fingerprint, Target, ShieldCheck,
+  Clock, Zap, ChevronRight,
   Mail, Check, X, AlertCircle, Lock
 } from "lucide-react"
 
@@ -117,13 +117,22 @@ const MiPerfil = () => {
     staleTime: 1000 * 60 * 5,
   })
 
-  if (isLoading) return <ProfileSkeleton />
-  if (isError)   return <ErrorState error={error} />
-
   const proximasConv = convocatorias
     .filter(c => new Date(c.fechaFin) >= new Date())
     .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
-    .slice(0, 3)
+    .slice(0, 2)
+
+  const fechaFormateada = useMemo(() => {
+    if (!nadador?.fechaNacimiento) return "No registrado"
+    return new Date(nadador.fechaNacimiento).toLocaleDateString("es-ES", {
+      year: "numeric", month: "2-digit", day: "2-digit"
+    })
+  }, [nadador?.fechaNacimiento])
+
+  if (isLoading) return <ProfileSkeleton />
+  if (isError)   return <ErrorState error={error} />
+
+const esFormativo = nadador.rama === "formativo"
 
   return (
     <div className="space-y-5 animate-fade-in pb-8">
@@ -134,10 +143,19 @@ const MiPerfil = () => {
           <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] mb-1 block italic">Perfil</span>
           <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">Mi Perfil</h2>
         </div>
-        <div className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-1.5 shadow-sm">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest italic">Cuenta Activa</span>
-        </div>
+        <div className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-[11px] font-black uppercase  sm:self-center ${
+            nadador.pagoAlDia
+              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+              : "bg-orange-50 border-orange-200 text-orange-700"
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${nadador.pagoAlDia ? "bg-emerald-500 animate-pulse" : "bg-orange-400"}`} />
+            {nadador.pagoAlDia ? "Cuenta Activa" : "Cuenta Inactiva"}
+            {nadador.fechaUltimoPago && nadador.pagoAlDia && (
+              <span className="opacity-60 font-bold normal-case text-[10px]">
+                · {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES",{day:"2-digit",month:"short"})}
+              </span>
+            )}
+          </div>
       </header>
 
       {/* HERO */}
@@ -145,32 +163,47 @@ const MiPerfil = () => {
         <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/5 rounded-full blur-[60px] -mr-16 -mt-16 pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-5 md:gap-8">
           <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-3xl md:text-4xl font-black italic text-white shadow-xl shadow-blue-600/20 rotate-2 group-hover:rotate-0 transition-transform duration-500 uppercase">
-              {nadador.user?.nombre?.charAt(0)}
+            <div className={`w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-2xl md:rounded-[2rem] flex items-center justify-center text-3xl md:text-5xl font-black italic text-white shadow-xl ${
+              esFormativo
+                ? "bg-gradient-to-br from-green-500 to-green-700 shadow-green-600/20"
+                : "bg-gradient-to-br from-blue-600 to-green-500 shadow-blue-600/20"
+            }`}>
+              {nadador.user?.nombre?.charAt(0) || "N"}
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2 rounded-xl shadow-lg -rotate-12 group-hover:rotate-0 transition-transform duration-500">
-              <Zap size={13} fill="currentColor" className="text-emerald-400" />
+            <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-2 rounded-xl shadow-lg">
+              <Zap size={14} fill="currentColor" className={esFormativo ? "text-green-400" : "text-green-400"} />
             </div>
           </div>
           <div className="text-center sm:text-left space-y-2 flex-1 min-w-0">
-            <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.15em]">
-              <Target size={11} /> {nadador.categoria || "Nivel Club"}
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+              <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.15em]">
+                <Target size={11} /> {nadador.categoria || "Sin Categoría"}
+              </div>
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] border ${
+                esFormativo
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-blue-50 text-blue-700 border-blue-200"
+              }`}>
+                {esFormativo ? <GraduationCap size={11} /> : <Trophy size={11} />}
+                Rama {esFormativo ? "Formativa" : "Competitiva"}
+              </div>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-[-0.03em] italic leading-[0.9] text-slate-900 uppercase">
               {nadador.user?.nombre} <br />
               <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">{nadador.apellido}</span>
             </h1>
-            <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-2 border-t border-slate-100">
-              <BadgeLight icon={Fingerprint} label={nadador.rut || "Sin RUT"} />
-              <BadgeLight icon={Waves} label="Federado" highlight />
-            </div>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-3 pt-3 border-t border-slate-100">
+                <DataLabel icon={Fingerprint} label="RUT"  value={nadador.rut || "N/A"} />
+                <DataLabel icon={Calendar} title="Edad"     value={`${nadador.edad || "--"} años`} />
+                <DataLabel icon={Mail}    label="Correo" value={`${nadador.user?.correo || "--"}`} />
+              </div>
           </div>
         </div>
       </section>
 
       {/* MÉTRICAS — 3 datos reales, quitar Progreso hardcodeado */}
       <div className="grid grid-cols-3 gap-3 md:gap-5">
-        <StatCard icon={Calendar} title="Edad"     value={`${nadador.edad || "--"} años`}  colorTheme="blue"  />
+        <StatCard icon={Calendar} title="Nacimiento" value={fechaFormateada} color="blue"   colorTheme="blue" />
         <StatCard icon={Weight}   title="Masa"     value={`${nadador.peso || "--"} kg`}    colorTheme="green" />
         <StatCard icon={Ruler}    title="Estatura" value={`${nadador.altura || "--"} cm`}  colorTheme="blue"  />
       </div>
@@ -189,7 +222,7 @@ const MiPerfil = () => {
                 <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-100">
                   <Trophy size={16} />
                 </div>
-                <h3 className="font-black text-slate-900 text-base tracking-tighter uppercase italic">Mis Convocatorias</h3>
+                <h3 className="font-black text-slate-900 text-base tracking-tighter uppercase italic">Proximas competencias</h3>
               </div>
               <Link to="/nadador/calendario" className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
                 Ver Todo
@@ -213,8 +246,8 @@ const MiPerfil = () => {
           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Accesos Rápidos</h3>
             <div className="space-y-2.5">
-              <ActionLink to="/nadador/competencias"   title="Mis Logros"    icon={Trophy}    />
-              <ActionLink to="/nadador/mis-tiempos"    title="Estadísticas"  icon={BarChart3}  />
+              <ActionLink to="/nadador/competencias"   title="Mis Competencias"    icon={Trophy}    />
+              <ActionLink to="/nadador/mis-tiempos"    title="Mis marcas"  icon={BarChart3}  />
               <ActionLink to="/nadador/entrenamientos" title="Entrenamientos" icon={Dumbbell}  />
               <ActionLink to="/nadador/calendario"     title="Calendario"    icon={Calendar}   />
             </div>
@@ -268,6 +301,18 @@ const ConvocatoriaRow = ({ conv }) => {
     </div>
   )
 }
+
+const DataLabel = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center gap-2">
+    <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
+      <Icon size={13} />
+    </div>
+    <div className="flex flex-col">
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{label}</span>
+      <span className="text-xs font-black text-slate-700 uppercase italic leading-tight">{value}</span>
+    </div>
+  </div>
+)
 
 const StatCard = memo(({ title, value, icon: Icon, colorTheme }) => {
   const themes = {

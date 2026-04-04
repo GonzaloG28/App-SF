@@ -11,10 +11,6 @@ import {
   Calendar, Timer, History, Waves, Award, Flame
 } from "lucide-react"
 
-// OPTIMIZACIÓN: importamos la queryKey compartida del layout.
-// Antes: este componente usaba queryKey: ["miPerfil"] y el layout usaba
-// ["miPerfilHeader"] → dos requests al mismo endpoint en cada carga.
-// Ahora ambos comparten la misma key → React Query devuelve el caché.
 import { PERFIL_QUERY_KEY } from "../../layouts/NadadorLayout"
 
 const PasswordUpdateModal = memo(({ isOpen, perfil, onCarreraExitosamente }) => {
@@ -91,7 +87,7 @@ const DashboardNadador = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // OPTIMIZACIÓN: misma queryKey que NadadorLayout → un solo request, caché compartido
-  const { data: perfil, isLoading: loadPerfil } = useQuery({
+  const { data: perfil, isLoading: loadPerfil, isError, error } = useQuery({
     queryKey: PERFIL_QUERY_KEY,
     queryFn:  async () => (await api.get("/nadadores/perfil")).data,
     enabled:  !!user,
@@ -112,6 +108,20 @@ const DashboardNadador = () => {
     enabled:  !!perfil?._id,
     staleTime: 1000 * 60 * 5,
   })
+
+  const { data: convocatorias = [] } = useQuery({
+    queryKey: ["misConvocatoriasPerfil"],
+    queryFn:  () => api.get("/convocatorias/mis-convocatorias").then(r => r.data),
+    enabled:  !!perfil,
+    staleTime: 1000 * 60 * 5,
+  })
+
+  if (isError)   return <ErrorState error={error} />
+
+  const proximasConv = convocatorias
+    .filter(c => new Date(c.fechaFin) >= new Date())
+    .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))
+    .slice(0, 3)
 
   const { data: entrenamientos = [], isLoading: loadEntreno } = useQuery({
     queryKey: ["misEntrenamientosDashboard"],
@@ -148,7 +158,7 @@ const DashboardNadador = () => {
             <div className="flex items-center gap-3 mb-4">
               <span className="flex h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
               {/* DISEÑO: subido de text-[11px] a text-[11px] */}
-              <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">Athlete Management // Performance Center</span>
+              <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">Panel principal del Atleta</span>
             </div>
             <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black text-slate-900 italic tracking-tighter uppercase leading-[0.8]">
               {perfil?.user?.nombre} <br />
@@ -175,7 +185,7 @@ const DashboardNadador = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
 
           {/* PRÓXIMO EVENTO */}
-          <Link to="/nadador/competencias" className="lg:col-span-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 text-white relative overflow-hidden group hover:shadow-2xl hover:shadow-blue-600/30 transition-all duration-700 flex flex-col justify-between min-h-[350px]">
+          <Link to="/nadador/calendario" className="lg:col-span-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 text-white relative overflow-hidden group hover:shadow-2xl hover:shadow-blue-600/30 transition-all duration-700 flex flex-col justify-between min-h-[350px]">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
               <Calendar size={220} />
             </div>
@@ -184,22 +194,42 @@ const DashboardNadador = () => {
               <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.3em] mb-8 bg-white/10 backdrop-blur-md border border-white/20 px-5 py-2.5 rounded-full">
                 <Timer size={14} className="text-green-400 animate-pulse" strokeWidth={3} /> Siguiente Competencia
               </span>
-              {proximasComp.length > 0 ? (
+              {proximasConv.length > 0 ? (
                 <>
                   <h2 className="text-4xl md:text-6xl font-black italic uppercase leading-[0.9] tracking-tighter mb-6 group-hover:translate-x-2 transition-transform">
-                    {proximasComp[0].nombre}
+                    {proximasConv[0].nombre}
                   </h2>
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 group-hover:bg-white/20 transition-colors">
                       {/* DISEÑO: subido de text-[11px] a text-[11px] */}
                       <p className="text-[11px] font-black uppercase text-blue-200 tracking-widest mb-1">Días para el salto</p>
-                      <p className="text-4xl font-black italic">
-                        {Math.ceil((new Date(proximasComp[0].fecha) - hoy) / (1000 * 60 * 60 * 24))}
-                      </p>
+                      {(() => {
+                        const inicio = new Date(proximasConv[0].fechaInicio);
+                        const fin = new Date(proximasConv[0].fechaFin);
+                        const hoy = new Date();
+  
+                        // Verificamos si hoy está entre el inicio y el fin (En curso)
+                        if (hoy >= inicio && hoy <= fin) {
+                          return (
+                            <p className="text-2xl font-black italic uppercase text-green-500 animate-pulse">
+                              En curso
+                            </p>
+                          );
+                        }
+
+                        // Si no ha empezado, calculamos los días restantes
+                        const diasRestantes = Math.ceil((inicio - hoy) / (1000 * 60 * 60 * 24));
+
+                        return (
+                          <p className="text-4xl font-black italic">
+                            {diasRestantes}
+                          </p>
+                        );
+                      })()}
                     </div>
                     <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 group-hover:bg-white/20 transition-colors">
-                      <p className="text-[11px] font-black uppercase text-blue-200 tracking-widest mb-1">Piscina</p>
-                      <p className="text-4xl font-black italic">{proximasComp[0].piscina}M</p>
+                      <p className="text-[11px] font-black uppercase text-blue-200 tracking-widest mb-1">Lugar</p>
+                      <p className="text-4xl font-black italic">{proximasConv[0].lugar}</p>
                     </div>
                   </div>
                 </>

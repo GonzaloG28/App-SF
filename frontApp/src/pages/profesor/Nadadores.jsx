@@ -59,7 +59,7 @@ const Nadadores = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-100 pb-10">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <span className="h-1 w-10 bg-blue-600 rounded-full" />
+            <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span>
             <p className="text-blue-600 text-[12px] font-black uppercase tracking-[0.4em]">Gestión de Plantel</p>
           </div>
           <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-[0.85]">

@@ -58,8 +58,8 @@ const MisCompetencias = () => {
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-100 pb-6 pt-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-1 bg-blue-600 rounded-full" />
-            <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.3em]">Performance Track</p>
+            <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span>
+            <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.3em]">Registro de Competencias</p>
           </div>
           <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">
             Mis <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">Competencias</span>

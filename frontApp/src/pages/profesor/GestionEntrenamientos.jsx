@@ -130,7 +130,7 @@ const GestionEntrenamientos = () => {
             CONTROL <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">RUTINAS</span>
           </h1>
           <p className="text-slate-400 text-[11px] md:text-[11px] font-bold uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
-            <span className="w-6 h-[2px] bg-blue-600 shrink-0"></span> Panel de Monitoreo
+           <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-tighter italic">ÑSF</span> Panel de Monitoreo
           </p>
         </div>
 

@@ -22,7 +22,7 @@ const NadadorDetalle = () => {
   const fechaFormateada = useMemo(() => {
     if (!nadador?.fechaNacimiento) return "No registrado"
     return new Date(nadador.fechaNacimiento).toLocaleDateString("es-ES", {
-      year: "numeric", month: "long", day: "2-digit"
+      year: "numeric", month: "2-digit", day: "2-digit"
     })
   }, [nadador?.fechaNacimiento])
 
@@ -49,10 +49,18 @@ const NadadorDetalle = () => {
               <span className="text-[10px] font-black uppercase hidden sm:block">Sincronizando</span>
             </div>
           )}
-          <div className="px-3 py-1.5 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5">
-            <ShieldCheck size={11} className="text-blue-400" />
-            <span className="hidden sm:inline">ID Verificado ÑSF</span>
-            <span className="sm:hidden">ÑSF</span>
+          <div className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-[11px] font-black uppercase  sm:self-center ${
+            nadador.pagoAlDia
+              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+              : "bg-orange-50 border-orange-200 text-orange-700"
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${nadador.pagoAlDia ? "bg-emerald-500 animate-pulse" : "bg-orange-400"}`} />
+            {nadador.pagoAlDia ? "Cuenta Activa" : "Cuenta Inactiva"}
+            {nadador.fechaUltimoPago && nadador.pagoAlDia && (
+              <span className="opacity-60 font-bold normal-case text-[10px]">
+                · {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES",{day:"2-digit",month:"short"})}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -107,30 +115,15 @@ const NadadorDetalle = () => {
               <DataLabel icon={Mail}    label="Correo" value={`${nadador.user?.correo || "--"}`} />
             </div>
           </div>
-
-          {/* Badge estado de pago */}
-          <div className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-[11px] font-black uppercase  sm:self-center ${
-            nadador.pagoAlDia
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-              : "bg-orange-50 border-orange-200 text-orange-700"
-          }`}>
-            <div className={`w-2 h-2 rounded-full ${nadador.pagoAlDia ? "bg-emerald-500 animate-pulse" : "bg-orange-400"}`} />
-            {nadador.pagoAlDia ? "Cuenta Activa" : "Cuenta Inactiva"}
-            {nadador.fechaUltimoPago && nadador.pagoAlDia && (
-              <span className="opacity-60 font-bold normal-case text-[10px]">
-                · {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES",{day:"2-digit",month:"short"})}
-              </span>
-            )}
-          </div>
         </div>
       </div>
 
       {/* MÉTRICAS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+      <div className="grid grid-cols-3 lg:grid-cols-3 gap-3 md:gap-5">
         <MetricCard icon={Calendar} title="Nacimiento" value={fechaFormateada}                          color="blue"    />
         <MetricCard icon={Weight}   title="Masa"       value={nadador.peso   ? `${nadador.peso} kg`   : "--"} color="indigo"  />
         <MetricCard icon={Ruler}    title="Estatura"   value={nadador.altura ? `${nadador.altura} cm` : "--"} color="emerald" />
-        <MetricCard icon={Trophy}   title="Estado"     value="Activo"                                   color="amber"   />
+        
       </div>
 
       {/* CONTENIDO PRINCIPAL */}

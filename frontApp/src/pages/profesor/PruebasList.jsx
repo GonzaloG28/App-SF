@@ -17,7 +17,7 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-blue-600">
             <Activity size={14} className="animate-pulse text-emerald-500" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Telemetría de Carrera</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Resultado de la prueba</span>
           </div>
           <h3 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tighter italic uppercase leading-none">
             {prueba.distancia}m <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">{prueba.estilo}</span>
@@ -164,7 +164,7 @@ const PruebasList = () => {
                 </span>
               </h1>
               <p className="text-slate-400 text-xs md:text-sm font-bold max-w-md mt-6 leading-relaxed uppercase tracking-widest opacity-70">
-                Módulo de análisis biomecánico y control de cronometraje oficial.
+                Registro de marcas del nadador realizadas en la competencia o toma de tiempo.
               </p>
             </div>
 
@@ -225,7 +225,7 @@ const PruebasList = () => {
         <div className="flex items-center gap-3">
           <div className="w-8 h-[2px] bg-gradient-to-r from-blue-600 to-emerald-500" />
           <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">
-            Data Engine v2.0 • {new Date().getFullYear()}
+            App ÑSF • {new Date().getFullYear()}
           </p>
         </div>
         
@@ -235,7 +235,7 @@ const PruebasList = () => {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
           </div>
           <span className="text-[11px] font-black text-emerald-700 uppercase tracking-widest italic">
-            Nodo Central Sincronizado
+            datos actualizados
           </span>
         </div>
       </footer>
