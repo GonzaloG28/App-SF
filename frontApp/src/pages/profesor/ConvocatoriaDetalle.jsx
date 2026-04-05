@@ -1,13 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom"
-import { CheckCircle2, XCircle, Calendar as CalIcon, MapPin as MapPinIcon, Clock as ClockIcon } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import api from "../../api/axios"
+import { CheckCircle2, XCircle, Loader2, Calendar as CalIcon, MapPin as MapPinIcon, Clock as ClockIcon, ArrowLeft } from "lucide-react"
 
-const ConvocatoriaDetalle = () => {
+export const ConvocatoriaDetalle = () => {
   const { id }     = useParams()
   const navigate   = useNavigate()
 
   const { data: convocatoria, isLoading } = useQuery({
     queryKey: ["convocatoriaDetalle", id],
-    queryFn:  () => api.get(`/convocatoria/${id}`).then(r => r.data),
+    queryFn:  () => api.get(`/convocatorias/${id}`).then(r => r.data),
     staleTime: 1000 * 60 * 2,
   })
 
@@ -103,4 +105,3 @@ const ConvocatoriaDetalle = () => {
   )
 }
 
-export default ConvocatoriaDetalle

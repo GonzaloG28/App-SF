@@ -97,7 +97,6 @@ const DashboardProfesor = () => {
     [entrenamientos]
     
   )
-  console.log(ultimoEntrenamiento)
 
 
   if (isLoading) return (
@@ -216,7 +215,7 @@ const DashboardProfesor = () => {
                   return (
                     <Link
                       key={c._id}
-                      to={`/profesor/ConvocatoriaDetalle`}
+                      to={`/profesor/convocatoria/${c._id}`}
                       className="flex items-center gap-4 px-6 py-4 hover:bg-blue-50/30 transition-all group"
                     >
                       {/* Fecha */}

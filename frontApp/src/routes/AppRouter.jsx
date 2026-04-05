@@ -18,7 +18,7 @@ import AdminFormativos      from '../pages/admin/AdminFormativos'
 import AdminConvocatorias   from '../pages/admin/AdminConvocatorias'
 
 // Páginas Profesor
-import DashboardProfesor    from '../pages/profesor/DashboardProfesor'
+import DashboardProfesor from '../pages/profesor/DashboardProfesor'
 import Nadadores            from '../pages/profesor/Nadadores'
 import NadadorForm          from '../pages/profesor/NadadorForm'
 import NadadorDetalle       from '../pages/profesor/NadadorDetalle'
@@ -30,7 +30,7 @@ import CrearCompetencia     from '../pages/profesor/CrearCompetencia'
 import CrearPrueba          from '../pages/profesor/CrearPrueba'
 import RankingNadador       from '../pages/rankingNadador'
 import { CrearConvocatoria }  from '../pages/profesor/CrearConvocatoria'
-import ConvocatoriaDetalle from '../pages/profesor/ConvocatoriaDetalle'
+import { ConvocatoriaDetalle } from "../pages/profesor/ConvocatoriaDetalle"
 import CalendarioProfesor   from '../pages/profesor/CalendarioProfesor'
 
 // Páginas Nadador
