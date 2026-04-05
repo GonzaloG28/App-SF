@@ -216,7 +216,7 @@ const DashboardProfesor = () => {
                   return (
                     <Link
                       key={c._id}
-                      to={`/profesor/convocatoria/${c._id}`}
+                      to={`/profesor/ConvocatoriaDetalle`}
                       className="flex items-center gap-4 px-6 py-4 hover:bg-blue-50/30 transition-all group"
                     >
                       {/* Fecha */}
