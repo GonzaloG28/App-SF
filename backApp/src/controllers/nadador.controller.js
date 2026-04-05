@@ -3,60 +3,112 @@ import mongoose from "mongoose"
 import User from "../models/User.js"
 import Nadador from "../models/Nadadores.js"
 import { crearNotificacion } from "./notificacion.controller.js"
+import { enviarNotificacionEmail } from "../utils/mailer.utils.js"
 
+
+const calcularEdad = (fecha) => {
+  const hoy = new Date();
+  const nacimiento = new Date(fecha);
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  if (hoy.getMonth() < nacimiento.getMonth() || (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate())) edad--;
+  return edad;
+};
 
 // Crear perfil nadador 
 export const crearNadador = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    const { nombre, apellido, correo, fechaNacimiento, peso, altura, rut, pruebasEspecialidad, rama } = req.body
+    const { 
+      nombre, apellido, correo, fechaNacimiento, peso, altura, rut, 
+      pruebasEspecialidad, rama, nombreApoderado, correoApoderado, telefonoApoderado 
+    } = req.body;
 
+    // 1. Validaciones de negocio (Igual que antes)
     if (!nombre || !apellido || !correo || !fechaNacimiento || !rut) {
-      await session.abortTransaction(); session.endSession()
-      return res.status(400).json({ message: "Faltan campos requeridos" })
+      return res.status(400).json({ message: "Faltan campos obligatorios" });
     }
 
-    const existeUsuario = await User.findOne({ correo }).session(session)
+    const edad = calcularEdad(fechaNacimiento);
+    if (edad < 18 && !correoApoderado) {
+      return res.status(400).json({ message: "El correo del apoderado es obligatorio para menores" });
+    }
+
+    const existeUsuario = await User.findOne({ correo }).session(session).select('_id').lean();
     if (existeUsuario) {
-      await session.abortTransaction(); session.endSession()
-      return res.status(400).json({ message: "Ya existe un usuario con ese correo" })
+      return res.status(400).json({ message: "El correo ya está registrado" });
     }
 
-    const salt = await bcrypt.genSalt(10)
-    const passwordHash = await bcrypt.hash(rut, salt)
+    // 2. Creación de datos
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(rut, salt);
 
-    const nuevoUser = await User.create([{
+    const [nuevoUser] = await User.create([{
       nombre, correo, password: passwordHash,
       rol: "nadador", debeCambiarPassword: true
-    }], { session })
+    }], { session });
 
-    await Nadador.create([{
-      user: nuevoUser[0]._id,
+    const [nuevoNadador] = await Nadador.create([{
+      user: nuevoUser._id,
       apellido, fechaNacimiento, peso, altura, rut,
-      pruebasEspecialidad, profesor: req.user._id,
-      rama:    rama || "competitivo"
-    }], { session })
+      pruebasEspecialidad, profesor: req.user.id,
+      rama: rama || "competitivo",
+      nombreApoderado, correoApoderado, telefonoApoderado
+    }], { session });
 
-    await session.commitTransaction(); session.endSession()
-    const admins = await User.find({ rol: "admin" }).select("_id")
-      for (const admin of admins) {
-        await crearNotificacion({
-          destinatario: admin._id,
-          tipo:    "nadador_creado",
-          titulo:  "Nuevo nadador registrado",
-          mensaje: `${nombre} ${apellido} fue registrado como nadador ${rama === "formativo" ? "formativo" : "competitivo"}`,
-          metadata: { nadadorNombre: `${nombre} ${apellido}` }
-        })
+    // 🟢 EL COMMIT: Aquí aseguramos los datos en la DB
+    await session.commitTransaction();
+    session.endSession(); // Cerramos la sesión aquí mismo
+
+    // 3. RESPUESTA INMEDIATA AL CLIENTE
+    // Enviamos el 201 ahora. Lo que pase después (correos/notifs) no debe hacer esperar al usuario.
+    res.status(201).json({ 
+      message: "Nadador y usuario creados correctamente",
+      id: nuevoNadador._id 
+    });
+
+    // 4. 🟢 AISLAMIENTO TOTAL: Notificaciones y Correos (Fuera del flujo principal)
+    // Usamos una función autoejecutable o simplemente no usamos 'await' para no bloquear
+    (async () => {
+      try {
+        // Notificaciones a admins (Cambiamos el for por un Promise.all para más velocidad)
+        const admins = await User.find({ rol: "admin" }).select("_id").lean();
+        const promesasNotif = admins.map(admin =>
+         crearNotificacion({
+           destinatario: admin._id,
+           tipo: "nadador_creado",
+           titulo: "Nuevo nadador",
+           mensaje: `${nombre} ${apellido} registrado.`,
+           metadata: { entidadId: nuevoNadador._id },
+           req   // ← pasar req como campo del objeto, no como primer argumento
+         })
+       );
+        
+        await Promise.allSettled([
+          ...promesasNotif,
+          enviarNotificacionEmail(
+            nuevoNadador._id,
+            "Bienvenido al Club",
+            `Hola ${nombre}, usa tu RUT como contraseña inicial.`
+          )
+        ]);
+      } catch (postError) {
+        console.error("[POST-CREATION ERROR]:", postError.message);
       }
-    res.status(201).json({ message: "Nadador creado correctamente" })
+    })();
 
   } catch (error) {
-    await session.abortTransaction(); session.endSession()
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al crear nadador", ...(isDev && { error: error.message }) })
+    // Solo entramos aquí si falló la creación de User o Nadador ANTES del commit
+    if (session.inAtomicitySession()) {
+      await session.abortTransaction();
+    }
+    session.endSession();
+    
+    console.error("[CREAR_NADADOR_ERROR]:", error);
+    res.status(500).json({ message: error.message || "Error al crear nadador" });
   }
-}
+};
 
 
 // Obtener perfil nadador 
@@ -78,41 +130,74 @@ export const obtenerMiPerfil = async (req, res) => {
 // Actualizar perfil nadador Profesor
 export const actualizarNadadorProfesor = async (req, res) => {
   try {
-    const { id } = req.params
-    const nadador = await Nadador.findById(id)
-    if (!nadador) return res.status(404).json({ message: "Nadador no encontrado" })
+    const { id } = req.params;
+    
+    // 1. Buscamos datos actuales (necesitamos el user ID)
+    const nadadorActual = await Nadador.findById(id).select("user correoApoderado").lean();
+    if (!nadadorActual) return res.status(404).json({ message: "Nadador no encontrado" });
 
-    const camposNadador = ["fechaNacimiento", "peso", "altura", "rut", "pruebasEspecialidad", "apellido", "rama"]
-    const camposUser    = ["nombre", "correo"]
+    const { nombre, correo, fechaNacimiento, ...datosNadador } = req.body;
 
-    const datosNadador = {}
-    camposNadador.forEach(campo => {
-      if (req.body[campo] !== undefined && req.body[campo] !== "") {
-        datosNadador[campo] = req.body[campo]
+    // 2. Validación de minoría de edad
+    if (fechaNacimiento) {
+      const nuevaEdad = calcularEdad(fechaNacimiento);
+      const tieneCorreoApoderado = req.body.correoApoderado || nadadorActual.correoApoderado;
+      
+      if (nuevaEdad < 18 && !tieneCorreoApoderado) {
+        return res.status(400).json({ message: "Es menor de edad, requiere correo de apoderado" });
       }
-    })
-
-    const datosUser = {}
-    camposUser.forEach(campo => {
-      if (req.body[campo] !== undefined && req.body[campo] !== "") {
-        datosUser[campo] = req.body[campo]
-      }
-    })
-
-    if (Object.keys(datosNadador).length > 0) {
-      await Nadador.findByIdAndUpdate(id, datosNadador, { new: true })
-    }
-    if (Object.keys(datosUser).length > 0) {
-      await User.findByIdAndUpdate(nadador.user, datosUser)
+      datosNadador.fechaNacimiento = fechaNacimiento;
     }
 
-    res.json({ message: "Nadador actualizado correctamente" })
+    // 3. ACTUALIZACIÓN EN DB (Operación Crítica)
+    // Usamos Promise.all para que sea atómico en tiempo de ejecución
+    await Promise.all([
+      Nadador.findByIdAndUpdate(id, { $set: datosNadador }),
+      User.findByIdAndUpdate(nadadorActual.user, { 
+        $set: { 
+          ...(nombre && { nombre }), // Solo actualiza si vienen en el body
+          ...(correo && { correo }) 
+        } 
+      })
+    ]);
+
+    // 🟢 RESPUESTA INMEDIATA: Liberamos al profesor para que siga trabajando
+    res.json({ message: "Perfil actualizado correctamente" });
+
+    // 4. 🟢 PROCESOS EN SEGUNDO PLANO (Aislados)
+    // No usamos 'await' para la respuesta final, permitiendo que corran solos
+    (async () => {
+      try {
+        // Notificación interna (Socket + DB)
+        await crearNotificacion({
+         destinatario: nadadorActual.user,
+         tipo: "perfil_actualizado",
+         titulo: "Perfil actualizado",
+         mensaje: "Tu profesor ha realizado cambios en tus datos.",
+         metadata: { entidadId: id },
+         req   // ← campo dentro del objeto
+       });
+
+        // Email de aviso
+        await enviarNotificacionEmail(
+          id,
+          "Actualización de Perfil",
+          "Se han realizado cambios en los datos de tu perfil por parte de tu profesor."
+        );
+      } catch (postError) {
+        // Si el email falla, solo lo logueamos, el cliente ni se entera
+        console.error("[UPDATE_NOTIF_ERROR]:", postError.message);
+      }
+    })();
+
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al actualizar", ...(isDev && { error: error.message }) })
+    console.error("[ACTUALIZAR_NADADOR_ERROR]:", error);
+    // Solo enviamos 500 si la base de datos falló
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Error al actualizar los datos" });
+    }
   }
 }
-
 
 // Actualizar perfil nadador Nadador
 export const actualizarMiPerfil = async (req, res) => {
@@ -174,39 +259,36 @@ export const actualizarMiPerfil = async (req, res) => {
 
 export const obtenerNadadores = async (req, res) => {
   try {
-    // 1. Extraemos 'rama' de la query junto a los otros filtros
     const { categoria, nombre, rama } = req.query;
 
-    // 2. Traemos todos los nadadores (necesario para filtrar por 'categoria' 
-    // ya que es un Virtual de Mongoose y no se puede filtrar directamente en el .find)
     const nadadores = await Nadador.find()
-      .populate("user", "nombre correo rol"); // 'apellido' y 'rama' suelen estar en el modelo Nadador, no en User
+      .populate("user", "nombre correo")
+      .lean(); 
 
     const filtrados = nadadores.filter(n => {
-      // Filtro por Categoría (Virtual: Infantil, JA, JB, Mayores)
-      const coincideCategoria = categoria ? n.categoria === categoria : true;
       
-      // Filtro por Rama (competitivo / formativo)
-      const coincideRama = rama ? n.rama === rama : true;
+      const edad = calcularEdad(n.fechaNacimiento);
+      let catN = "Mayores";
+      if (edad < 13) catN = "Infantil";
+      else if (edad <= 14) catN = "JA";
+      else if (edad <= 17) catN = "JB";
 
-      // Filtro por Nombre o Apellido (incluimos ambos para mejor UX)
+      const coincideCategoria = categoria ? catN === categoria : true;
+      const coincideRama = rama ? n.rama === rama : true;
       const busqueda = nombre ? nombre.toLowerCase() : "";
       const nombreCompleto = `${n.user?.nombre} ${n.apellido}`.toLowerCase();
       const coincideNombre = nombre ? nombreCompleto.includes(busqueda) : true;
 
-      // Solo retorna si cumple las TRES condiciones
       return coincideCategoria && coincideNombre && coincideRama;
     });
 
     res.status(200).json(filtrados);
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development";
-    res.status(500).json({ 
-      message: "Error con el servidor", 
-      ...(isDev && { error: error.message }) 
-    });
+    res.status(500).json({ message: "Error al obtener lista" });
   }
 };
+
+
 
 export const obtenerNadadorPorId = async (req, res) => {
   try {

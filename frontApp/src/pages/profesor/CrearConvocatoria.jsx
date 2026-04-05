@@ -5,6 +5,7 @@ import api                   from "../../api/axios"
 import DatePicker, { registerLocale } from "react-datepicker"
 import es                    from "date-fns/locale/es"
 import "react-datepicker/dist/react-datepicker.css"
+import { calcularCategoria } from "../../utils/categoria"
 import {
   Calendar, MapPin, Users, Search, CheckCircle2,
   Circle, ArrowLeft, Loader2, Plus, ChevronRight, Zap
@@ -30,7 +31,7 @@ const NadadorRow = ({ n, isSelected, onToggle }) => (
         <p className={`text-xs font-black uppercase truncate ${isSelected ? "text-blue-700" : "text-slate-700"}`}>
           {n.user?.nombre} {n.apellido}
         </p>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{n.categoria}</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{n._categoria || n.categoria}</p>
       </div>
     </div>
     {/* Badge pago */}
@@ -53,10 +54,9 @@ export const CrearConvocatoria = () => {
   const [seleccionados, setSeleccionados] = useState([])
   const [buscar,        setBuscar]        = useState("")
   const [errors,        setErrors]        = useState({})
-  const [filtroNivel, setFiltroNivel] = useState("todos")
-  const [filtroCat, setFiltroCat] = useState("todos")
-
-
+  const [filtroNivel, setFiltroNivel] = useState("");
+  const [filtroCat, setFiltroCat] = useState("");
+  const [exitoso,       setExitoso]       = useState(false)
 
   const { data: nadadores = [], isLoading } = useQuery({
     queryKey: ["nadadores-convocatoria"],
@@ -64,23 +64,33 @@ export const CrearConvocatoria = () => {
     staleTime: 1000 * 60 * 5,
   })
 
-  const categoriasUnicas = useMemo(() => {
-  const cats = nadadores.map(n => n.categoria).filter(Boolean)
-  return ["todos", ...new Set(cats)]
-}, [nadadores])
+  // FIX: calcular categoría en frontend (lean() no devuelve virtuals)
+  const nadoresConCat = useMemo(() =>
+    nadadores.map(n => ({
+      ...n,
+      _categoria: n.categoria || calcularCategoria(n.fechaNacimiento)
+    })),
+    [nadadores]
+  )
 
-  const filtrados = useMemo(() => {
-  return nadadores.filter(n => {
-    const coincideBusqueda = !buscar || 
+  const categoriasUnicas = useMemo(() => {
+    const cats = nadoresConCat.map(n => n._categoria).filter(Boolean)
+    return ["todos", ...new Set(cats)]
+  }, [nadoresConCat])
+
+  const filtrados = useMemo(() =>
+  nadoresConCat.filter(n => {
+    const coincideBusqueda = !buscar ||
       `${n.user?.nombre} ${n.apellido}`.toLowerCase().includes(buscar.toLowerCase())
     
-    // Asumiendo que el modelo Nadador tiene un campo 'nivel' o 'tipo'
-    const coincideNivel = filtroNivel === "todos" || n.rama === filtroNivel
-    const coincideCat = filtroCat === "todos" || n.categoria === filtroCat
-
+    // Ajuste para manejar "" o "todos"
+    const coincideNivel = !filtroNivel || filtroNivel === "todos" || n.rama === filtroNivel
+    const coincideCat   = !filtroCat || filtroCat === "todos" || n._categoria === filtroCat
+    
     return coincideBusqueda && coincideNivel && coincideCat
-  })
-}, [nadadores, buscar, filtroNivel, filtroCat])
+  }),
+  [nadoresConCat, buscar, filtroNivel, filtroCat]
+)
 
   const toggleNadador = useCallback((id) => {
     setSeleccionados(prev =>
@@ -95,17 +105,13 @@ export const CrearConvocatoria = () => {
   }
 
   const mutation = useMutation({
-  mutationFn: (data) => api.post("/convocatorias", data),
-  onSuccess: () => {
-    queryClient.invalidateQueries(["convocatorias"])
-    // Usar un alert o un toast antes de navegar
-    alert("¡Convocatoria creada con éxito!") 
-    navigate("/convocatorias") // O a la lista
-  },
-  onError: (error) => {
-    alert("Error al crear: " + (error.response?.data?.message || "Error del servidor"))
-  }
-})
+    mutationFn: (data) => api.post("/convocatorias", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["convocatorias"])
+      setExitoso(true)
+      setTimeout(() => navigate(-1), 2500)
+    }
+  })
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -236,9 +242,20 @@ export const CrearConvocatoria = () => {
           </div>
 
           {/* Botón submit */}
+          {/* Banner de éxito */}
+          {exitoso && (
+            <div className="flex items-center gap-3 p-4 bg-emerald-500 text-white rounded-2xl animate-fade-in">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              <div>
+                <p className="font-black text-[11px] uppercase tracking-widest">¡Convocatoria creada!</p>
+                <p className="text-[10px] font-bold opacity-80">Volviendo al calendario...</p>
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || exitoso}
             className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl bg-blue-600 hover:bg-slate-900 text-white font-black text-[11px] uppercase tracking-[0.25em] transition-all shadow-xl shadow-blue-200 disabled:opacity-50 active:scale-[0.98]"
           >
             {mutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
@@ -271,31 +288,29 @@ export const CrearConvocatoria = () => {
               className="w-full pl-9 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-[11px] font-bold outline-none focus:bg-white/10 transition-all placeholder:text-slate-500 uppercase"
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <select 
-              value={filtroNivel} 
-              onChange={e => setFiltroNivel(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase p-2 outline-none"
+          <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
+            <select
+              value={filtroNivel}
+              onChange={(e) => setFiltroNivel(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-[10px] font-black text-blue-400 uppercase outline-none focus:bg-white/10"
             >
-              <option value="todos" className="text-slate-900">Todos los Niveles</option>
-              <option value="formativo" className="text-slate-900">Formativo</option>
-              <option value="competitivo" className="text-slate-900">Competitivo</option>
+              <option value="todos">Todas las Ramas</option>
+              <option value="competitivo">Competitivo</option>
+              <option value="formativo">Formativo</option>
             </select>
-
-            <select 
-              value={filtroCat} 
-              onChange={e => setFiltroCat(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase p-2 outline-none"
+                  
+            <select
+              value={filtroCat}
+              onChange={(e) => setFiltroCat(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-[10px] font-black text-blue-400 uppercase outline-none focus:bg-white/10"
             >
               {categoriasUnicas.map(cat => (
-                <option key={cat} value={cat} className="text-slate-900">
-                  {cat === "todos" ? "Todas las Categorías" : cat}
+                <option key={cat} value={cat}>
+                  {cat === "todos" ? "Todas las Edades" : cat}
                 </option>
               ))}
             </select>
           </div>
-
           <button type="button" onClick={seleccionarTodos}
             className="mb-3 shrink-0 w-full py-2.5 border-2 border-dashed border-blue-500/30 text-blue-400 text-[10px] font-black uppercase rounded-xl hover:bg-blue-600 hover:text-white transition-all"
           >

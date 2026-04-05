@@ -1,44 +1,60 @@
-import jwt from "jsonwebtoken"
-import env from "../utils/envs.utils.js"
+import jwt  from "jsonwebtoken"
 import User from "../models/User.js"
+import envs from "../utils/envs.utils.js"
 
 export const verificarToken = async (req, res, next) => {
   try {
-    // FIX: el token ahora viene de la cookie httpOnly, no del header Authorization.
-    // req.cookies requiere el middleware cookie-parser en server.js.
-    //
-    // Mantenemos fallback al header Authorization para compatibilidad con
-    // Postman o clientes que no soporten cookies (ej: apps móviles nativas).
-    const tokenDeCookie = req.cookies?.token
-    const tokenDeHeader = req.headers.authorization?.split(" ")[1]
-    const token = tokenDeCookie || tokenDeHeader
-
+    const token = req.cookies?.token
     if (!token) {
-      return res.status(401).json({ message: "Acceso denegado — sin token" })
+      return res.status(401).json({ message: "No autorizado: falta token" })
     }
 
-    const decoded = jwt.verify(token, env.JWT_SECRET)
-    const user    = await User.findById(decoded.id).select("-password")
+    // Decodificar JWT — falla si expiró o es inválido
+    let decoded
+    try {
+      decoded = jwt.verify(token, envs.JWT_SECRET)
+    } catch (jwtErr) {
+      res.clearCookie("token", {
+        httpOnly: true, secure: true, sameSite: "none"
+      })
+      return res.status(401).json({ message: "Sesión expirada, inicia sesión nuevamente" })
+    }
+
+    // Buscar usuario en BD para obtener nombre y correo (no están en el JWT)
+    // .lean() evita instanciar un documento Mongoose completo → menos RAM
+    const user = await User.findById(decoded.id)
+      .select("nombre correo rol")
+      .lean()
 
     if (!user) {
-      return res.status(401).json({ message: "Usuario no válido" })
+      res.clearCookie("token", {
+        httpOnly: true, secure: true, sameSite: "none"
+      })
+      return res.status(401).json({ message: "Usuario no encontrado" })
     }
 
+    // Poblar req.user con todo lo necesario
     req.user = {
       _id:    user._id,
-      rol:    user.rol,
-      correo: user.correo
+      id:     user._id,     // compatibilidad con código que usa req.user.id
+      nombre: user.nombre,
+      correo: user.correo,
+      rol:    user.rol
     }
 
     next()
-  } catch (error) {
-    // Token expirado o inválido → limpiar la cookie para no dejar residuos
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure:   process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    })
-    return res.status(401).json({ message: "Token inválido o expirado" })
+  } catch (err) {
+    console.error("[AUTH MIDDLEWARE ERROR]:", err.message)
+    return res.status(500).json({ message: "Error de autenticación" })
   }
 }
 
+// Middleware de roles — usar después de verificarToken
+export const soloRol = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user?.rol)) {
+    return res.status(403).json({
+      message: `Acceso denegado. Se requiere rol: ${roles.join(" o ")}`
+    })
+  }
+  next()
+}

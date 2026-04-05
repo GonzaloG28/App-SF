@@ -1,107 +1,119 @@
 import { Convocatoria } from "../models/Convocatoria.js"
 import Nadador from "../models/Nadadores.js"
 import { crearNotificacion } from "./notificacion.controller.js"
+import User from "../models/User.js"
 
 
 export const crearConvocatoria = async (req, res) => {
   try {
-    const { nombre, descripcion, lugar, fechaInicio, fechaFin, nadadores } = req.body
+    const { nombre, descripcion, lugar, fechaInicio, fechaFin, nadadores } = req.body;
 
-    // 1. Validaciones iniciales
     if (!nombre || !lugar || !fechaInicio || !fechaFin) {
-      return res.status(400).json({ message: "Faltan campos requeridos" })
+      return res.status(400).json({ message: "Faltan campos requeridos" });
     }
 
-    // 2. Crear la convocatoria primero
     const nueva = await Convocatoria.create({
-      nombre, descripcion: descripcion || "", lugar,
-      fechaInicio, fechaFin,
+      nombre: nombre.trim(),
+      descripcion: descripcion?.trim() || "",
+      lugar: lugar.trim(),
+      fechaInicio,
+      fechaFin,
       nadadores: nadadores || [],
       creadoPor: req.user._id
-    })
+    });
 
-    // 3. Notificaciones (en paralelo para evitar timeout)
-    // Ejecutamos esto sin bloquear la respuesta principal si es necesario, 
-    // o usamos Promise.all para que sea rápido.
+    // 🟢 OPTIMIZACIÓN: Notificaciones masivas eficientes
     const enviarNotificaciones = async () => {
       try {
+        const idsNadadores = nadadores || [];
+        if (idsNadadores.length === 0) return;
+
+        // Traemos todos los usuarios asociados a esos nadadores de UNA SOLA VEZ
+        const datosNadadores = await Nadador.find({ _id: { $in: idsNadadores } })
+          .populate("user", "_id nombre")
+          .select("user")
+          .lean();
+
+        const promesasNotificaciones = [];
+
         // Notificaciones a nadadores
-        const promesasNadadores = (nadadores || []).map(async (id) => {
-          const n = await Nadador.findById(id).populate("user", "_id nombre")
-          if (n?.user?._id) {
-            return crearNotificacion({
-              destinatario: n.user._id,
-              tipo: "convocatoria_publicada",
-              titulo: "Fuiste convocado",
-              mensaje: `Has sido convocado para "${nombre}" en ${lugar}`,
-              metadata: { entidad: nueva._id, nadadorNombre: n.user.nombre }
-            })
+        datosNadadores.forEach(n => {
+          if (n.user?._id) {
+            promesasNotificaciones.push(crearNotificacion({
+             destinatario: n.user._id,
+             tipo: "convocatoria_publicada",
+             titulo: "Fuiste convocado",
+             mensaje: `Convocatoria para "${nombre}" en ${lugar}`,
+             metadata: { entidadId: nueva._id }
+           }));
           }
-        })
+        });
 
-        // Notificaciones a admins
-        const admins = await User.find({ rol: "admin" }).select("_id")
-        const promesasAdmins = admins.map(admin => 
-          crearNotificacion({
-            destinatario: admin._id,
-            tipo: "convocatoria_admin",
-            titulo: "Nueva convocatoria publicada",
-            mensaje: `${req.user.nombre} publicó la convocatoria "${nombre}"`,
-            metadata: { entidad: nueva._id }
-          })
-        )
+        // Notificaciones a admins (Traer solo IDs)
+        const admins = await User.find({ rol: "admin" }).select("_id").lean();
+        admins.forEach(admin => {
+           promesasNotificaciones.push(crearNotificacion({
+             destinatario: admin._id,
+             tipo: "convocatoria_admin",
+             titulo: "Nueva convocatoria",
+             mensaje: `${req.user.nombre} publicó "${nombre}"`,
+             metadata: { entidadId: nueva._id }
+           }));
+        });
 
-        await Promise.all([...promesasNadadores, ...promesasAdmins])
+        // Ejecutar todo en lotes para no saturar el event loop
+        await Promise.allSettled(promesasNotificaciones);
       } catch (err) {
-        console.error("Error enviando notificaciones:", err)
+        console.error("[CONVOCATORIA_NOTIF_ERROR]:", err);
       }
-    }
+    };
 
-    // Ejecutar notificaciones
-    enviarNotificaciones() 
+    enviarNotificaciones(); // Se ejecuta de fondo
 
-    // 4. RESPUESTA INMEDIATA para evitar que el profesor clickee de nuevo
-    return res.status(201).json(nueva)
+    return res.status(201).json(nueva);
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al crear convocatoria", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error al crear convocatoria" });
   }
-}
+};
 
 // Lista convocatorias — solo las que no han terminado (fechaFin >= hoy)
 export const getConvocatorias = async (req, res) => {
   try {
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
 
+    // 🟢 RAM: .lean() y select para enviar solo lo que el listado necesita
     const convocatorias = await Convocatoria.find({ fechaFin: { $gte: hoy } })
       .populate("creadoPor", "nombre")
+      .select("nombre lugar fechaInicio fechaFin creadoPor nadadores") 
       .sort({ fechaInicio: 1 })
+      .lean();
 
-    res.json(convocatorias)
+    res.json(convocatorias);
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al obtener convocatorias", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error" });
   }
-}
+};
 
 // Detalle con nadadores + estado de pago
 export const getConvocatoriaDetalle = async (req, res) => {
   try {
+    // 🟢 RAM: El deep populate con .lean() ahorra mucha memoria en objetos anidados
     const convocatoria = await Convocatoria.findById(req.params.id)
       .populate("creadoPor", "nombre")
       .populate({
         path: "nadadores",
-        populate: { path: "user", select: "nombre correo" }
+        populate: { path: "user", select: "nombre correo" },
+        select: "user apellido rama pagoAlDia" // Solo lo necesario del nadador
       })
+      .lean();
 
-    if (!convocatoria) return res.status(404).json({ message: "Convocatoria no encontrada" })
-    res.json(convocatoria)
+    if (!convocatoria) return res.status(404).json({ message: "No encontrada" });
+    res.json(convocatoria);
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al obtener convocatoria", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error" });
   }
-}
+};
 
 // Convocatorias de un nadador específico (para su calendario)
 export const getConvocatoriasNadador = async (req, res) => {

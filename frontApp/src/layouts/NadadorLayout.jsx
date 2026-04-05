@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, memo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"

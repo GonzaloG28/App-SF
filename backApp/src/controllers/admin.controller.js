@@ -1,19 +1,45 @@
 import Nadador from "../models/Nadadores.js"
-import { NadadorFormativo } from "../models/NadadorFormativo.js"
 import { Convocatoria } from "../models/Convocatoria.js"
 import User from "../models/User.js"
-import bcrypt               from "bcrypt"
+import bcrypt from "bcrypt"
+import { enviarNotificacionEmail } from "../utils/mailer.utils.js" // Para avisar del pago
 
+
+
+
+const calcularCategoria = (fechaNacimiento) => {
+  if (!fechaNacimiento) return "S/C"
+  const hoy = new Date()
+  const nac = new Date(fechaNacimiento)
+  let edad  = hoy.getFullYear() - nac.getFullYear()
+  const mes = hoy.getMonth() - nac.getMonth()
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) edad--
+  if (edad < 13) return "Infantil"
+  if (edad <= 14) return "JA"
+  if (edad <= 17) return "JB"
+  return "Mayores"
+}
+
+const calcularEdad = (fechaNacimiento) => {
+  if (!fechaNacimiento) return null
+  const hoy = new Date()
+  const nac = new Date(fechaNacimiento)
+  let edad  = hoy.getFullYear() - nac.getFullYear()
+  const mes = hoy.getMonth() - nac.getMonth()
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) edad--
+  return edad
+}
 // GET /api/admin/stats
 export const getStats = async (req, res) => {
   try {
+    // Usamos countDocuments con lean() implícito (muy rápido)
     const [
       totalCompetitivos, pagadosCompetitivos,
       totalFormativos, pagadosFormativos,
       totalConvocatorias
     ] = await Promise.all([
-      Nadador.countDocuments({ $or: [{ rama: "competitivo" }, { rama: { $exists: false } }] }),
-      Nadador.countDocuments({ pagoAlDia: true, $or: [{ rama: "competitivo" }, { rama: { $exists: false } }] }),
+      Nadador.countDocuments({ rama: "competitivo" }),
+      Nadador.countDocuments({ pagoAlDia: true, rama: "competitivo" }),
       Nadador.countDocuments({ rama: "formativo" }),
       Nadador.countDocuments({ rama: "formativo", pagoAlDia: true }),
       Convocatoria.countDocuments({ fechaFin: { $gte: new Date() } })
@@ -26,110 +52,115 @@ export const getStats = async (req, res) => {
       totalMiembros: totalCompetitivos + totalFormativos
     });
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al obtener estadísticas", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error al obtener estadísticas" });
   }
 }
 
-// GET /api/admin/nadadores — todos los nadadores con estado de pago
+// GET /api/admin/nadadores
 export const getNadadoresAdmin = async (req, res) => {
   try {
     const { tipo = "competitivo", buscar, pago } = req.query;
 
-    // Filtro base unificado
-    let query = {
-      ...(tipo === "formativo" 
-        ? { rama: "formativo" } 
-        : { $or: [{ rama: "competitivo" }, { rama: { $exists: false } }] }
-      )
-    };
-
+    // 🟢 MEJORA: Construimos la query dinámicamente para filtrar en la DB, no en RAM
+    let query = { rama: tipo };
+    
     if (pago === "si") query.pagoAlDia = true;
     if (pago === "no") query.pagoAlDia = false;
 
-    // NO usar .lean() para que 'categoria' (Virtual) se incluya en la respuesta
-    const nadadores = await Nadador.find(query)
-      .populate("user", "nombre correo")
-      .populate("profesor", "nombre")
-      .sort({ apellido: 1 });
-
-    let filtrados = nadadores;
+    // 🟢 SEGURIDAD Y VELOCIDAD: Filtro de búsqueda directamente en MongoDB usando Regex
     if (buscar) {
-      const b = buscar.toLowerCase();
-      filtrados = nadadores.filter(n => {
-        const nombreUser = n.user?.nombre?.toLowerCase() || n.nombre?.toLowerCase() || "";
-        const apellido = n.apellido?.toLowerCase() || "";
-        return nombreUser.includes(b) || apellido.includes(b);
-      });
+      const regex = new RegExp(buscar, 'i'); // 'i' para que no importe mayúsculas/minúsculas
+      query.$or = [
+        { apellido: regex },
+        { rut: regex }
+        // Para buscar por nombre de usuario (que está en otra colección), 
+        // lo ideal es buscar primero el ID del usuario o usar un Aggregate.
+      ];
     }
 
-    // Convertimos a JSON manualmente manteniendo los virtuals
-    res.json(filtrados.map(n => n.toJSON({ virtuals: true })));
+    const nadadores = await Nadador.find(query)
+          .populate("user", "nombre correo")
+          .populate("profesor", "nombre")
+          .sort({ apellido: 1 })
+          .limit(100)
+          .lean()
+    
+        // FIX: lean() no ejecuta virtuals → calculamos categoria y edad manualmente
+        const conCategoria = nadadores.map(n => ({
+          ...n,
+          edad:      calcularEdad(n.fechaNacimiento),
+          categoria: calcularCategoria(n.fechaNacimiento)
+        }))
+    
+        res.json(conCategoria)
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al obtener nadadores", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error al obtener lista" });
   }
 }
 
-// PATCH /api/admin/pago/:id — toggle pago de un nadador competitivo
+// PATCH /api/admin/pago/:id
 export const togglePagoNadador = async (req, res) => {
   try {
-    const { id }   = req.params
-    const nadador  = await Nadador.findById(id)
-    if (!nadador) return res.status(404).json({ message: "Nadador no encontrado" })
+    const { id } = req.params;
+    
+    // 🟢 RAM: Solo traemos lo mínimo necesario para el correo
+    const nadador = await Nadador.findById(id)
+      .populate("user", "nombre")
+      .select("pagoAlDia user")
+      .lean();
+      
+    if (!nadador) return res.status(404).json({ message: "No encontrado" });
 
-    const nuevoPago = !nadador.pagoAlDia
+    const nuevoEstado = !nadador.pagoAlDia;
+    
+    // Usamos findByIdAndUpdate para una operación atómica
     await Nadador.findByIdAndUpdate(id, {
-      pagoAlDia:       nuevoPago,
-      fechaUltimoPago: nuevoPago ? new Date() : nadador.fechaUltimoPago
-    })
+      pagoAlDia: nuevoEstado,
+      fechaUltimoPago: nuevoEstado ? new Date() : undefined
+    });
 
-    res.json({
-      message:    nuevoPago ? "Pago confirmado" : "Pago marcado como pendiente",
-      pagoAlDia:  nuevoPago
-    })
+    if (nuevoEstado) {
+      // 🟢 PERFORMANCE: No usamos 'await' aquí. 
+      // El admin recibe la respuesta de "OK" de inmediato mientras el correo se envía solo.
+      enviarNotificacionEmail(
+        id,
+        "Confirmación de Pago",
+        `Hola ${nadador.user.nombre}, hemos recibido tu pago.`
+      ).catch(e => console.error("Error envío correo:", e));
+    }
+
+    res.json({ message: "Estado actualizado", pagoAlDia: nuevoEstado });
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al actualizar pago", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error" });
   }
 }
 
-// PATCH /api/admin/pago-formativo/:id — toggle pago de un nadador formativo
-export const togglePagoFormativo = async (req, res) => {
-  try {
-    const { id }    = req.params
-    const formativo = await NadadorFormativo.findById(id)
-    if (!formativo) return res.status(404).json({ message: "Nadador formativo no encontrado" })
-
-    const nuevoPago = !formativo.pagoAlDia
-    await NadadorFormativo.findByIdAndUpdate(id, {
-      pagoAlDia:       nuevoPago,
-      fechaUltimoPago: nuevoPago ? new Date() : formativo.fechaUltimoPago
-    })
-
-    res.json({ message: nuevoPago ? "Pago confirmado" : "Pago pendiente", pagoAlDia: nuevoPago })
-  } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al actualizar pago", ...(isDev && { error: error.message }) })
-  }
-}
-
-// POST /api/admin/register — crear cuenta de admin
+// POST /api/admin/register
 export const registerAdmin = async (req, res) => {
   try {
-    const { nombre, correo, password } = req.body
-    if (!nombre || !correo || !password) {
-      return res.status(400).json({ message: "Todos los campos son requeridos" })
+    const { nombre, correo, password, adminSecret } = req.body;
+    
+    // 🟢 SEGURIDAD: Solo si conoces una "llave maestra" puedes crear admins
+    // Esto evita que alguien que descubra tu ruta cree cuentas de admin
+    if (adminSecret !== envs.ADMIN_SECRET) {
+      return res.status(401).json({ message: "No tienes permiso para crear administradores" });
     }
-    const existe = await User.findOne({ correo })
-    if (existe) return res.status(400).json({ message: "Ya existe un usuario con ese correo" })
 
-    const salt         = await bcrypt.genSalt(10)
-    const passwordHash = await bcrypt.hash(password, salt)
-    await User.create({ nombre, correo, password: passwordHash, rol: "admin" })
-    res.status(201).json({ message: "Administrador creado correctamente" })
+    const existe = await User.findOne({ correo }).select("_id").lean();
+    if (existe) return res.status(400).json({ message: "Correo ya existe" });
+
+    const salt = await bcrypt.genSalt(12); // 🟢 12 ráfagas es más seguro que 10
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    await User.create({ 
+      nombre, 
+      correo: correo.toLowerCase().trim(), 
+      password: passwordHash, 
+      rol: "admin" 
+    });
+
+    res.status(201).json({ message: "Admin creado" });
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: "Error al crear admin", ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: "Error" });
   }
 }

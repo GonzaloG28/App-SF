@@ -8,9 +8,11 @@ import { getReporteProfesor, eliminarEntrenamiento } from "../../api/entrenamien
 
 // --- COMPONENTE DE TARJETA CON TONALIDADES UNIFICADAS ---
 const EntrenamientoCard = ({ ent, onEliminar, onDetalles, isDeleting }) => {
-  const porcentaje = useMemo(() => 
-    Math.round((ent.completados / ent.totalAlumnos) * 100) || 0, 
-  [ent.completados, ent.totalAlumnos]);
+  const porcentaje = useMemo(() => {
+  const completados = ent.estadisticas?.completados || 0;
+  const total = ent.estadisticas?.total || 0;
+  return total > 0 ? Math.round((completados / total) * 100) : 0;
+}, [ent.estadisticas]);
   
   // Lógica de colores basada en tu paleta
   const esBajo = porcentaje < 50;
@@ -183,8 +185,8 @@ const GestionEntrenamientos = () => {
             </div>
 
             <div className="p-6 md:p-10 max-h-[70vh] md:max-h-[50vh] overflow-y-auto space-y-3">
-              {modalData.detallesCompletados?.length > 0 ? (
-                modalData.detallesCompletados.map((atleta, i) => (
+              {modalData.detalles?.length > 0 ? (
+                modalData.detalles.map((atleta, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-emerald-200 transition-all">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black shrink-0">

@@ -4,12 +4,14 @@ const mensajeSchema = new mongoose.Schema({
   emisor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
+    index: true 
   },
   receptor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
+    index: true 
   },
   contenido: {
     type: String,
@@ -19,12 +21,18 @@ const mensajeSchema = new mongoose.Schema({
   },
   leido: {
     type: Boolean,
-    default: false
+    default: false,
+    index: true
   }
-}, { timestamps: true })
+}, { 
+  timestamps: true,
+  versionKey: false 
+})
 
-// Índices para buscar conversaciones rápidamente
-mensajeSchema.index({ emisor: 1, receptor: 1, createdAt: -1 })
-mensajeSchema.index({ receptor: 1, leido: 1 })
+//Limpieza cada 60 dias
+mensajeSchema.index({ createdAt: 1 }, { expires: 5184000 });
+
+mensajeSchema.index({ emisor: 1, receptor: 1, createdAt: -1 });
+mensajeSchema.index({ receptor: 1, emisor: 1, createdAt: -1 });
 
 export default mongoose.model("Mensaje", mensajeSchema)

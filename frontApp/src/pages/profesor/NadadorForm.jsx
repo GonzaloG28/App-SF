@@ -8,8 +8,10 @@ import es from "date-fns/locale/es"
 import {
   User, Mail, Calendar, Weight, Ruler, Fingerprint,
   Waves, ArrowLeft, Save, Loader2, Info, AlertTriangle,
-  CheckCircle2, Edit3, Lock, Trophy, GraduationCap
+  CheckCircle2, Edit3, Lock, Trophy, GraduationCap,
+  Phone, ShieldCheck
 } from "lucide-react"
+import { calcularEdad } from "../../utils/categoria"
 
 registerLocale("es", es)
 
@@ -30,17 +32,24 @@ const NadadorForm = () => {
 
   const [errors,      setErrors]      = useState({})
   const [serverError, setServerError] = useState("")
-
-  // FIX RAMA: estado SEPARADO del form para evitar pérdida de valor
-  // en modo creación. El problema era que rama dentro del objeto form
-  // quedaba atrapado en closures stale en algunos re-renders.
-  const [rama, setRama] = useState("competitivo")
+  const [rama,        setRama]        = useState("competitivo")
 
   const [form, setForm] = useState({
-    nombre: "", apellido: "", correo: "", fechaNacimiento: null,
-    peso: "", altura: "", rut: "", pruebasEspecialidad: ""
+    nombre: "", apellido: "", correo: "",
+    fechaNacimiento: null,
+    peso: "", altura: "", rut: "",
+    pruebasEspecialidad: "",
+    // Campos apoderado
+    nombreApoderado:  "",
+    correoApoderado:  "",
+    telefonoApoderado: ""
   })
   const originalData = useRef(null)
+
+  // Calcular si el nadador es menor de edad según la fecha ingresada
+  const esMenor = form.fechaNacimiento
+    ? calcularEdad(form.fechaNacimiento) < 18
+    : false
 
   const { data, isLoading } = useQuery({
     queryKey: ["nadador", id],
@@ -60,9 +69,11 @@ const NadadorForm = () => {
         altura:              data.altura?.toString()  || "",
         rut:                 data.rut                 || "",
         pruebasEspecialidad: data.pruebasEspecialidad?.join(", ") || "",
+        nombreApoderado:     data.nombreApoderado     || "",
+        correoApoderado:     data.correoApoderado     || "",
+        telefonoApoderado:   data.telefonoApoderado   || "",
       }
       originalData.current = { ...original, rama: data.rama || "competitivo" }
-      // FIX: rama se actualiza en su propio estado
       setRama(data.rama || "competitivo")
     }
   }, [data])
@@ -76,13 +87,10 @@ const NadadorForm = () => {
     },
     onError: (error) => {
       const message = error.response?.data?.message || ""
-      if (message.toLowerCase().includes("rut")) {
-        setErrors(prev => ({ ...prev, rut: "RUT ya registrado" }))
-      } else if (message.toLowerCase().includes("correo")) {
-        setErrors(prev => ({ ...prev, correo: "Email ya en uso" }))
-      } else {
-        setServerError("Error en el servidor. Reintente.")
-      }
+      if (message.toLowerCase().includes("rut"))    setErrors(prev => ({ ...prev, rut: "RUT ya registrado" }))
+      else if (message.toLowerCase().includes("correo")) setErrors(prev => ({ ...prev, correo: "Email ya en uso" }))
+      else if (message.toLowerCase().includes("apoderado")) setErrors(prev => ({ ...prev, correoApoderado: "Requerido para menores" }))
+      else setServerError(message || "Error en el servidor. Reintente.")
     }
   })
 
@@ -92,23 +100,27 @@ const NadadorForm = () => {
 
     if (isEdit) {
       if (form.correo && !emailRegex.test(form.correo)) newErrors.correo = "Email inválido"
+      if (form.correoApoderado && !emailRegex.test(form.correoApoderado)) newErrors.correoApoderado = "Email inválido"
       const algoCambio = Object.values(form).some(v => v !== "" && v !== null)
       const ramaCambio = rama !== originalData.current?.rama
-      if (!algoCambio && !ramaCambio) {
-        setServerError("Modifica al menos un campo para guardar.")
-        return false
-      }
+      if (!algoCambio && !ramaCambio) { setServerError("Modifica al menos un campo para guardar."); return false }
     } else {
       if (!form.nombre.trim())           newErrors.nombre          = "Requerido"
       if (!form.apellido.trim())         newErrors.apellido        = "Requerido"
       if (!emailRegex.test(form.correo)) newErrors.correo          = "Email inválido"
       if (!form.fechaNacimiento)         newErrors.fechaNacimiento = "Falta fecha"
       if (!form.rut.trim())              newErrors.rut             = "RUT requerido"
+      // Validar apoderado si es menor
+      if (esMenor) {
+        if (!form.correoApoderado.trim())    newErrors.correoApoderado   = "Requerido (menor de edad)"
+        else if (!emailRegex.test(form.correoApoderado)) newErrors.correoApoderado = "Email inválido"
+        if (!form.telefonoApoderado.trim())  newErrors.telefonoApoderado = "Requerido (menor de edad)"
+      }
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }, [form, isEdit, rama])
+  }, [form, isEdit, rama, esMenor])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -116,17 +128,14 @@ const NadadorForm = () => {
     if (!validate()) return
 
     if (isEdit) {
-      const cambios = { rama } // siempre incluir rama
+      const cambios = { rama }
       Object.entries(form).forEach(([key, val]) => {
         if (val !== "" && val !== null) cambios[key] = val
       })
       if (cambios.pruebasEspecialidad) {
-        cambios.pruebasEspecialidad = cambios.pruebasEspecialidad
-          .split(",").map(p => p.trim()).filter(p => p !== "")
+        cambios.pruebasEspecialidad = cambios.pruebasEspecialidad.split(",").map(p => p.trim()).filter(Boolean)
       }
-      if (cambios.fechaNacimiento instanceof Date) {
-        cambios.fechaNacimiento = cambios.fechaNacimiento.toISOString()
-      }
+      if (cambios.fechaNacimiento instanceof Date) cambios.fechaNacimiento = cambios.fechaNacimiento.toISOString()
       mutation.mutate(cambios)
     } else {
       mutation.mutate({
@@ -134,15 +143,9 @@ const NadadorForm = () => {
         rama,
         peso:   form.peso   ? Number(form.peso)   : 0,
         altura: form.altura ? Number(form.altura) : 0,
-        pruebasEspecialidad: form.pruebasEspecialidad
-          .split(",").map(p => p.trim()).filter(p => p !== "")
+        pruebasEspecialidad: form.pruebasEspecialidad.split(",").map(p => p.trim()).filter(Boolean)
       })
     }
-  }
-
-  const handleRutChange = (e) => {
-    const formatted = formatRut(e.target.value)
-    if (formatted.length <= 12) setForm({ ...form, rut: formatted })
   }
 
   if (isLoading) return (
@@ -152,7 +155,6 @@ const NadadorForm = () => {
         <div className="h-64 bg-slate-100 rounded-2xl" />
         <div className="h-64 bg-slate-100 rounded-2xl" />
       </div>
-      <div className="h-48 bg-slate-100 rounded-2xl" />
     </div>
   )
 
@@ -160,7 +162,6 @@ const NadadorForm = () => {
 
   return (
     <>
-      {/* FIX DATEPICKER z-index — inyectado en el head via style tag */}
       <style>{`.react-datepicker-popper { z-index: 9999 !important; }`}</style>
 
       <div className="max-w-3xl mx-auto space-y-5 animate-fade-in pb-8 p-4">
@@ -194,45 +195,29 @@ const NadadorForm = () => {
           </div>
         </div>
 
-        {/* SELECTOR DE RAMA — estado propio, no dentro del form */}
+        {/* SELECTOR DE RAMA */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
             <Waves size={14} className="text-blue-500" /> Rama del Nadador
           </h3>
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setRama("competitivo")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
-                rama === "competitivo"
-                  ? "border-blue-600 bg-blue-50 text-blue-700"
-                  : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
-              }`}
-            >
-              <Trophy size={22} className={rama === "competitivo" ? "text-blue-600" : "text-slate-300"} />
-              <div className="text-center">
-                <p className="text-[11px] font-black uppercase tracking-wider">Competitivo</p>
-                <p className="text-[10px] font-medium opacity-70 mt-0.5">Compite en torneos</p>
-              </div>
-              {rama === "competitivo" && <CheckCircle2 size={14} className="text-blue-600" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setRama("formativo")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
-                rama === "formativo"
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
-              }`}
-            >
-              <GraduationCap size={22} className={rama === "formativo" ? "text-green-600" : "text-slate-300"} />
-              <div className="text-center">
-                <p className="text-[11px] font-black uppercase tracking-wider">Formativo</p>
-                <p className="text-[10px] font-medium opacity-70 mt-0.5">Aprendiendo a nadar</p>
-              </div>
-              {rama === "formativo" && <CheckCircle2 size={14} className="text-green-600" />}
-            </button>
+            {[
+              { value: "competitivo", label: "Competitivo", sub: "Compite en torneos", Icon: Trophy, active: "border-blue-600 bg-blue-50 text-blue-700", check: "text-blue-600" },
+              { value: "formativo",  label: "Formativo",   sub: "Aprendiendo a nadar", Icon: GraduationCap, active: "border-green-500 bg-green-50 text-green-700", check: "text-green-600" }
+            ].map(({ value, label, sub, Icon, active, check }) => (
+              <button key={value} type="button" onClick={() => setRama(value)}
+                className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                  rama === value ? active : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+                }`}
+              >
+                <Icon size={22} className={rama === value ? check : "text-slate-300"} />
+                <div className="text-center">
+                  <p className="text-[11px] font-black uppercase tracking-wider">{label}</p>
+                  <p className="text-[10px] font-medium opacity-70 mt-0.5">{sub}</p>
+                </div>
+                {rama === value && <CheckCircle2 size={14} className={check} />}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -246,7 +231,7 @@ const NadadorForm = () => {
         )}
 
         {serverError && (
-          <div className="bg-orange-500 text-white p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-orange-200">
+          <div className="bg-orange-500 text-white p-4 rounded-2xl flex items-center gap-3 shadow-lg">
             <AlertTriangle size={20} className="shrink-0" />
             <span className="text-[11px] font-black uppercase tracking-widest">{serverError}</span>
           </div>
@@ -254,9 +239,9 @@ const NadadorForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
+          {/* IDENTIDAD + BIOMETRÍA */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* IDENTIDAD */}
-            <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5 relative overflow-hidden">
+            <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-100 shadow-sm space-y-5 relative overflow-hidden">
               <div className="absolute -top-4 -right-4 text-slate-50 rotate-12 pointer-events-none">
                 <Fingerprint size={80} />
               </div>
@@ -264,36 +249,30 @@ const NadadorForm = () => {
                 <Fingerprint size={14} /> Identidad
               </h3>
               <div className="space-y-4 relative z-10">
-                <Field
-                  label="RUT" name="rut"
-                  icon={isEdit ? Lock : Fingerprint}
+                <Field label="RUT" name="rut" icon={isEdit ? Lock : Fingerprint}
                   form={form} errors={errors}
                   placeholder={isEdit ? (orig?.rut || "No editable") : "12.345.678-9"}
-                  onChange={handleRutChange}
+                  onChange={e => { const f = formatRut(e.target.value); if (f.length <= 12) setForm({...form, rut: f}) }}
                   disabled={isEdit}
                   hint={isEdit ? "El RUT no puede modificarse" : undefined}
                 />
-                <Field
-                  label="Email" name="correo" type="email" icon={Mail}
+                <Field label="Email" name="correo" type="email" icon={Mail}
                   form={form} setForm={setForm} errors={errors}
                   placeholder={isEdit ? (orig?.correo || "correo@ejemplo.com") : "atleta@club.cl"}
                 />
               </div>
             </div>
 
-            {/* BIOMETRÍA */}
-            <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5">
+            <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-100 shadow-sm space-y-5">
               <h3 className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
                 <Info size={14} /> Biometría
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                <Field
-                  label="Peso (kg)" name="peso" type="number" icon={Weight}
+                <Field label="Peso (kg)" name="peso" type="number" icon={Weight}
                   form={form} setForm={setForm} errors={errors}
                   placeholder={isEdit ? (orig?.peso || "kg") : "70"}
                 />
-                <Field
-                  label="Altura (cm)" name="altura" type="number" icon={Ruler}
+                <Field label="Altura (cm)" name="altura" type="number" icon={Ruler}
                   form={form} setForm={setForm} errors={errors}
                   placeholder={isEdit ? (orig?.altura || "cm") : "180"}
                 />
@@ -311,14 +290,11 @@ const NadadorForm = () => {
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 z-10 transition-colors" size={17} />
                   <DatePicker
                     selected={form.fechaNacimiento}
-                    onChange={(date) => setForm({ ...form, fechaNacimiento: date })}
-                    locale="es"
-                    dateFormat="dd / MM / yyyy"
-                    showYearDropdown
-                    dropdownMode="select"
+                    onChange={date => setForm({ ...form, fechaNacimiento: date })}
+                    locale="es" dateFormat="dd / MM / yyyy"
+                    showYearDropdown dropdownMode="select"
                     placeholderText={isEdit ? "Dejar vacío para no cambiar" : "DD / MM / AAAA"}
                     wrapperClassName="w-full"
-                    // FIX z-index: popperProps strategy fixed para que salga por encima de todo
                     popperProps={{ strategy: "fixed" }}
                     popperPlacement="bottom-start"
                     className={`w-full pl-11 pr-4 py-3.5 bg-slate-50 border-2 rounded-xl text-sm font-black focus:ring-4 focus:ring-blue-500/5 focus:border-blue-600 outline-none transition-all ${
@@ -334,48 +310,72 @@ const NadadorForm = () => {
           </div>
 
           {/* DATOS DEL PERFIL */}
-          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Waves size={14} className="text-blue-500" /> Datos del Perfil
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1.5 bg-slate-50 rounded-full italic self-start sm:self-auto">
-                Visible en el perfil
-              </span>
-            </div>
+          <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+            <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+              <Waves size={14} className="text-blue-500" /> Datos del Perfil
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field
-                label="Nombres" name="nombre" icon={User}
+              <Field label="Nombres" name="nombre" icon={User}
                 form={form} setForm={setForm} errors={errors}
                 placeholder={isEdit ? (orig?.nombre || "Nombre actual") : "Ej: Juan Andrés"}
               />
-              <Field
-                label="Apellidos" name="apellido" icon={User}
+              <Field label="Apellidos" name="apellido" icon={User}
                 form={form} setForm={setForm} errors={errors}
                 placeholder={isEdit ? (orig?.apellido || "Apellido actual") : "Ej: Pérez Soto"}
               />
               <div className="sm:col-span-2">
-                <Field
-                  label="Pruebas de Especialidad"
-                  name="pruebasEspecialidad"
-                  icon={Waves}
+                <Field label="Pruebas de Especialidad" name="pruebasEspecialidad" icon={Waves}
                   form={form} setForm={setForm} errors={errors}
-                  placeholder={isEdit
-                    ? (orig?.pruebasEspecialidad || "Especialidades actuales")
-                    : "Ej: 100m Mariposa, 50m Pecho..."}
+                  placeholder={isEdit ? (orig?.pruebasEspecialidad || "Especialidades actuales") : "Ej: 100m Mariposa, 50m Pecho..."}
                   description="Separar con comas"
                 />
               </div>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={mutation.isPending}
+          {/* DATOS DEL APODERADO — visible si es menor o si ya tiene datos */}
+          {(esMenor || orig?.correoApoderado || isEdit) && (
+            <div className={`bg-white p-5 md:p-8 rounded-2xl border-2 shadow-sm space-y-5 transition-all ${
+              esMenor ? "border-orange-200" : "border-slate-100"
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-xl shrink-0 ${esMenor ? "bg-orange-50 text-orange-500" : "bg-slate-50 text-slate-400"}`}>
+                  <ShieldCheck size={16} />
+                </div>
+                <div>
+                  <h3 className={`text-[11px] font-black uppercase tracking-[0.2em] ${esMenor ? "text-orange-600" : "text-slate-500"}`}>
+                    Datos del Apoderado
+                  </h3>
+                  <p className="text-[10px] font-medium text-slate-400 mt-0.5">
+                    {esMenor
+                      ? "⚠ Obligatorio — el nadador es menor de edad"
+                      : "Opcional si el nadador es mayor de 18 años"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <Field label="Nombre del Apoderado" name="nombreApoderado" icon={User}
+                    form={form} setForm={setForm} errors={errors}
+                    placeholder="Nombre completo del apoderado"
+                  />
+                </div>
+                <Field label="Correo del Apoderado" name="correoApoderado" type="email" icon={Mail}
+                  form={form} setForm={setForm} errors={errors}
+                  placeholder="apoderado@email.com"
+                />
+                <Field label="Teléfono del Apoderado" name="telefonoApoderado" icon={Phone}
+                  form={form} setForm={setForm} errors={errors}
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+            </div>
+          )}
+
+          <button type="submit" disabled={mutation.isPending}
             className={`w-full flex items-center justify-center gap-3 px-8 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all duration-300 shadow-xl active:scale-95 disabled:opacity-50 ${
-              isEdit
-                ? "bg-emerald-500 hover:bg-slate-900 text-white shadow-emerald-200"
-                : "bg-slate-900 hover:bg-blue-600 text-white shadow-slate-300"
+              isEdit ? "bg-emerald-500 hover:bg-slate-900 text-white shadow-emerald-200" : "bg-slate-900 hover:bg-blue-600 text-white shadow-slate-300"
             }`}
           >
             {mutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
@@ -405,12 +405,11 @@ const Field = ({ label, name, type = "text", icon: Icon, form, setForm, errors, 
         placeholder={placeholder}
         value={form[name]}
         disabled={disabled}
-        onChange={onChange || ((e) => setForm({ ...form, [name]: e.target.value }))}
+        onChange={onChange || (e => setForm({ ...form, [name]: e.target.value }))}
         className={`w-full py-3.5 pl-11 pr-4 bg-slate-50 border-2 rounded-xl text-sm font-black outline-none transition-all
-          ${disabled
-            ? "bg-slate-100 border-slate-100 text-slate-500 cursor-not-allowed"
-            : "border-slate-100 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/5"
-          } ${errors[name] ? "border-orange-400 bg-orange-50/20" : ""}`}
+          ${disabled ? "bg-slate-100 border-slate-100 text-slate-500 cursor-not-allowed"
+            : "border-slate-100 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/5"}
+          ${errors[name] ? "border-orange-400 bg-orange-50/20" : ""}`}
       />
       {errors[name] && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500">
@@ -423,3 +422,4 @@ const Field = ({ label, name, type = "text", icon: Icon, form, setForm, errors, 
 )
 
 export default NadadorForm
+

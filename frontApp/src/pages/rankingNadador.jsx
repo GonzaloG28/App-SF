@@ -78,7 +78,7 @@ const RankingNadador = () => {
         
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
           {[
-            { label: "Estilo", name: "estilo", icon: Waves, options: ["Libre", "Espalda", "Pecho", "Mariposa", "Combinado"], color: "text-blue-500" },
+            { label: "Estilo", name: "estilo", icon: Waves, options: ["Libre", "Espalda", "Pecho", "Mariposa", "comb."], color: "text-blue-500" },
             { label: "Metraje", name: "distancia", icon: Search, options: [25, 50, 100, 200, 400, 800, 1500], color: "text-emerald-500" },
             { label: "Vaso", name: "piscina", icon: Filter, options: [{l: "Corta (25m)", v: 25}, {l: "Larga (50m)", v: 50}], color: "text-blue-500" }
           ].map((f) => (

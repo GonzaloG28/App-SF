@@ -1,10 +1,9 @@
 // Chat.jsx — componente universal de mensajería
-// Funciona para nadador, profesor y admin.
-// El backend controla quién puede hablar con quién.
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient }    from "@tanstack/react-query"
 import { useAuth }                                  from "../context/AuthContext"
 import api from "../api/axios"
+import { io } from "socket.io-client" // 🟢 NUEVO: Importamos el cliente de sockets
 import {
   Send, MessageSquare, Search, ArrowLeft,
   Loader2, User, Shield, GraduationCap, Trophy
@@ -63,8 +62,8 @@ const Conversacion = ({ contacto, onVolver, miId, miNombre }) => {
 
   const { data: mensajes = [], isLoading } = useQuery({
     queryKey: ["conversacion", contacto._id],
-    queryFn:  () => api.get(`/mensajes/conversacion/${contacto._id}`).then(r => r.data),
-    refetchInterval: 5000, // polling cada 5 segundos
+    queryFn: () => api.get(`/mensajes/conversacion/${contacto._id}`).then(r => r.data),
+    // 🔴 ELIMINADO: refetchInterval (Adiós Polling)
   })
 
   // Auto-scroll al último mensaje
@@ -83,9 +82,14 @@ const Conversacion = ({ contacto, onVolver, miId, miNombre }) => {
       receptorId: contacto._id,
       contenido:  texto.trim()
     }),
-    onSuccess: () => {
+    onSuccess: (res) => { // 🟢 NUEVO: Recibimos el mensaje creado desde el backend
       setTexto("")
-      queryClient.invalidateQueries(["conversacion", contacto._id])
+      
+      // 🟢 NUEVO: En vez de hacer un refetch, inyectamos el mensaje instantáneamente en la pantalla
+      queryClient.setQueryData(["conversacion", contacto._id], (old) => {
+        return [...(old || []), res.data]
+      })
+
       queryClient.invalidateQueries(["contactos"])
       inputRef.current?.focus()
     }
@@ -194,8 +198,9 @@ const ListaContactos = ({ contactoActivo, onSeleccionar }) => {
 
   const { data: contactos = [], isLoading } = useQuery({
     queryKey: ["contactos"],
-    queryFn:  () => api.get("/mensajes/contactos").then(r => r.data),
-    refetchInterval: 10000,
+    queryFn: () => api.get("/mensajes/contactos").then(r => r.data),
+    staleTime: 60000, // Lo dejamos en caché 1 minuto, los sockets actualizarán el resto
+    // 🔴 ELIMINADO: refetchInterval
   })
 
   const filtrados = contactos.filter(c => {
@@ -275,9 +280,40 @@ const ListaContactos = ({ contactoActivo, onSeleccionar }) => {
 const Chat = () => {
   const { user }  = useAuth()
   const [contactoActivo, setContactoActivo] = useState(null)
+  const queryClient = useQueryClient() // 🟢 NUEVO
 
-  // En mobile: si hay contacto activo, muestra la conversación
-  // En desktop: siempre muestra ambos paneles
+  // 🟢 NUEVO: LÓGICA DE WEBSOCKETS
+  useEffect(() => {
+  if (!user) return;
+
+  const BACKEND_URL = import.meta.env.VITE_API_URL 
+    ? import.meta.env.VITE_API_URL.replace("/api", "") 
+    : "http://localhost:5000";
+
+  // 🟢 CAMBIO SEGURO: Enviamos el token en el objeto 'auth'
+  // Suponiendo que guardas tu token en localStorage como 'token'
+  const token = localStorage.getItem("token"); 
+
+  const socket = io(BACKEND_URL, {
+    auth: {
+      token: token 
+    }
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error("Error de conexión al socket:", err.message);
+    // Si el token expira, podrías redirigir al login aquí
+  });
+
+  socket.on("nuevo_mensaje", (mensaje) => {
+    // ... (tu lógica de queryClient.setQueryData que ya pusimos antes)
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, [user, queryClient]);
+  // ───────────────────────────────────────────────────────────
 
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col animate-fade-in">

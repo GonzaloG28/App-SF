@@ -1,6 +1,7 @@
 import { useState }  from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api           from "../../api/axios"
+import { calcularCategoria } from "../../utils/categoria"
 import {
   Search, CheckCircle2, XCircle, Loader2,
   RefreshCcw, Filter, GraduationCap, Trophy
@@ -13,16 +14,17 @@ export const AdminNadadores = () => {
   const [tipo,       setTipo]       = useState("competitivo")
 
   const { data = [], isLoading, isFetching } = useQuery({
-    queryKey: ["adminNadadores", tipo, filtroPago, buscar],
+    queryKey: ["adminNadadores", tipo, filtroPago],
     queryFn:  () => api.get("/admin/nadadores", {
-      params: { tipo, pago: filtroPago || undefined, buscar: buscar || undefined }
+      params: { tipo, pago: filtroPago || undefined }
     }).then(r => r.data),
-    keepPreviusData: true,
     staleTime: 1000 * 60 * 2,
   })
 
   const toggleMutation = useMutation({
-    mutationFn: (id) => api.patch(`/admin/pago/${id}`),
+    mutationFn: (id) => api.patch(
+      tipo === "formativo" ? `/admin/pago-formativo/${id}` : `/admin/pago/${id}`
+    ),
     onSuccess: () => {
       queryClient.invalidateQueries(["adminNadadores"])
       queryClient.invalidateQueries(["adminStats"])
@@ -113,16 +115,13 @@ export const AdminNadadores = () => {
 }
 
 const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
-  const nombreBase = nadador.user?.nombre || nadador.nombre || "Sin Nombre";
-  const nombre = `${nombreBase} ${nadador.apellido || ""}`.trim();
-  const inicial = nombre.charAt(0).toUpperCase();
-  
-  const pagado = nadador.pagoAlDia;
-  const ramaReal = nadador.rama || tipo;
-  const esFormativo = ramaReal === "formativo";
-  
-  // Ahora la categoría vendrá del backend gracias a toJSON({ virtuals: true })
-  const categoria = nadador.categoria || "S/C";
+  const nombre    = `${nadador.user?.nombre} ${nadador.apellido}`
+  const inicial   = nombre.charAt(0).toUpperCase()
+  const pagado    = nadador.pagoAlDia
+  // FIX: distinguir tipo real — usar campo rama si existe, sino el tipo del filtro
+  const ramaReal  = nadador.rama || tipo
+  const esFormativo = ramaReal === "formativo"
+  const categoria = (nadador.categoria || calcularCategoria(nadador.fechaNacimiento) || "S/C")
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-all">
@@ -140,6 +139,7 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <p className="font-black text-slate-900 uppercase italic tracking-tight text-sm truncate">{nombre}</p>
+            {/* Badge tipo — siempre visible */}
             <span className={`flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shrink-0 border ${
               esFormativo
                 ? "bg-green-50 text-green-700 border-green-100"
@@ -150,9 +150,9 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
             </span>
           </div>
 
-          {/* Badge pago */}
+          {/* Badge pago — SIEMPRE visible en mobile y desktop */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`flex items-center gap-1 text-[8px] font-black px-2.5 py-1 rounded-lg uppercase border ${
+            <span className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase border ${
               pagado
                 ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                 : "bg-orange-50 text-orange-600 border-orange-100"
@@ -160,47 +160,34 @@ const NadadorPagoCard = ({ nadador, tipo, onToggle, isToggling }) => {
               {pagado ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
               {pagado ? "Al día" : "Pago pendiente"}
             </span>
-            {pagado && nadador.fechaUltimoPago && (
-              <p className="text-[10px] text-slate-400 font-bold">
-                Ultimo pago:{" "}
-                <span className="font-black text-slate-500">
-                  {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                  })}
-                </span>
-              </p>
+            {nadador.fechaUltimoPago && (
+              <span className="text-[10px] text-slate-400 font-bold">
+                {new Date(nadador.fechaUltimoPago).toLocaleDateString("es-ES", {
+                  day: "2-digit", month: "short", year: "numeric"
+                })}
+              </span>
             )}
           </div>
         </div>
 
         {/* Toggle pago */}
-        <div className="flex flex-col items-center gap-1">
-  {/* El texto cambia dinámicamente y el tamaño ahora es text-[10px] */}
-  <p className={`font-black uppercase italic tracking-tight text-[10px] truncate ${
-    pagado ? "text-emerald-600" : "text-slate-500"
-  }`}>
-    {pagado ? "Pago realizado" : "Confirmación de pago"}
-  </p>
-
-  <button
-    onClick={onToggle}
-    disabled={isToggling}
-    className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${
-      pagado
-        ? "bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
-        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-    }`}
-    title={pagado ? "Marcar como pendiente" : "Confirmar pago"}
-  >
-    {isToggling
-      ? <RefreshCcw size={16} className="animate-spin" />
-      : pagado ? <XCircle size={18} /> : <CheckCircle2 size={18} />
-    }
-  </button>
-</div>
+        <button
+          onClick={onToggle}
+          disabled={isToggling}
+          className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${
+            pagado
+              ? "bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white"
+              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+          }`}
+          title={pagado ? "Marcar como pendiente" : "Confirmar pago"}
+        >
+          {isToggling
+            ? <RefreshCcw size={16} className="animate-spin" />
+            : pagado ? <XCircle size={18} /> : <CheckCircle2 size={18} />
+          }
+        </button>
       </div>
     </div>
   )
 }
+

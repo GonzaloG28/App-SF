@@ -6,7 +6,7 @@ import {
   ArrowLeft, Trophy, BarChart3, Calendar, Weight,
   Ruler, Fingerprint, Waves, ExternalLink,
   ShieldCheck, RefreshCcw, Target, Zap, AlertCircle,
-  GraduationCap, Mail, XCircle
+  GraduationCap, Mail, UserRound, Phone, ShieldAlert
 } from "lucide-react"
 
 const NadadorDetalle = () => {
@@ -125,7 +125,6 @@ const NadadorDetalle = () => {
         <MetricCard icon={Ruler}    title="Estatura"   value={nadador.altura ? `${nadador.altura} cm` : "--"} color="emerald" />
         
       </div>
-
       {/* CONTENIDO PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-8">
 
@@ -180,6 +179,56 @@ const NadadorDetalle = () => {
           </Link>
         </div>
       </div>
+      {nadador.edad < 18 && (
+  <div className="bg-amber-50 rounded-2xl md:rounded-[2.5rem] p-5 md:p-8 border border-amber-200 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+    <div className="flex items-center gap-3 mb-6">
+      <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-200">
+        <ShieldAlert size={20} />
+      </div>
+      <div>
+        <h3 className="font-black text-amber-900 uppercase tracking-tighter text-lg italic text-left">Información del Apoderado</h3>
+        <p className="text-[11px] font-bold text-amber-600 uppercase tracking-widest text-left">Atleta menor de edad</p>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Nombre Apoderado */}
+      <div className="bg-white/60 p-4 rounded-2xl border border-amber-100 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+          <UserRound size={18} />
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Nombre Apoderado</span>
+          <span className="font-black text-slate-800 uppercase italic text-sm">{nadador.nombreApoderado || "No registrado"}</span>
+        </div>
+      </div>
+
+      {/* Correo Apoderado */}
+      <div className="bg-white/60 p-4 rounded-2xl border border-amber-100 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+          <Mail size={18} />
+        </div>
+        <div className="flex flex-col text-left min-w-0">
+          <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Correo de Contacto</span>
+          <span className="font-black text-slate-800 lowercase text-sm truncate">{nadador.correoApoderado || "No registrado"}</span>
+        </div>
+      </div>
+
+      {/* Teléfono Apoderado */}
+      <div className="bg-white/60 p-4 rounded-2xl border border-amber-100 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+          <Phone size={18} />
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Teléfono Emergencia</span>
+          <a href={`tel:${nadador.telefonoApoderado}`} className="font-black text-blue-600 hover:text-blue-700 uppercase italic text-sm transition-colors">
+            {nadador.telefonoApoderado || "No registrado"}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }

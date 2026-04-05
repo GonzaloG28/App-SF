@@ -79,8 +79,8 @@ const MisTiempos = () => {
       {/* PANEL DE CONTROL (FILTROS) */}
       <section className="bg-white rounded-[2.5rem] p-4 md:p-6 shadow-2xl shadow-blue-900/5 border border-slate-100 flex flex-wrap lg:flex-nowrap gap-4 items-end">
         {[
-          { label: "Estilo", name: "estilo", options: ["Libre", "Espalda", "Pecho", "Mariposa"] },
-          { label: "Distancia", name: "distancia", options: [25, 50, 100, 200, 400] },
+          { label: "Estilo", name: "estilo", options: ["Libre", "Espalda", "Pecho", "Mariposa", "Comb."] },
+          { label: "Distancia", name: "distancia", options: [25, 50, 100, 200, 400, 800, 1500] },
           { label: "Piscina", name: "piscina", options: [{v:25, t:"25m"}, {v:50, t:"50m"}] }
         ].map((f) => (
           <div key={f.name} className="flex-1 min-w-[140px] space-y-2">

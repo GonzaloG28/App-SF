@@ -126,18 +126,29 @@ const CompetenciasList = () => {
   const competencias = data?.data || [];
 
   const competenciasProcesadas = useMemo(() => {
-    return [...competencias]
-      .filter((c) => {
-        const matchesNombre = c.nombre.toLowerCase().includes(searchNombre.toLowerCase());
-        const matchesFecha = !searchFecha || 
-          new Date(c.fecha).toDateString() === searchFecha.toDateString();
-        return matchesNombre && matchesFecha;
-      })
-      .sort((a, b) => {
-        const diff = new Date(a.fecha) - new Date(b.fecha);
-        return orden === "desc" ? -diff : diff;
-      });
-  }, [competencias, searchNombre, searchFecha, orden]);
+  return [...competencias]
+    .filter((c) => {
+      const matchesNombre = c.nombre.toLowerCase().includes(searchNombre.toLowerCase());
+
+      let matchesFecha = true;
+      if (searchFecha) {
+        const fechaComp = new Date(c.fecha);
+        // Comparamos SOLO Año y Mes
+        matchesFecha = 
+          fechaComp.getFullYear() === searchFecha.getFullYear() &&
+          fechaComp.getMonth() === searchFecha.getMonth();
+      }
+
+      return matchesNombre && matchesFecha;
+    })
+    .sort((a, b) => {
+      // Usamos getTime() para asegurar una comparación numérica precisa
+      const dateA = new Date(a.fecha).getTime();
+      const dateB = new Date(b.fecha).getTime();
+      
+      return orden === "desc" ? dateB - dateA : dateA - dateB;
+    });
+}, [competencias, searchNombre, searchFecha, orden]);
 
   const destacada = useMemo(() => {
     if (!competencias.length) return null;
@@ -183,15 +194,18 @@ const CompetenciasList = () => {
           <div className="flex items-center w-full sm:w-auto bg-slate-50 rounded-2xl px-5 relative group border border-transparent focus-within:border-blue-100 transition-all">
             <Calendar size={18} className="text-blue-400 mr-3" />
             <DatePicker
-              selected={searchFecha}
-              onChange={(date) => setSearchFecha(date)}
-              maxDate={new Date()}
-              placeholderText="Filtrar por fecha"
-              dateFormat="dd/MM/yyyy"
-              showYearDropdown
-              dropdownMode="select"
-              className="bg-transparent border-none py-4 text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer w-full uppercase tracking-tighter"
-            />
+  selected={searchFecha}
+  onChange={(date) => setSearchFecha(date)}
+  maxDate={new Date()}
+  placeholderText="Mes / Año"
+  
+  // PROPIEDADES CLAVE PARA SOLO MES Y AÑO:
+  dateFormat="MM/yyyy"
+  showMonthYearPicker 
+  showFullMonthYearPicker
+  
+  className="bg-transparent border-none py-4 text-[11px] font-black text-slate-600 focus:ring-0 cursor-pointer w-full uppercase tracking-tighter"
+/>
           </div>
 
           <div className="flex items-center w-full sm:w-auto bg-slate-900 text-white rounded-2xl px-5">

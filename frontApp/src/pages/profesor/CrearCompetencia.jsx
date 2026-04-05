@@ -146,6 +146,8 @@ const CrearCompetencia = () => {
                   showYearDropdown
                   dropdownMode="select"
                   wrapperClassName="w-full"
+                  portalId="root-portal" 
+                  popperClassName="z-[9999]"
                   className={`w-full pl-12 pr-4 py-4 bg-slate-50 border-2 rounded-2xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all ${
                     errors.fecha ? "border-orange-200" : "border-slate-100"
                   }`}

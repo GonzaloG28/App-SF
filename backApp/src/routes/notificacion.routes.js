@@ -1,5 +1,5 @@
 import express from "express"
-import { getNotificaciones, marcarTodasLeidas } from "../controllers/notificacion.controller.js"
+import { getNotificaciones, marcarLeidas } from "../controllers/notificacion.controller.js"
 import { verificarToken } from "../middleware/authMiddleware.js"
 
 const router = express.Router()
@@ -8,6 +8,6 @@ const router = express.Router()
 router.get("/", verificarToken, getNotificaciones)
 
 // Se llama al abrir el panel de notificaciones
-router.patch("/marcar-leidas", verificarToken, marcarTodasLeidas)
+router.patch("/marcar-leidas", verificarToken, marcarLeidas)
 
 export default router

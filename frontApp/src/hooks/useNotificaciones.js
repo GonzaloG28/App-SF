@@ -1,75 +1,67 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useCallback, useRef, useState } from "react"
 import api from "../api/axios"
 
-const POLL_INTERVAL = 30 * 1000 // 30 segundos
+const QUERY_KEY = ["notificaciones"]
 
 export const useNotificaciones = (isAuthenticated) => {
-  // notificaciones — las que llegan del servidor (para el badge)
-  const [notificaciones, setNotificaciones] = useState([])
-  // snapshot — copia que se muestra en el panel mientras está abierto
-  // se guarda al abrir y se borra al cerrar
-  const [snapshot,       setSnapshot]       = useState([])
-  const [panelAbierto,   setPanelAbierto]   = useState(false)
-  const intervalRef = useRef(null)
+  const queryClient = useQueryClient()
+  const snapshotRef = useRef(null)
+  
+  // Estado local para la UI del panel
+  const [panelAbierto, setPanelAbierto] = useState(false)
 
-  const fetchNotificaciones = useCallback(async () => {
-    if (!isAuthenticated) return
-    try {
-      const res = await api.get("/notificaciones")
-      setNotificaciones(res.data)
-    } catch {
-      // Si falla el poll no hacemos nada —
-      // el interceptor de axios maneja el 401
+  const { data: notificaciones = [], isLoading } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: () => api.get("/notificaciones").then(r => r.data),
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 30,
+    refetchOnWindowFocus: false,
+    enabled: !!isAuthenticated, // Solo ejecutar si el usuario está logueado
+  })
+
+  const cantidad = notificaciones.filter(n => !n.leida).length
+  const hayNuevas = cantidad > 0
+
+  const marcarLeidasMutation = useMutation({
+    mutationFn: () => api.patch("/notificaciones/marcar-leidas"),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
+      snapshotRef.current = queryClient.getQueryData(QUERY_KEY)
+      queryClient.setQueryData(QUERY_KEY, (old = []) =>
+        old.map(n => ({ ...n, leida: true }))
+      )
+    },
+    onError: () => {
+      if (snapshotRef.current) {
+        queryClient.setQueryData(QUERY_KEY, snapshotRef.current)
+      }
+    },
+    onSettled: () => {
+      snapshotRef.current = null
     }
-  }, [isAuthenticated])
+  })
 
-  // Polling — arranca cuando el usuario está autenticado
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setNotificaciones([])
-      setSnapshot([])
-      return
-    }
+  const marcarLeidas = useCallback(() => {
+    if (cantidad > 0) marcarLeidasMutation.mutate()
+  }, [cantidad, marcarLeidasMutation])
 
-    fetchNotificaciones() // fetch inmediato al montar
-
-    intervalRef.current = setInterval(fetchNotificaciones, POLL_INTERVAL)
-    return () => clearInterval(intervalRef.current)
-  }, [isAuthenticated, fetchNotificaciones])
-
-  // ABRIR el panel:
-  // 1. Guardamos snapshot de las notificaciones actuales para mostrarlas
-  // 2. Limpiamos el badge inmediatamente (UX instantánea)
-  // 3. Marcamos como leídas en el servidor
-  const abrirPanel = useCallback(async () => {
-    // Guardar copia antes de limpiar
-    setSnapshot(notificaciones)
+  // Funciones para el Layout
+  const abrirPanel = () => {
     setPanelAbierto(true)
-
-    if (notificaciones.length > 0) {
-      // Limpiar badge de inmediato
-      setNotificaciones([])
-      // Avisar al servidor sin bloquear la UI
-      api.patch("/notificaciones/marcar-leidas").catch(() => {})
-    }
-  }, [notificaciones])
-
-  // CERRAR el panel:
-  // Limpiamos el snapshot — la próxima vez que se abra
-  // mostrará solo las notificaciones nuevas
-  const cerrarPanel = useCallback(() => {
-    setPanelAbierto(false)
-    setSnapshot([])
-  }, [])
+    marcarLeidas() // Marcamos como leídas al abrir
+  }
+  
+  const cerrarPanel = useCallback(() => setPanelAbierto(false), [])
 
   return {
-    // El panel usa snapshot (lo que había al abrir)
-    // no notificaciones (que ya se limpió para el badge)
-    notificaciones: panelAbierto ? snapshot : notificaciones,
-    cantidad:   notificaciones.length,
-    hayNuevas:  notificaciones.length > 0,
+    notificaciones,
+    cantidad, // Antes era noLeidas
+    hayNuevas,
+    isLoading,
     panelAbierto,
     abrirPanel,
     cerrarPanel,
+    isPending: marcarLeidasMutation.isPending
   }
 }

@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, memo } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useNotificaciones } from "../hooks/useNotificaciones"
 import NotificacionesPanel from "../components/NotificacionesPanel"
@@ -105,7 +105,14 @@ const ProfesorLayout = () => {
   const [showEntrenamientos, setShowEntrenamientos] = useState(false)
   const [isMobileMenuOpen,   setIsMobileMenuOpen]   = useState(false)
 
-  const { notificaciones, cantidad, hayNuevas, panelAbierto, abrirPanel, cerrarPanel } = useNotificaciones(isAuthenticated)
+ const { 
+    notificaciones, 
+    cantidad, 
+    hayNuevas, 
+    panelAbierto, 
+    abrirPanel, 
+    cerrarPanel 
+  } = useNotificaciones(isAuthenticated)
 
   useEffect(() => {
     setIsMobileMenuOpen(false)

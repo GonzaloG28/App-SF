@@ -4,37 +4,48 @@ const notificacionSchema = new mongoose.Schema({
   destinatario: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
+    index: true 
   },
   tipo: {
     type: String,
     enum: [
-      // Entrenamientos
       "entrenamiento_asignado",
       "entrenamiento_completado",
-      // Competencias y convocatorias
       "competencia_creada",
-      "convocatoria_publicada",  // nadador convocado
-      "convocatoria_admin",      // admin: nueva convocatoria creada
-      // Marcas
+      "convocatoria_publicada",
+      "convocatoria_admin",
       "marca_subida",
-      // Mensajes
       "mensaje_recibido",
-      // Nuevos nadadores (para admin)
       "nadador_creado",
+      "perfil_actualizado"
     ],
-    required: true
+    required: true,
+    index: true
   },
-  titulo:  { type: String, required: true },
+  titulo: { type: String, required: true, trim: true },
   mensaje: { type: String, required: true },
+  
+  createdAt: { type: Date, default: Date.now },
   metadata: {
-    fecha:         Date,
-    entidad:       mongoose.Schema.Types.ObjectId,
+    entidadId: { type: mongoose.Schema.Types.ObjectId }, 
     nadadorNombre: String,
+    tipoEntidad: String 
   },
-  leida: { type: Boolean, default: false }
-}, { timestamps: true })
+  
+  leida: { 
+    type: Boolean, 
+    default: false,
+    index: true 
+  }
+}, { 
+  timestamps: true,
+  versionKey: false 
+})
 
-notificacionSchema.index({ destinatario: 1, leida: 1, createdAt: -1 })
+
+notificacionSchema.index({ createdAt: 1 }, { expires: 432000 });
+
+notificacionSchema.index({ destinatario: 1, leida: 1, createdAt: -1 });
 
 export default mongoose.model("Notificacion", notificacionSchema)

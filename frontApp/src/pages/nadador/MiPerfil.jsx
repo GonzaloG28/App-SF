@@ -6,7 +6,7 @@ import {
   Trophy, BarChart3, Calendar, Weight, Dumbbell,
   Ruler, Fingerprint, Target, ShieldCheck,
   Clock, Zap, ChevronRight,
-  Mail, Check, X, AlertCircle, Lock
+  Mail, Check, X, AlertCircle, Lock, GraduationCap
 } from "lucide-react"
 
 // ── CAMBIO DE CORREO ─────────────────────────────────────────────────

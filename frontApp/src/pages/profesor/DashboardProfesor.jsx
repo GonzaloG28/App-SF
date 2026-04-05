@@ -95,7 +95,10 @@ const DashboardProfesor = () => {
     [...entrenamientos]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] || null,
     [entrenamientos]
+    
   )
+  console.log(ultimoEntrenamiento)
+
 
   if (isLoading) return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -255,73 +258,74 @@ const DashboardProfesor = () => {
           </section>
 
           {/* ÚLTIMO ENTRENAMIENTO — estilo igual al nadador */}
-          <Link
-            to="/profesor/entrenamientos"
-            className="block bg-white rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 group hover:shadow-2xl hover:border-blue-200 transition-all duration-500"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-3">
-                <Dumbbell size={15} className="text-green-500" strokeWidth={2.5} /> Último Entrenamiento
-              </h3>
-              <div className="p-2.5 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
-                <ChevronRight size={16} strokeWidth={3} />
-              </div>
-            </div>
+          {/* ÚLTIMO ENTRENAMIENTO — estilo igual al nadador */}
+<Link
+  to={"/profesor/entrenamientos"}
+  className="cursor-pointer block bg-white rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 border border-slate-100 group hover:shadow-2xl hover:border-blue-200 transition-all duration-500"
+>
+  <div className="flex items-center justify-between mb-6">
+    <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-3">
+      <Dumbbell size={15} className="text-green-500" strokeWidth={2.5} /> Último Entrenamiento
+    </h3>
+    <div className="p-2.5 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+      <ChevronRight size={16} strokeWidth={3} />
+    </div>
+  </div>
 
-            {ultimoEntrenamiento ? (() => {
-              const listaAtletas = ultimoEntrenamiento.totalAlumnos || []
-              const completados = ultimoEntrenamiento.completados
-              const pct         = listaAtletas > 0 ? Math.round((completados / listaAtletas) * 100) : 0
-              const fecha       = new Date(ultimoEntrenamiento.fecha || ultimoEntrenamiento.createdAt)
-              return (
-                <div>
-                  <h4 className="text-2xl md:text-3xl font-black italic text-slate-900 uppercase leading-none tracking-tighter mb-5 group-hover:text-blue-600 transition-colors">
-                    {ultimoEntrenamiento.titulo || "Sesión General"}
-                  </h4>
-                  <div className="flex flex-wrap items-center gap-3 mb-5">
-                    <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
-                      <Calendar size={13} className="text-blue-600" />
-                      <p className="text-[11px] font-black italic text-blue-800 uppercase tracking-widest">
-                        {fecha.toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"})}
-                      </p>
-                    </div>
-                    <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                      <Users size={13} className="text-slate-500" />
-                      <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest">
-                        {listaAtletas} atletas
-                      </p>
-                    </div>
-                  </div>
-                  {/* Barra de progreso grande */}
-                  <div>
-                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-2">
-                      <span>{completados} completados</span>
-                      <span className={`font-black text-sm italic ${pct === 100 ? "text-emerald-600" : pct >= 50 ? "text-orange-500" : "text-slate-500"}`}>{pct}%</span>
-                    </div>
-                    <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : pct >= 50 ? "bg-orange-400" : "bg-blue-500"}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
-                      {pct === 100 ? "✓ Completado al 100%" : `${listaAtletas - completados} pendientes`}
-                    </p>
-                  </div>
-                </div>
-              )
-            })() : (
-              <div className="py-8 text-center">
-                <Waves className="mx-auto mb-4 text-slate-100" size={36} />
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-300">Sin entrenamientos registrados</p>
-                <Link to="/profesor/crear-entrenamiento" onClick={e => e.stopPropagation()}
-                  className="mt-3 inline-flex items-center gap-1.5 text-blue-600 text-[11px] font-black uppercase tracking-widest hover:underline"
-                >
-                  + Crear entrenamiento
-                </Link>
-              </div>
-            )}
-          </Link>
+  {ultimoEntrenamiento ? (() => {
+    const listaAtletas = ultimoEntrenamiento.estadisticas?.total || 0;
+    const completados = ultimoEntrenamiento.estadisticas?.completados || 0;
+    const pct = listaAtletas > 0 ? Math.round((completados / listaAtletas) * 100) : 0;
+    const fecha = new Date(ultimoEntrenamiento.fecha || ultimoEntrenamiento.createdAt);
+    
+    return (
+      <div>
+        <h4 className="text-2xl md:text-3xl font-black italic text-slate-900 uppercase leading-none tracking-tighter mb-5 group-hover:text-blue-600 transition-colors">
+          {ultimoEntrenamiento.titulo || "Sesión General"}
+        </h4>
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <div className="inline-flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
+            <Calendar size={13} className="text-blue-600" />
+            <p className="text-[11px] font-black italic text-blue-800 uppercase tracking-widest">
+              {fecha.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+            <Users size={13} className="text-slate-500" />
+            <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest">
+              {listaAtletas} atletas
+            </p>
+          </div>
+        </div>
+        
+        <div>
+          <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase mb-2">
+            <span>{completados} completados</span>
+            <span className={`font-black text-sm italic ${pct === 100 ? "text-emerald-600" : pct >= 50 ? "text-orange-500" : "text-slate-500"}`}>
+              {pct}%
+            </span>
+          </div>
+          <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : pct >= 50 ? "bg-orange-400" : "bg-blue-500"}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+            {pct === 100 ? "✓ Completado al 100%" : `${listaAtletas - completados} pendientes`}
+          </p>
+        </div>
+      </div>
+    );
+  })() : (
+    <div className="py-8 text-center">
+      <Waves className="mx-auto mb-4 text-slate-100" size={36} />
+      <p className="text-[11px] font-black uppercase tracking-widest text-slate-300">
+        Sin entrenamientos registrados
+      </p>
+    </div>
+  )}
+</Link>
         </div>
 
         {/* ── Columna derecha — 1/3 ── */}

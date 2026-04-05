@@ -1,51 +1,51 @@
 import express from "express";
-import { crearEntrenamiento, getMisEntrenamientos, completarEntrenamiento, getReporteProfesor,eliminarEntrenamiento } from "../controllers/entrenamiento.controller.js";
+import { 
+  crearEntrenamiento, 
+  getMisEntrenamientos, 
+  completarEntrenamiento, 
+  getReporteProfesor, 
+  eliminarEntrenamiento 
+} from "../controllers/entrenamiento.controller.js";
 import { verificarRol } from "../middleware/roleMiddleware.js";
 import { verificarToken } from "../middleware/authMiddleware.js";
-import { upload } from "../middleware/multerMiddleware.js"; // Ajusta la ruta a tu archivo
+import { upload } from "../middleware/multerMiddleware.js";
 
 const router = express.Router();
 
-// POST /api/entrenamiento/enviar
-// 1. Verifica login
-// 2. Verifica rol Profesor
-// 3. Procesa el archivo (Multer)
-// 4. Ejecuta el controlador
+router.use(verificarToken);
+
 router.post(
     '/enviar', 
-    verificarToken, 
-    verificarRol("profesor"), 
+    verificarRol("profesor", "admin"), 
     upload.single('archivo'), 
-    (req, res, next) => {
-        console.log("2. ✅ Archivo procesado por Multer:", req.file);
-        next();
-    },
     crearEntrenamiento
 );
 
+// Ver quién ha completado qué
 router.get(
   "/reporte-profesor", 
-  verificarToken, 
-  verificarRol("profesor"),
+  verificarRol("profesor", "admin"),
   getReporteProfesor
 );
 
-// GET /api/entrenamiento/mis-entrenamientos
-// Solo los nadadores pueden consultar esta ruta
+router.delete(
+  "/:id", 
+  verificarRol("profesor", "admin"), 
+  eliminarEntrenamiento
+);
+
+
 router.get(
     '/mis-entrenamientos', 
-    verificarToken, 
     verificarRol("nadador"), 
     getMisEntrenamientos
 );
 
+// Marcar como hecho
 router.patch(
     '/:id/completar', 
-    verificarToken, 
     verificarRol("nadador"), 
     completarEntrenamiento
 );
-
-router.delete("/:id", verificarToken, eliminarEntrenamiento);
 
 export default router;
