@@ -7,7 +7,7 @@ import {
   Loader2, Trophy, Activity, AlertCircle, Zap, Check
 } from "lucide-react"
 
-const ESTILOS   = ["Libre", "Espalda", "Pecho", "Mariposa", "Comb."]
+const ESTILOS = ["Libre", "Espalda", "Pecho", "Mariposa", "Comb."]
 const DISTANCIAS = [25, 50, 100, 200, 400, 800, 1500]
 
 const tiempoAMs = (tiempoStr) => {
@@ -81,78 +81,76 @@ const CrearPrueba = () => {
   }
 
   if (loadingComp) return (
-    <div className="flex flex-col h-[50vh] items-center justify-center gap-3">
-      <Loader2 className="animate-spin text-blue-600" size={32} />
-      <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Cargando competencia...</p>
+    <div className="flex flex-col h-[60vh] items-center justify-center gap-4 px-6 text-center">
+      <Loader2 className="animate-spin text-blue-600" size={40} />
+      <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Preparando Cronómetro</p>
     </div>
   )
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 p-4 animate-fade-in pb-8">
+    <div className="w-full max-w-2xl mx-auto space-y-4 p-2 sm:p-4 animate-fade-in pb-20 overflow-x-hidden">
 
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-all font-black text-[11px] uppercase tracking-widest"
+        className="flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-all font-black text-[10px] sm:text-[11px] uppercase tracking-widest ml-2"
       >
-        <ArrowLeft size={14} /> Volver a Pruebas
+        <ArrowLeft size={14} /> Regresar
       </button>
 
-      <div className="bg-white rounded-2xl md:rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden mx-1">
 
-        {/* Banner */}
-        <div className="bg-[#0f172a] p-5 md:p-6 text-white flex items-center justify-between">
+        {/* Header Compacto */}
+        <div className="bg-[#0f172a] p-5 sm:p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
-              <Trophy size={20} />
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+              <Trophy size={18} />
             </div>
             <div>
-              <h1 className="text-lg font-black italic uppercase tracking-tighter">Nueva Marca</h1>
-              <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em]">Registro Técnico</p>
+              <h1 className="text-base sm:text-lg font-black italic uppercase tracking-tighter leading-none">Nueva Marca</h1>
+              <p className="text-slate-500 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] mt-1">Registro de Campo</p>
             </div>
           </div>
-          <Activity size={18} className="text-slate-700" />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 md:p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-7">
 
-          {/* ESTILOS */}
+          {/* ESTILOS - Gap reducido y texto que no rompe */}
           <div className="space-y-3">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Waves size={13} className="text-blue-500" /> Estilo
             </label>
-            {/* FIX MOBILE: grid-cols-5 siempre — botones más pequeños pero legibles */}
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2">
               {ESTILOS.map((est) => (
                 <button
                   key={est}
                   type="button"
                   onClick={() => setForm({ ...form, estilo: est })}
-                  className={`py-3 rounded-xl text-[10px] md:text-[11px] font-black uppercase transition-all border-2 ${
+                  className={`py-3 px-0.5 rounded-xl text-[9px] sm:text-[11px] font-black uppercase transition-all border-2 text-center ${
                     form.estilo === est
-                      ? "bg-blue-600 border-blue-600 text-white shadow-md"
-                      : "bg-slate-50 border-transparent text-slate-400 hover:bg-slate-100"
+                      ? "bg-blue-600 border-blue-600 text-white shadow-lg"
+                      : "bg-slate-50 border-transparent text-slate-400"
                   }`}
                 >
-                  {est}
+                  {est === "comb." ? "IM" : est}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* DISTANCIAS */}
+          {/* DISTANCIAS - Scroll corregido */}
           <div className="space-y-3">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Ruler size={13} className="text-emerald-500" /> Distancia
             </label>
-            <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
+            <div className="flex overflow-x-auto pb-2 gap-2 snap-x no-scrollbar -mx-1 px-1">
               {DISTANCIAS.map((dist) => (
                 <button
                   key={dist}
                   type="button"
                   onClick={() => setForm({ ...form, distancia: dist })}
-                  className={`shrink-0 min-w-[58px] py-3 rounded-xl text-[11px] font-black transition-all border-2 ${
+                  className={`snap-start shrink-0 min-w-[60px] sm:min-w-[80px] py-3 rounded-xl text-[11px] font-black transition-all border-2 ${
                     form.distancia === dist
-                      ? "bg-slate-900 border-slate-900 text-white"
+                      ? "bg-slate-900 border-slate-900 text-white shadow-lg"
                       : "bg-white border-slate-100 text-slate-400"
                   }`}
                 >
@@ -162,11 +160,11 @@ const CrearPrueba = () => {
             </div>
           </div>
 
-          {/* CRONÓMETRO — FIX MOBILE: text más pequeño en mobile */}
-          <div className="flex flex-col items-center gap-3 py-6 bg-slate-50 rounded-2xl border border-slate-100 relative">
-            <div className="absolute top-3 left-4 flex items-center gap-1.5 opacity-30">
+          {/* TIEMPO FINAL - Texto fluido para no salirse */}
+          <div className="flex flex-col items-center gap-2 py-6 sm:py-8 bg-slate-50 rounded-3xl border border-slate-100 relative">
+            <div className="absolute top-3 w-full flex justify-center items-center gap-1.5 opacity-40">
               <Timer size={12} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Tiempo Final</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-center">Tiempo Final</span>
             </div>
             <input
               type="text"
@@ -175,7 +173,7 @@ const CrearPrueba = () => {
               value={form.tiempo}
               onChange={(e) => setForm({ ...form, tiempo: e.target.value.replace(/[^0-9:.]/g, "") })}
               required
-              className={`w-full bg-transparent text-5xl md:text-7xl font-black text-center tracking-tighter outline-none tabular-nums ${
+              className={`w-full bg-transparent text-[15vw] sm:text-7xl font-black text-center tracking-tighter outline-none tabular-nums leading-none px-2 ${
                 !validacion.coincide ? "text-orange-500" : "text-slate-900"
               }`}
             />
@@ -183,49 +181,53 @@ const CrearPrueba = () => {
               <button
                 type="button"
                 onClick={() => setForm(prev => ({ ...prev, tiempo: msATiempo(sumaParcialesMs) }))}
-                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-full shadow-md shadow-emerald-200 active:scale-95 transition-transform"
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-100 active:scale-95 transition-all mt-2 max-w-[90%]"
               >
-                <Zap size={12} fill="currentColor" />
-                <span className="text-[11px] font-black uppercase tracking-widest">
-                  Usar Suma: {msATiempo(sumaParcialesMs)}
+                <Zap size={12} fill="currentColor" className="shrink-0" />
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest truncate">
+                  Suma: {msATiempo(sumaParcialesMs)}
                 </span>
               </button>
             )}
           </div>
 
-          {/* PARCIALES */}
+          {/* PARCIALES - REESTRUCTURADO PARA NO SALIRSE */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-800">Parciales (Laps)</h3>
-              {!validacion.coincide && <AlertCircle size={15} className="text-orange-500 animate-pulse" />}
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+              <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 italic">Desglose de Laps</h3>
+              {!validacion.coincide && <AlertCircle size={14} className="text-orange-500" />}
             </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="00.00"
-                value={nuevoParcial}
-                onChange={(e) => setNuevoParcial(e.target.value.replace(/[^0-9:.]/g, ""))}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarParcial() } }}
-                className="flex-1 h-12 px-4 bg-slate-100 rounded-xl text-base font-black outline-none focus:ring-4 focus:ring-blue-500/10 focus:bg-white border-2 border-transparent focus:border-blue-200 transition-all"
-              />
+            {/* Input Group - El botón ya no empuja hacia afuera */}
+            <div className="flex w-full items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Tiempo Lap"
+                  value={nuevoParcial}
+                  onChange={(e) => setNuevoParcial(e.target.value.replace(/[^0-9:.]/g, ""))}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); agregarParcial() } }}
+                  className="w-full h-14 pl-5 pr-2 bg-slate-50 rounded-2xl text-base font-black outline-none border-2 border-transparent focus:border-blue-500/20 focus:bg-white transition-all shadow-inner"
+                />
+              </div>
               <button
                 type="button"
                 onClick={agregarParcial}
-                className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center active:scale-90 transition-transform shrink-0"
+                className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-xl shadow-blue-100 shrink-0"
               >
-                <Plus size={20} />
+                <Plus size={24} strokeWidth={3} />
               </button>
             </div>
 
+            {/* Grid de resultados corregido */}
             {form.parciales.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {form.parciales.map((p, idx) => (
-                  <div key={idx} className="bg-white p-3 rounded-xl flex items-center justify-between border border-slate-200">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase italic">L{p.nroParcial}</span>
-                      <span className="text-sm font-black tabular-nums">{p.tiempo}</span>
+                  <div key={idx} className="bg-white p-3 sm:p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm min-w-0">
+                    <div className="flex flex-col min-w-0 overflow-hidden">
+                      <span className="text-[8px] sm:text-[9px] font-black text-blue-500 uppercase italic">L{p.nroParcial}</span>
+                      <span className="text-sm sm:text-base font-black tabular-nums text-slate-800 truncate">{p.tiempo}</span>
                     </div>
                     <button
                       type="button"
@@ -235,9 +237,9 @@ const CrearPrueba = () => {
                           .filter((_, i) => i !== idx)
                           .map((p, i) => ({ ...p, nroParcial: i + 1 }))
                       }))}
-                      className="text-slate-300 hover:text-red-500 p-1"
+                      className="text-slate-300 hover:text-red-500 p-1 shrink-0"
                     >
-                      <X size={14} />
+                      <X size={16} strokeWidth={3} />
                     </button>
                   </div>
                 ))}
@@ -248,9 +250,9 @@ const CrearPrueba = () => {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl bg-blue-600 hover:bg-slate-900 text-white font-black text-[11px] uppercase tracking-[0.25em] transition-all shadow-lg shadow-blue-100 disabled:opacity-50 active:scale-[0.97]"
+            className="w-full flex items-center justify-center gap-3 py-5 sm:py-6 rounded-[1.5rem] bg-slate-900 hover:bg-blue-600 text-white font-black text-[11px] sm:text-[12px] uppercase tracking-[0.2em] transition-all shadow-xl disabled:opacity-50 active:scale-[0.96]"
           >
-            {mutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} strokeWidth={3} />}
+            {mutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} strokeWidth={3} />}
             Guardar Marca
           </button>
         </form>

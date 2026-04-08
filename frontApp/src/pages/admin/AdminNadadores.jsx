@@ -22,9 +22,7 @@ export const AdminNadadores = () => {
   })
 
   const toggleMutation = useMutation({
-    mutationFn: (id) => api.patch(
-      tipo === "formativo" ? `/admin/pago-formativo/${id}` : `/admin/pago/${id}`
-    ),
+    mutationFn: (id) => api.patch(`/admin/pago/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(["adminNadadores"])
       queryClient.invalidateQueries(["adminStats"])

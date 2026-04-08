@@ -12,6 +12,7 @@ const EntrenamientoCard = ({ ent, onEliminar, onDetalles, isDeleting }) => {
   const completados = ent.estadisticas?.completados || 0;
   const total = ent.estadisticas?.total || 0;
   return total > 0 ? Math.round((completados / total) * 100) : 0;
+  
 }, [ent.estadisticas]);
   
   // Lógica de colores basada en tu paleta
