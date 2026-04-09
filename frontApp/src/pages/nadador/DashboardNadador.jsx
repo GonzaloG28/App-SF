@@ -153,14 +153,13 @@ const DashboardNadador = () => {
       <div className={`transition-all duration-700 ease-in-out ${isModalOpen ? "blur-sm opacity-20 pointer-events-none select-none" : "opacity-100"}`}>
 
         {/* HERO */}
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-12">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10">
           <div className="relative">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-              {/* DISEÑO: subido de text-[11px] a text-[11px] */}
-              <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">Panel principal del Atleta</span>
+            <div className="flex items-center gap-3 mb-2 md:mb-4">
+              <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Panel del Atleta</span>
             </div>
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black text-slate-900 italic tracking-tighter uppercase leading-[0.8]">
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-slate-900 italic tracking-tighter uppercase leading-[0.85]">
               {perfil?.user?.nombre} <br />
               <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent not-italic">
                 {perfil?.apellido}
@@ -168,16 +167,15 @@ const DashboardNadador = () => {
             </h1>
           </div>
 
-          <Link to="/nadador/perfil" className="flex items-center gap-6 p-2 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm pr-10 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all group">
-            <div className="w-16 h-16 bg-slate-900 rounded-[1.8rem] flex items-center justify-center text-blue-400 shadow-xl group-hover:rotate-6 transition-transform">
-              <Activity size={26} strokeWidth={2.5} />
+          <Link to="/nadador/perfil" className="flex items-center gap-4 p-1.5 bg-white rounded-full border border-slate-100 shadow-sm pr-6 hover:border-blue-200 hover:shadow-lg transition-all group">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-900 rounded-full flex items-center justify-center text-blue-400 shadow-lg group-hover:rotate-6 transition-transform">
+              <Activity size={22} strokeWidth={2.5} />
             </div>
             <div>
-              {/* DISEÑO: subido de text-[11px] a text-[11px] */}
-              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Categoría</p>
-              <p className="text-lg font-black text-slate-900 tracking-tighter uppercase italic leading-none">{perfil?.categoria || "ÉLITE"}</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Categoría</p>
+              <p className="text-base font-black text-slate-900 tracking-tighter uppercase italic leading-none">{perfil?.categoria || "ÉLITE"}</p>
             </div>
-            <ChevronRight size={20} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-2 transition-all ml-4" />
+            <ChevronRight size={16} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-1 transition-all ml-2" />
           </Link>
         </header>
 
@@ -186,7 +184,7 @@ const DashboardNadador = () => {
 
           {/* PRÓXIMO EVENTO */}
           <Link to="/nadador/calendario" className="lg:col-span-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 text-white relative overflow-hidden group hover:shadow-2xl hover:shadow-blue-600/30 transition-all duration-700 flex flex-col justify-between min-h-[350px]">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
               <Calendar size={220} />
             </div>
             <div className="relative z-10">
