@@ -6,7 +6,7 @@ import {
   Calendar, Plus, MapPin, Clock, Trash2,
   Loader2, ChevronLeft, ChevronRight, Waves,
   CheckCircle2, XCircle, Users, ChevronDown,
-  ChevronUp, Eye
+  ChevronUp, Eye, UserPlus
 } from "lucide-react"
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -30,7 +30,13 @@ const PanelConvocados = ({ convocatoriaId }) => {
   if (!conv?.nadadores?.length) return (
     <div className="py-6 text-center">
       <Users size={24} className="mx-auto text-slate-200 mb-2" />
-      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Sin nadadores convocados</p>
+      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Sin nadadores convocados</p>
+      <Link
+        to={`/profesor/convocatoria/${convocatoriaId}/nadadores`}
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+      >
+        <UserPlus size={14} /> Agregar Nadadores
+      </Link>
     </div>
   )
 
@@ -56,7 +62,7 @@ const PanelConvocados = ({ convocatoriaId }) => {
       </div>
 
       {/* Lista de convocados */}
-      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 mb-3">
         {conv.nadadores.map(n => (
           <div key={n._id} className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl hover:bg-white border border-transparent hover:border-slate-100 transition-all">
             {/* Avatar */}
@@ -87,6 +93,14 @@ const PanelConvocados = ({ convocatoriaId }) => {
           </div>
         ))}
       </div>
+
+      {/* Botón Gestionar Nadadores al final de la lista */}
+      <Link
+        to={`/profesor/convocatoria/${convocatoriaId}`}
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100 hover:border-blue-100"
+      >
+        <UserPlus size={14} /> Gestionar Nadadores
+      </Link>
     </div>
   )
 }
@@ -320,6 +334,15 @@ const CalendarioProfesor = () => {
 
                       {/* Controles */}
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Botón rápido de Agregar Nadadores */}
+                        <Link
+                          to={`/profesor/convocatoria/${c._id}`}
+                          onClick={e => e.stopPropagation()}
+                          className="w-8 h-8 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl flex items-center justify-center transition-all cursor-pointer"
+                          title="Agregar Nadadores"
+                        >
+                          <UserPlus size={14} />
+                        </Link>
                         {/* Eliminar */}
                         <div
                           onClick={e => {

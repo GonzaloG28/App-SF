@@ -5,9 +5,11 @@ import jwt from "jsonwebtoken"
 
 const cookieOptions = {
     httpOnly: true,
-    secure:   true, 
-    sameSite: "none",
-    maxAge:   8 * 60 * 60 * 1000 
+    secure: true,
+    sameSite: "none", 
+    partitioned: true, 
+    maxAge: 8 * 60 * 60 * 1000,
+    path: "/" 
 }
 
 const handleError = (res, error, message = "Error en el servidor") => {

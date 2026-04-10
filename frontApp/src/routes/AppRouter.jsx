@@ -30,7 +30,7 @@ import CrearCompetencia     from '../pages/profesor/CrearCompetencia'
 import CrearPrueba          from '../pages/profesor/CrearPrueba'
 import RankingNadador       from '../pages/rankingNadador'
 import { CrearConvocatoria }  from '../pages/profesor/CrearConvocatoria'
-import { ConvocatoriaDetalle } from "../pages/profesor/ConvocatoriaDetalle"
+import  ConvocatoriaDetalle  from "../pages/profesor/ConvocatoriaDetalle"
 import CalendarioProfesor   from '../pages/profesor/CalendarioProfesor'
 
 // Páginas Nadador
