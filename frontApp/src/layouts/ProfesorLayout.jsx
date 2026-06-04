@@ -6,7 +6,7 @@ import NotificacionesPanel from "../components/NotificacionesPanel"
 import {
   LayoutDashboard, Calendar, Users, Dumbbell,
   MessageSquare, LogOut, ChevronRight,
-  Menu, X, Waves, User
+  Menu, X, Waves, User, BarChart3
 } from "lucide-react"
 
 const NavItem = ({ to, label, Icon, isActive }) => {
@@ -70,6 +70,7 @@ const SidebarContent = ({ user, showEntrenamientos, setShowEntrenamientos, onLog
             </div>
           )}
         </div>
+        <NavItem to="/profesor/metricas" label="Metricas"  Icon={BarChart3}        isActive={isActive} />
         <NavItem to="/profesor/calendario" label="Calendario"  Icon={Calendar}        isActive={isActive} />
       </nav>
     </div>

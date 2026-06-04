@@ -8,7 +8,7 @@ import { useAuth }           from "../../context/AuthContext"
 import { PERFIL_QUERY_KEY }  from "../../layouts/NadadorLayout"
 import {
   Calendar, ChevronLeft, ChevronRight,
-  MapPin, Clock, Loader2, Waves
+  MapPin, Clock, Loader2, Waves, ArrowBigRight
 } from "lucide-react"
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -216,13 +216,13 @@ const ConvocatoriaCard = ({ convocatoria }) => {
               <span className="text-[10px] font-black bg-green-500 text-white px-2 py-0.5 rounded-full uppercase">En curso</span>
             )}
           </div>
+          {convocatoria.descripcion && (
+            <span className=" text-[12px] font-black text-slate-700 italic flex items-center gap-1"> <ArrowBigRight size={14} /> {convocatoria.descripcion}</span>
+          )}
           <div className="flex flex-wrap gap-3 text-[11px] font-bold text-slate-500">
             <span className="flex items-center gap-1"><MapPin size={11} /> {convocatoria.lugar}</span>
             <span className="flex items-center gap-1"><Clock size={11} /> {dias} {dias === 1 ? "día" : "días"}</span>
           </div>
-          {convocatoria.descripcion && (
-            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">{convocatoria.descripcion}</p>
-          )}
           {/* Fecha fin */}
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-2">
             Hasta el {fin.toLocaleDateString("es-ES",{day:"2-digit",month:"long"})}

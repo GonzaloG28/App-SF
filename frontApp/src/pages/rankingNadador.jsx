@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getPruebasDisponibles, getRankingIndividual } from "../api/pruebas.api";
+import { getRankingIndividual } from "../api/pruebas.api";
 import { 
   Trophy, Filter, Calendar, Timer, 
-  ChevronLeft, Award, Waves, Search,
-  Loader2, Star, AlertCircle, ArrowUpRight, Zap
+  ChevronLeft, Waves, Search,
+  Loader2, Star, AlertCircle, Zap
 } from "lucide-react";
 
 const RankingNadador = () => {
@@ -16,7 +16,7 @@ const RankingNadador = () => {
     estilo: "Libre",
     distancia: 50,
     piscina: 25,
-    orden: "asc"
+    orden: "fecha_desc"
   });
 
   const { data: ranking, isLoading, isError, isFetching } = useQuery({
@@ -24,7 +24,6 @@ const RankingNadador = () => {
     queryFn: () => getRankingIndividual(id, filtros).then(res => res.data),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
-    placeholderData: (previousData) => previousData,
   });
 
   const handleFilterChange = useCallback((e) => {
@@ -33,16 +32,27 @@ const RankingNadador = () => {
     setFiltros(prev => ({ ...prev, [name]: parsedValue }));
   }, []);
 
+  // Función auxiliar para formatear la fecha técnica
+  const formatFecha = (prueba) => {
+    // Priorizamos la fecha del campeonato/competencia
+    const fechaTarget = prueba.competencia?.fecha || prueba.fecha;
+    if (!fechaTarget) return "S/D";
+    
+    return new Date(fechaTarget).toLocaleDateString('es-ES', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: "2-digit",
+      timeZone: 'UTC' // Recomendado para que no cambie el día por la zona horaria del navegador
+    });
+  };
+
   if (isError) return (
     <div className="max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-orange-600 gap-6 px-6">
       <div className="p-6 bg-orange-50 rounded-[2.5rem] animate-pulse">
         <AlertCircle size={40} />
       </div>
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl md:text-4xl font-black italic tracking-tighter uppercase text-slate-900">Error de Conexión</h2>
-        <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Revisa tu conexión a internet</p>
-      </div>
-      <button onClick={() => window.location.reload()} className="w-full md:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.3em]">
+      <h2 className="text-2xl md:text-4xl font-black italic tracking-tighter uppercase text-slate-900">Error de Conexión</h2>
+      <button onClick={() => window.location.reload()} className="px-10 py-5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase">
         Reintentar
       </button>
     </div>
@@ -54,7 +64,7 @@ const RankingNadador = () => {
       {/* HEADER */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 px-2">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-200">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow-lg">
             <Zap size={10} fill="currentColor" />
             <span className="text-[11px] font-black uppercase tracking-widest">ñsf</span>
           </div>
@@ -68,14 +78,13 @@ const RankingNadador = () => {
           <div className="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 transition-all">
             <ChevronLeft size={16} />
           </div>
-          <span className="md:inline">Volver</span>
+          <span>Volver</span>
         </button>
       </header>
 
-      {/* FILTROS ADAPTATIVOS */}
+      {/* FILTROS */}
       <div className="bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-12 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] -mr-32 -mt-32" />
-        
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
           {[
             { label: "Estilo", name: "estilo", icon: Waves, options: ["Libre", "Espalda", "Pecho", "Mariposa", "comb."], color: "text-blue-500" },
@@ -87,34 +96,34 @@ const RankingNadador = () => {
                 <f.icon size={12} className={f.color} /> {f.label}
               </label>
               <select 
-                name={f.name} 
-                value={filtros[f.name]} 
-                onChange={handleFilterChange}
+                name={f.name} value={filtros[f.name]} onChange={handleFilterChange}
                 className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-5 py-3.5 font-black text-white text-[11px] uppercase outline-none focus:border-emerald-500 transition-all"
               >
                 {f.options.map(opt => (
-                  <option key={opt.v || opt} value={opt.v || opt} className="bg-slate-900">{opt.l || opt}</option>
+                  <option key={opt.v || opt} value={opt.v || opt}>{opt.l || opt}</option>
                 ))}
               </select>
             </div>
           ))}
-
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">
-              <Timer size={12} className="text-orange-500" /> Prioridad
+              <Calendar size={12} className="text-orange-500" /> Ordenar por
             </label>
             <select 
-              name="orden" value={filtros.orden} onChange={handleFilterChange}
-              className="w-full bg-blue-600 border-none rounded-xl px-5 py-3.5 font-black text-white text-[11px] uppercase shadow-lg shadow-blue-900/40 outline-none appearance-none"
+              name="orden" 
+              value={filtros.orden} 
+              onChange={handleFilterChange}
+              className="w-full bg-blue-600 border-none rounded-xl px-5 py-3.5 font-black text-white text-[11px] uppercase shadow-lg shadow-blue-900/40 outline-none appearance-none cursor-pointer hover:bg-blue-700 transition-colors"
             >
-              <option value="asc">Mejores Tiempos</option>
-              <option value="desc">Más Recientes</option>
+              <option value="fecha_desc">Más Recientes (Fecha ↓)</option>
+              <option value="fecha_asc">Más Antiguos (Fecha ↑)</option>
+              <option value="tiempo_asc">Mejores Tiempos (Crono ↑)</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* RESULTADOS (Mobile Cards / Desktop Table) */}
+      {/* RESULTADOS */}
       <div className={`bg-white rounded-[2.5rem] md:rounded-[4.5rem] shadow-xl border border-slate-50 overflow-hidden transition-all ${isFetching && !isLoading ? 'opacity-50' : ''}`}>
         {isLoading ? (
           <div className="p-20 text-center space-y-4">
@@ -131,7 +140,7 @@ const RankingNadador = () => {
                     <th className="pl-14 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest">Posición</th>
                     <th className="px-8 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Crono</th>
                     <th className="px-8 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest">Evento</th>
-                    <th className="pr-14 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha</th>
+                    <th className="pr-14 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha Oficial</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -155,7 +164,7 @@ const RankingNadador = () => {
                       </td>
                       <td className="pr-14 py-10 text-right">
                          <span className="px-4 py-2 bg-slate-50 rounded-xl text-[11px] font-black text-slate-600 tabular-nums">
-                           {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : "---"}
+                           {formatFecha(prueba)}
                          </span>
                       </td>
                     </tr>
@@ -178,7 +187,7 @@ const RankingNadador = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-1 text-[11px] font-black text-slate-400 uppercase">
-                      <Calendar size={10} /> {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : "S/D"}
+                      <Calendar size={10} /> {formatFecha(prueba)}
                     </div>
                   </div>
                   <div className="flex justify-between items-end">
@@ -203,18 +212,6 @@ const RankingNadador = () => {
           </div>
         )}
       </div>
-
-      {/* FOOTER */}
-      <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto z-20">
-        <div className="bg-slate-900/95 backdrop-blur-md px-8 py-4 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-between md:justify-center gap-6">
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-            actualizacion momentanea: <span className="text-emerald-500">Active</span>
-          </p>
-          <div className="flex -space-x-2">
-            {[1,2].map(i => <div key={i} className="w-6 h-6 rounded-full bg-emerald-600 border-2 border-slate-900" />)}
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

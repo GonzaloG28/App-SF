@@ -2,6 +2,8 @@ import Nadador from "../models/Nadadores.js"
 import { Convocatoria } from "../models/Convocatoria.js"
 import User from "../models/User.js"
 import bcrypt from "bcrypt"
+import Finanzas   from "../models/Finanzas.model.js"
+import { crearMovimientoMensualidad } from "./finanzas.controller.js"
 import { enviarNotificacionEmail } from "../utils/mailer.utils.js" // Para avisar del pago
 
 
@@ -101,39 +103,56 @@ export const getNadadoresAdmin = async (req, res) => {
 // PATCH /api/admin/pago/:id
 export const togglePagoNadador = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // 🟢 RAM: Solo traemos lo mínimo necesario para el correo
+    const { id } = req.params
+
     const nadador = await Nadador.findById(id)
-      .populate("user", "nombre")
-      .select("pagoAlDia user")
-      .lean();
-      
-    if (!nadador) return res.status(404).json({ message: "No encontrado" });
+      .populate("user", "nombre correo")
+      .select("pagoAlDia user rama apellido")
+      .lean()
 
-    const nuevoEstado = !nadador.pagoAlDia;
-    
-    // Usamos findByIdAndUpdate para una operación atómica
+    if (!nadador) return res.status(404).json({ message: "No encontrado" })
+
+    const nuevoEstado = !nadador.pagoAlDia
+
     await Nadador.findByIdAndUpdate(id, {
-      pagoAlDia: nuevoEstado,
+      pagoAlDia:       nuevoEstado,
       fechaUltimoPago: nuevoEstado ? new Date() : undefined
-    });
+    })
 
+    // ── INTEGRACIÓN FINANCIERA ──────────────────────────────────────────
+    // Si se confirma el pago → crear movimiento de ingreso automáticamente
     if (nuevoEstado) {
-      // 🟢 PERFORMANCE: No usamos 'await' aquí. 
-      // El admin recibe la respuesta de "OK" de inmediato mientras el correo se envía solo.
+      const config = await Finanzas.getConfig()
+      const monto  = nadador.rama === "formativo"
+        ? config.precioFormativo
+        : config.precioCompetitivo
+
+      const nombre = `${nadador.user?.nombre || ""} ${nadador.apellido || ""}`.trim()
+
+      // Solo crear movimiento si el precio está configurado (> 0)
+      if (monto > 0) {
+        crearMovimientoMensualidad({
+          nadadorId:    id,
+          nombreNadador: nombre,
+          monto,
+          adminId:      req.user._id
+        }).catch(err => console.error("[FINANZAS_MOV_ERROR]:", err.message))
+      }
+
+      // Email en background
       enviarNotificacionEmail(
         id,
         "Confirmación de Pago",
-        `Hola ${nadador.user.nombre}, hemos recibido tu pago.`
-      ).catch(e => console.error("Error envío correo:", e));
+        `Hola ${nadador.user?.nombre}, hemos recibido tu pago mensual.`
+      ).catch(e => console.error("Error envío correo:", e))
     }
 
-    res.json({ message: "Estado actualizado", pagoAlDia: nuevoEstado });
+    res.json({ message: "Estado actualizado", pagoAlDia: nuevoEstado })
   } catch (error) {
-    res.status(500).json({ message: "Error" });
+    res.status(500).json({ message: "Error" })
   }
 }
+
 
 // POST /api/admin/register
 export const registerAdmin = async (req, res) => {

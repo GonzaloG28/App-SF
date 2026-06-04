@@ -3,20 +3,46 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useCallback } from "react";
 import { 
   Trophy, Plus, Trash2, Timer, ArrowLeft, Loader2, 
-  TrendingUp, Target, Layers, BarChart3, Activity
+  TrendingUp, Target, Layers, BarChart3, Activity, Calendar // <-- Añadido Calendar
 } from "lucide-react";
 import { getPruebasPorCompetencia, deletePrueba } from "../../api/pruebas.api";
 
-const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
+const PruebaCard = ({ prueba, fechaCompetencia, onDelete, isDeleting }) => {
+  // Priorizamos la fecha de la competencia. Evitamos usar prueba.createdAt
+  const fechaCruda = fechaCompetencia || prueba?.competencia?.fecha || prueba?.fecha;
+  
+  const fechaFormateada = fechaCruda 
+    ? new Date(fechaCruda).toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric',
+        timeZone: 'UTC' // Previene que la fecha de la DB se reste 1 día por la zona horaria
+      }).replace('.', '') 
+    : '';
+
   return (
     <div className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-500 flex flex-col overflow-hidden h-full">
       
       {/* Header Tarjeta */}
       <div className="p-5 lg:p-8 pb-4 flex justify-between items-start gap-4">
         <div className="space-y-1 flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-blue-600 mb-1">
+          <div className="flex flex-wrap items-center gap-2 text-blue-600 mb-1">
             <Activity size={14} className="animate-pulse text-emerald-500 shrink-0" />
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resultado</span>
+            
+            {/* --- SECCIÓN DE LA FECHA AÑADIDA AQUÍ --- */}
+            {fechaFormateada && (
+              <>
+                <span className="text-slate-300 text-[10px]">•</span>
+                <div className="flex items-center gap-1">
+                  <Calendar size={12} className="text-slate-400 shrink-0" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    {fechaFormateada}
+                  </span>
+                </div>
+              </>
+            )}
+
           </div>
           <h3 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tighter italic uppercase leading-none break-words">
             {prueba.distancia}m <span className="bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">{prueba.estilo}</span>
@@ -32,7 +58,7 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
         </button>
       </div>
 
-      {/* Resultado Principal - Eliminado el truncate para evitar los "..." */}
+      {/* Resultado Principal */}
       <div className="px-5 lg:px-8 mb-6">
         <div className="bg-slate-900 rounded-2xl p-4 lg:p-6 flex items-center justify-between border border-slate-800 shadow-xl group-hover:scale-[1.02] transition-transform duration-500 gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -41,7 +67,6 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
             </div>
             <div className="min-w-0">
               <p className="text-[9px] lg:text-[11px] font-black uppercase tracking-widest text-slate-500">Tiempo Oficial</p>
-              {/* Quitamos truncate aquí */}
               <p className="text-xl sm:text-2xl lg:text-3xl font-black tabular-nums text-white italic leading-none">{prueba.tiempo}</p>
             </div>
           </div>
@@ -58,18 +83,17 @@ const PruebaCard = ({ prueba, onDelete, isDeleting }) => {
           <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded shrink-0">Laps: {prueba.parciales?.length || 0}</span>
         </div>
         
-        <div className="space-y-3 flex-1">
+        <div className="space-y-3 flex-1 overflow-y-auto max-h-60 pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
           {prueba.parciales?.length > 0 ? (
             prueba.parciales.map((par, idx) => (
               <div key={idx} className="space-y-1 group/lap">
                 <div className="flex justify-between text-[10px] font-black italic text-slate-500 uppercase gap-2">
                   <span className="truncate">Tramo {par.nroParcial}</span>
-                  {/* Quitamos truncate aquí también */}
                   <span className="text-slate-800 group-hover/lap:text-emerald-600 transition-colors shrink-0">{par.tiempo}</span>
                 </div>
                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                    className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${Math.max(15, 100 - (idx * 12))}%` }}
                   />
                 </div>
@@ -100,6 +124,10 @@ const PruebasList = () => {
   });
 
   const pruebas = data?.pruebas || [];
+  
+  // Extraemos la fecha de la competencia desde la respuesta de la API.
+  // Ajusta "data?.competencia?.fecha" según cómo venga estructurado tu backend en Node.
+  const fechaCompetenciaGlobal = data?.competencia?.fecha || data?.fecha;
 
   const stats = useMemo(() => {
     if (!pruebas.length) return null;
@@ -190,7 +218,7 @@ const PruebasList = () => {
         </div>
       </header>
 
-      {/* Listado de Pruebas con Grid Inteligente */}
+      {/* Listado de Pruebas */}
       <section>
         {pruebas.length === 0 ? (
           <div className="bg-white rounded-[2rem] p-12 text-center border-4 border-dashed border-slate-50 flex flex-col items-center">
@@ -198,12 +226,12 @@ const PruebasList = () => {
             <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest italic">Vault vacío</p>
           </div>
         ) : (
-          /* El grid-cols ahora es más flexible para el rango 700-1100px */
           <div className="grid grid-cols-1 md:grid-cols-2 min-[1150px]:grid-cols-3 gap-6 lg:gap-8">
             {pruebas.map((p) => (
               <PruebaCard 
                 key={p._id} 
                 prueba={p} 
+                fechaCompetencia={fechaCompetenciaGlobal} // <-- Pasamos la fecha global aquí
                 onDelete={handleDelete}
                 isDeleting={deletingId === p._id}
               />

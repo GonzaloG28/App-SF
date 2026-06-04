@@ -116,42 +116,59 @@ export const obtenerPruebasDisponibles = async (req, res) => {
 
 export const rankingIndividual = async (req, res) => {
   try {
-    const { nadadorId } = req.params
-    const { estilo, distancia, orden, piscina } = req.query
+    const { nadadorId } = req.params;
+    const { estilo, distancia, orden, piscina } = req.query;
 
     if (!estilo || !distancia) {
-      return res.status(400).json({ message: "Debes enviar estilo y distancia" })
+      return res.status(400).json({ message: "Debes enviar estilo y distancia" });
     }
 
     const competencias = await Competencia.find({
       nadador: nadadorId,
       ...(piscina && { piscina: Number(piscina) })
-    })
+    });
 
-    const competenciaIds = competencias.map(c => c._id)
-    if (competenciaIds.length === 0) return res.json([])
+    const competenciaIds = competencias.map(c => c._id);
+    if (competenciaIds.length === 0) return res.json([]);
 
     const pruebas = await Prueba.find({
-      competencia: { $in: competenciaIds },
-      estilo,
-      distancia: Number(distancia)
-    })
-      .populate("competencia", "nombre fecha año")
-      .sort({ tiempoNumerico: orden === "desc" ? -1 : 1 })
+  competencia: { $in: competenciaIds },
+  estilo,
+  distancia: Number(distancia)
+}).populate("competencia", "nombre fecha año");
 
-    if (pruebas.length === 0) return res.json([])
+if (pruebas.length === 0) return res.json([]);
 
-    const mejorTiempo = Math.min(...pruebas.map(p => p.tiempoNumerico))
-    const pruebasConRecord = pruebas.map(prueba => ({
-      ...prueba.toObject(),
-      esRecordPersonal: prueba.tiempoNumerico === mejorTiempo
-    }))
+// 2. Ordena el array 'pruebas' según el valor que llega del frontend
+pruebas.sort((a, b) => {
+  const fechaA = new Date(a.competencia?.fecha || 0);
+  const fechaB = new Date(b.competencia?.fecha || 0);
 
-    res.json(pruebasConRecord)
+  if (orden === "fecha_desc") {
+    return fechaB - fechaA; // De más reciente a más antigua
+  } 
+  if (orden === "fecha_asc") {
+    return fechaA - fechaB; // De más antigua a más reciente
+  }
+  if (orden === "tiempo_asc") {
+    return a.tiempoNumerico - b.tiempoNumerico; // Mejores tiempos primero
+  }
+  
+  // Orden por defecto (si no coincide nada)
+  return a.tiempoNumerico - b.tiempoNumerico;
+});
+
+// 3. Continúa con el cálculo del récord personal
+const mejorTiempo = Math.min(...pruebas.map(p => p.tiempoNumerico));
+const pruebasConRecord = pruebas.map(prueba => ({
+  ...prueba.toObject(),
+  esRecordPersonal: prueba.tiempoNumerico === mejorTiempo
+}));
+
+res.json(pruebasConRecord);
 
   } catch (error) {
-    const isDev = process.env.NODE_ENV === "development"
-    res.status(500).json({ message: error.message, ...(isDev && { error: error.message }) })
+    res.status(500).json({ message: error.message });
   }
 }
 

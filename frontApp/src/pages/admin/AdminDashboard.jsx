@@ -3,7 +3,7 @@ import { Link }      from "react-router-dom"
 import api           from "../../api/axios"   // ← import faltante
 import {
   Users, UserCheck, Calendar,
-  ChevronRight, CheckCircle2, AlertCircle, Loader2
+  ChevronRight, CheckCircle2, AlertCircle, Loader2, Wallet, TrendingUp
 } from "lucide-react"
 
 export const AdminDashboard = () => {
@@ -82,6 +82,7 @@ export const AdminDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <QuickLink to="/admin/nadadores"     icon={Users}     label="Gestionar Pagos Nadadores" />
         <QuickLink to="/admin/convocatorias" icon={Calendar}  label="Ver Convocatorias Activas"    />
+        <QuickLink to="/admin/finanzas"      icon={Wallet}   label="Finanzas Del Club" />
       </div>
     </div>
   )

@@ -36,6 +36,8 @@ const PasswordUpdateModal = memo(({ isOpen, perfil, onCarreraExitosamente }) => 
     mutation.mutate(passwords.new)
   }
 
+  
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" />
@@ -366,6 +368,16 @@ const DashboardSkeleton = () => (
     </div>
   </div>
 )
+
+const ErrorState = ({ error }) => (
+  <div className="p-10 text-center">
+    <p className="text-red-500 font-bold uppercase">
+      {error?.response?.status === 403 
+        ? "Sesión expirada o acceso denegado. Intenta recargar." 
+        : "Hubo un error al cargar la información."}
+    </p>
+  </div>
+);
 
 export default DashboardNadador
 

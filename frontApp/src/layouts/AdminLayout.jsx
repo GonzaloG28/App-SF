@@ -3,13 +3,14 @@ import { useState, useEffect, memo } from "react"
 import { useAuth } from "../context/AuthContext"
 import {
   LayoutDashboard, Users, Calendar,
-  LogOut, Menu, X, Waves, ChevronRight, Shield, MessageSquare
+  LogOut, Menu, X, Waves, ChevronRight, Shield, MessageSquare, Wallet
 } from "lucide-react"
 
 const SidebarContent = memo(({ user, logout, pathname }) => {
   const nav = [
     { to: "/admin", label: "Dashboard", Icon: LayoutDashboard, exact: true },
     { to: "/admin/nadadores", label: "Nadadores", Icon: Users },
+    { to: "/admin/finanzas", label: "Finanzas", Icon: Wallet },
     { to: "/admin/chat", label: "Mensajes", Icon: MessageSquare },
     { to: "/admin/convocatorias", label: "Convocatorias", Icon: Calendar },
   ];

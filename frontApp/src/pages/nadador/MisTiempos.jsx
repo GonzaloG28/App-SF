@@ -21,13 +21,33 @@ const tiempoASegundos = (tiempoStr) => {
   return parseFloat(tiempoStr);
 };
 
+const segundosATiempo = (segundos) => {
+  const min = Math.floor(segundos / 60);
+  const seg = (segundos % 60).toFixed(2);
+  // Si es menos de 60 segundos, mostramos solo segundos, si es más, MM:SS
+  return min > 0 ? `${min}:${seg.padStart(5, '0')}` : seg;
+};
+
 const MisTiempos = () => {
   const [filtros, setFiltros] = useState({
     estilo: "Libre",
     distancia: 50,
     piscina: 25,
-    orden: "asc"
+    orden: "fecha_desc"
   });
+
+  const formatFecha = (prueba) => {
+    // Priorizamos la fecha del campeonato/competencia
+    const fechaTarget = prueba.competencia?.fecha || prueba.fecha;
+    if (!fechaTarget) return "S/D";
+    
+    return new Date(fechaTarget).toLocaleDateString('es-ES', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: "2-digit",
+      timeZone: 'UTC' // Recomendado para que no cambie el día por la zona horaria del navegador
+    });
+  };
 
   const { data: perfil } = useQuery({
     queryKey: ["miPerfil"],
@@ -51,7 +71,7 @@ const MisTiempos = () => {
     return [...ranking]
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
       .map(p => ({
-        fecha: new Date(p.fecha).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
+        fecha: formatFecha(p),
         segundos: tiempoASegundos(p.tiempo),
         tiempoOriginal: p.tiempo,
         evento: p.competencia?.nombre
@@ -63,6 +83,24 @@ const MisTiempos = () => {
     const parsedValue = (name === "distancia" || name === "piscina") ? Number(value) : value;
     setFiltros(prev => ({ ...prev, [name]: parsedValue }));
   }, []);
+
+  const stats = useMemo(() => {
+  if (!ranking || ranking.length === 0) return { mejor: "00:00", peor: "00:00", diferencia: 0 };
+
+  const segundos = ranking.map(p => tiempoASegundos(p.tiempo));
+  const minSeg = Math.min(...segundos);
+  const maxSeg = Math.max(...segundos);
+
+  // Buscamos los strings originales para mostrar en la UI
+  const mejorStr = ranking.find(p => tiempoASegundos(p.tiempo) === minSeg)?.tiempo;
+  const peorStr = ranking.find(p => tiempoASegundos(p.tiempo) === maxSeg)?.tiempo;
+
+  return {
+    mejor: mejorStr,
+    peor: peorStr,
+    diferencia: (maxSeg - minSeg).toFixed(2)
+  };
+}, [ranking]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 md:space-y-12 p-4 md:p-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32">
@@ -113,11 +151,14 @@ const MisTiempos = () => {
               <Timer size={12} className="text-orange-500" /> Prioridad
             </label>
             <select 
-              name="orden" value={filtros.orden} onChange={handleFilterChange}
-              className="w-full bg-blue-600 border-none rounded-xl px-5 py-3.5 font-black text-white text-[11px] uppercase shadow-lg shadow-blue-900/40 outline-none appearance-none"
+              name="orden" 
+              value={filtros.orden} 
+              onChange={handleFilterChange}
+              className="w-full bg-blue-600 border-none rounded-xl px-5 py-3.5 font-black text-white text-[11px] uppercase shadow-lg shadow-blue-900/40 outline-none appearance-none cursor-pointer hover:bg-blue-700 transition-colors"
             >
-              <option value="asc">Mejor Marca (PB)</option>
-              <option value="desc">Más Recientes</option>
+              <option value="fecha_desc">Más Recientes (Fecha ↓)</option>
+              <option value="fecha_asc">Más Antiguos (Fecha ↑)</option>
+              <option value="tiempo_asc">Mejores Tiempos (Crono ↑)</option>
             </select>
           </div>
         </div>
@@ -139,42 +180,78 @@ const MisTiempos = () => {
               </h3>
             </div>
             
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl">
-              <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-1">Mejor Tiempo Actual</p>
-              <p className="text-3xl font-black text-white italic leading-none">{ranking[0]?.tiempo}s</p>
+            <div className="flex gap-4">
+              {/* Card Mejor Tiempo */}
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl">
+                <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-1">Mejor Tiempo</p>
+                <p className="text-3xl font-black text-white italic leading-none">{stats.mejor}s</p>
+              </div>
+
+              {/* Card Peor Tiempo (para comparación) */}
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl border-l-orange-500/50 border-l-4">
+                <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Peor Tiempo</p>
+                <p className="text-2xl font-black text-slate-300 italic leading-none">{stats.peor}s</p>
+                <p className="text-[9px] font-bold text-orange-400 mt-1">+{stats.diferencia}s de diferencia</p>
+              </div>
             </div>
           </div>
           
           <div className="h-[350px] w-full relative z-10">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={datosGrafica}>
-                <defs>
-                  <linearGradient id="colorTime" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="fecha" stroke="#475569" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} dy={15} />
-                <YAxis hide domain={['dataMin - 1', 'dataMax + 1']} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '20px', padding: '15px' }}
-                  itemStyle={{ color: '#60a5fa', fontWeight: '900', fontSize: '12px' }}
-                  labelStyle={{ display: 'none' }}
-                  cursor={{ stroke: '#3b82f6', strokeWidth: 2 }}
-                  formatter={(value, name, props) => [props.payload.tiempoOriginal + "s", "MARCA"]}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="segundos" 
-                  stroke="#3b82f6" 
-                  strokeWidth={5}
-                  fillOpacity={1} 
-                  fill="url(#colorTime)" 
-                  animationDuration={2000}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+        <AreaChart data={datosGrafica} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorTime" x1="0" y1="0" x2="0" y2="1">
+              {/* Ahora el color es fuerte abajo y se desvanece hacia arriba */}
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4}/>
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+
+          <XAxis 
+            dataKey="fecha" 
+            stroke="#ffffff" 
+            fontSize={10} 
+            fontWeight="900" 
+            tickLine={false} 
+            axisLine={false}
+            dy={15} 
+          />
+
+          {/* Activamos YAxis y definimos el estilo */}
+          <YAxis 
+            stroke="#ffffff" 
+            fontSize={10} 
+            fontWeight="900" 
+            tickLine={false} 
+            axisLine={true}
+            domain={['auto', 'auto']} // Ajuste automático según tus marcas
+            tickFormatter={(valor) => segundosATiempo(valor)}
+          />
+
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '20px', padding: '15px' }}
+            itemStyle={{ color: '#60a5fa', fontWeight: '900', fontSize: '12px' }}
+            labelStyle={{ color: '#94a3b8', marginBottom: '5px' }}
+            cursor={{ stroke: '#3b82f6', strokeWidth: 2 }}
+            formatter={(value, name, props) => [props.payload.tiempoOriginal + "s", "MARCA"]}
+          />
+
+          <Area 
+            type="monotone" 
+            dataKey="segundos" 
+            stroke="#3b82f6" 
+            strokeWidth={4}
+            fillOpacity={1} 
+            fill="url(#colorTime)" 
+            animationDuration={2000}
+            // 'dot' hace que cada competencia tenga un punto visible
+            dot={{ fill: '#ffffff', stroke: '#3b82f6', strokeWidth: 3, r: 5 }}
+            activeDot={{ r: 8, fill: '#3b82f6' }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
           </div>
         </section>
       )}
@@ -222,7 +299,7 @@ const MisTiempos = () => {
                       </td>
                       <td className="pr-14 py-10 text-right">
                          <span className="px-4 py-2 bg-slate-50 rounded-xl text-[11px] font-black text-slate-600 tabular-nums">
-                           {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : "---"}
+                           {formatFecha(prueba)}
                          </span>
                       </td>
                     </tr>
@@ -245,7 +322,7 @@ const MisTiempos = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-1 text-[11px] font-black text-slate-400 uppercase">
-                      <Calendar size={10} /> {prueba.fecha ? new Date(prueba.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : "S/D"}
+                      <Calendar size={10} /> {formatFecha(prueba)}
                     </div>
                   </div>
                   <div className="flex justify-between items-end">

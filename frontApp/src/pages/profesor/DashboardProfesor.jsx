@@ -136,6 +136,7 @@ const DashboardProfesor = () => {
 
         {/* Total nadadores */}
         <StatCard
+          link="/profesor/nadadores"
           label="Total Plantel"
           value={stats.total}
           sub={`${stats.competitivos} comp. · ${stats.formativos} form.`}
@@ -145,6 +146,7 @@ const DashboardProfesor = () => {
 
         {/* Cuentas al día */}
         <StatCard
+          link="/profesor/nadadores"
           label="Cuentas al Día"
           value={`${stats.pctPago}%`}
           sub={`${stats.pagados} de ${stats.total} nadadores`}
@@ -154,6 +156,7 @@ const DashboardProfesor = () => {
 
         {/* Próximas convocatorias */}
         <StatCard
+          link="/profesor/calendario"
           label="Convocatorias"
           value={proximasConvocatorias.length}
           sub={proximasConvocatorias.length > 0 ? "eventos próximos" : "sin eventos"}
@@ -163,9 +166,9 @@ const DashboardProfesor = () => {
 
         {/* Entrenamientos del mes */}
         <StatCard
+          link="/profesor/crear-entrenamiento"
           label="Entrenos del Mes"
           value={entStats.total}
-          // FIX: Ahora mostrará "X comp. · Y pend." en la tarjeta
           sub={`${entStats.completados} comp. · ${entStats.pendientes} pend.`}
           icon={Dumbbell}
           color="orange"
@@ -397,7 +400,7 @@ const DashboardProfesor = () => {
 
 // ── Sub-componentes ─────────────────────────────────────────────────
 
-const StatCard = ({ label, value, sub, icon: Icon, color }) => {
+const StatCard = ({ label, link, value, sub, icon: Icon, color }) => {
   const themes = {
     blue:   "text-blue-600 bg-blue-50 border-blue-100",
     green:  "text-emerald-600 bg-emerald-50 border-emerald-100",
@@ -406,14 +409,14 @@ const StatCard = ({ label, value, sub, icon: Icon, color }) => {
     purple: "text-purple-600 bg-purple-50 border-purple-100",
   }
   return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+    <Link to={link} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform border ${themes[color]}`}>
         <Icon size={18} />
       </div>
       <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{label}</p>
       <p className="text-2xl md:text-3xl font-black text-slate-900 italic leading-none">{value}</p>
       {sub && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">{sub}</p>}
-    </div>
+    </Link>
   )
 }
 

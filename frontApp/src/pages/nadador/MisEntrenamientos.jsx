@@ -67,39 +67,33 @@ const MisEntrenamientos = () => {
 // --- SUB-COMPONENTES DE UI ---
 
 const TrainingCard = ({ ent, onComplete, isPending }) => (
-  <div className={`relative bg-white rounded-[2.5rem] border transition-all duration-500 group overflow-hidden ${
-    ent.completado ? "border-emerald-100 shadow-sm" : "border-slate-100 shadow-xl shadow-blue-900/5 hover:border-blue-200"
+  <div className={`relative bg-white rounded-[2rem] md:rounded-[2.5rem] border p-1 transition-all duration-300 group ${
+    ent.completado ? "border-emerald-100 shadow-sm" : "border-slate-100 shadow-xl shadow-slate-200/50 hover:border-blue-200"
   }`}>
-    {/* Indicador Lateral de Estado */}
-    <div className={`absolute left-0 top-0 bottom-0 w-2 ${ent.completado ? "bg-emerald-500" : "bg-blue-600"}`} />
+    <div className={`absolute left-0 top-6 bottom-6 w-1 rounded-r-full ${ent.completado ? "bg-emerald-500" : "bg-blue-600"}`} />
 
-    <div className="p-6 md:p-10 flex flex-col lg:flex-row gap-8">
+    <div className="p-5 md:p-8 flex flex-col gap-6">
       
-      {/* COLUMNA IZQUIERDA: CONTENIDO */}
-      <div className="flex-1 space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-xl shadow-md">
-            <Calendar size={12} className="text-blue-400" />
-            <span className="font-black text-[11px] uppercase tracking-wider tabular-nums">
-              {new Date(ent.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
-            </span>
-          </div>
-          <StatusBadge completed={ent.completado} type={ent.tipo} />
+      {/* HEADER CARD: Más compacto */}
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-2">
+           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+             {new Date(ent.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+           </span>
+           <h3 className="text-2xl md:text-4xl font-black text-slate-900 italic uppercase tracking-tighter leading-[0.9]">
+             {ent.titulo}
+           </h3>
         </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-3xl md:text-5xl font-black text-slate-900 italic uppercase tracking-tighter leading-[0.9] group-hover:translate-x-1 transition-transform">
-            {ent.titulo}
-          </h3>
-          <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
-            <Zap size={12} fill="currentColor" /> {ent.tipo === 'archivo' ? 'Descarga Técnica' : 'Instrucciones Digitales'}
-          </p>
-        </div>
+        <StatusBadge completed={ent.completado} type={ent.tipo} />
+      </div>
 
-        {/* RENDERIZADO DE CONTENIDO SEGÚN TIPO */}
-        <div className="pt-4">
+      {/* CONTENIDO PRINCIPAL: Layout optimizado */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        
+        {/* Columna principal de contenido */}
+        <div className="lg:col-span-2">
           {ent.tipo === 'texto' && (
-            <div className="bg-slate-50 border border-slate-100 p-6 md:p-8 rounded-[2rem] italic text-slate-600 text-sm md:text-base leading-relaxed whitespace-pre-line font-medium">
+            <div className="bg-slate-50 p-5 rounded-2xl italic text-slate-600 text-sm leading-relaxed font-medium">
               {ent.contenido}
             </div>
           )}
@@ -139,33 +133,22 @@ const TrainingCard = ({ ent, onComplete, isPending }) => (
 
       {/* COLUMNA DERECHA: COACH NOTES & ACCIÓN */}
       <div className="lg:w-72 space-y-4">
-        <div className="bg-slate-50/80 rounded-[2rem] p-6 border border-slate-100 h-full flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Info size={14} className="text-blue-600" />
-              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Notas del Coach</p>
-            </div>
-            <p className="text-[12px] font-bold text-slate-500 leading-relaxed italic">
-              "{ent.notasProfesor || "Nada por ahora..."}"
-            </p>
+        <div className="flex flex-col gap-4">
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Notas Coach</p>
+            <p className="text-xs font-medium text-slate-600 italic">"{ent.notasProfesor || "Sin comentarios"}"</p>
           </div>
           
           <button
             onClick={onComplete}
             disabled={ent.completado || isPending}
-            className={`mt-8 w-full flex items-center justify-center gap-3 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all duration-300 ${
+            className={`w-full py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${
               ent.completado 
-              ? "bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-default" 
-              : "bg-blue-600 text-white hover:bg-slate-900 shadow-lg shadow-blue-200 active:scale-95"
+              ? "bg-emerald-50 text-emerald-600 border border-emerald-200" 
+              : "bg-slate-900 text-white hover:bg-blue-600"
             }`}
           >
-            {isPending ? (
-              <Loader2 className="animate-spin" size={16} />
-            ) : ent.completado ? (
-              <> <CheckCircle size={16} /> Completado </>
-            ) : (
-              "Marcar Finalizado"
-            )}
+            {isPending ? "..." : ent.completado ? "Completado" : "Marcar Finalizado"}
           </button>
         </div>
       </div>

@@ -45,6 +45,11 @@ const PanelConvocados = ({ convocatoriaId }) => {
 
   return (
     <div className="border-t border-slate-100 mt-3 pt-3">
+      {conv.descripcion && (
+                      <p className="text-[11px] font-black uppercase tracking-wider mt-1 mb-3 text-center">
+                       Detalles: {conv.descripcion}
+                    </p>
+                  )}
       {/* Mini stats */}
       <div className="flex gap-2 mb-3">
         <div className="flex-1 bg-emerald-50 rounded-xl p-2 text-center">

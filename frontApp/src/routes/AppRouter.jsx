@@ -5,16 +5,17 @@ import Home from '../pages/Home'
 import Login from '../pages/auth/Login'
 import ProtectedRouter from './ProtectedRoute'
 import Chat from '../pages/Chat'
+import Metricas from '../pages/Metricas'
 
 // Layouts
 import ProfesorLayout from '../layouts/ProfesorLayout'
 import NadadorLayout  from '../layouts/NadadorLayout'
 import AdminLayout    from '../layouts/AdminLayout'
+import FinanzasDashboard  from '../pages/admin/FinanzasDashboard'
 
 // Páginas Admin
 import { AdminDashboard }   from '../pages/admin/AdminDashboard'
 import { AdminNadadores }   from '../pages/admin/AdminNadadores'
-import AdminFormativos      from '../pages/admin/AdminFormativos'
 import AdminConvocatorias   from '../pages/admin/AdminConvocatorias'
 
 // Páginas Profesor
@@ -87,8 +88,9 @@ const AppRouter = () => {
         <Route path="entrenamientos" element={<MisEntrenamientos />} />
         <Route path="mis-tiempos"   element={<MisTiempos />} />
         <Route path="competencias"  element={<MisCompetencias />} />
-        <Route path="calendario"    element={<CalendarioNadador />} />  {/* ← path relativo, sin /nadador/ */}
+        <Route path="calendario"    element={<CalendarioNadador />} />
         <Route path="perfil"        element={<MiPerfil />} />
+        <Route path="metricas" element={<Metricas />} />
         <Route path="chat" element={<Chat />} />
       </Route>
 
@@ -113,9 +115,10 @@ const AppRouter = () => {
         <Route path="competencia/:id/pruebas/nuevo" element={<CrearPrueba />} />
         <Route path="crear-entrenamiento"         element={<CrearEntrenamiento />} />
         <Route path="entrenamientos"              element={<GestionEntrenamientos />} />
-        <Route path="convocatoria/nueva"          element={<CrearConvocatoria />} />       {/* ← relativo */}
-        <Route path="convocatoria/:id"            element={<ConvocatoriaDetalle />} />     {/* ← relativo */}
-        <Route path="calendario"                  element={<CalendarioProfesor />} />      {/* ← relativo */}
+        <Route path="convocatoria/nueva"          element={<CrearConvocatoria />} />       
+        <Route path="convocatoria/:id"            element={<ConvocatoriaDetalle />} />     
+        <Route path="calendario"                  element={<CalendarioProfesor />} />
+        <Route path="metricas" element={<Metricas esProfesor />} />      
         <Route path="chat" element={<Chat />} />
       </Route>
 
@@ -129,10 +132,10 @@ const AppRouter = () => {
       >
         <Route index               element={<AdminDashboard />} />
         <Route path="nadadores"    element={<AdminNadadores />} />
-        <Route path="formativos"   element={<AdminFormativos />} />
         <Route path="convocatorias"          element={<AdminConvocatorias />} />
         <Route path="convocatorias/:id"      element={<ConvocatoriaDetalle />} />
         <Route path="chat" element={<Chat />} />
+        <Route path='finanzas' element={<FinanzasDashboard/>} />
       </Route>
 
       {/* COMODÍN */}

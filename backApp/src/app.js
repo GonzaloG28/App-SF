@@ -20,6 +20,7 @@ import notificacionRoutes  from "./routes/notificacion.routes.js"
 import adminRoutes         from "./routes/admin.routes.js"
 import mensajeRoutes       from "./routes/mensaje.routes.js"
 import { convocatoriaRoutes } from "./routes/convocatoria.routes.js"
+import finanzasRoutes from "./routes/finanzas.routes.js"
 
 const app = express()
 const server = http.createServer(app) // <-- NUEVO: Express ahora corre sobre este servidor
@@ -156,6 +157,7 @@ app.use("/api/users",         userRoutes)
 app.use("/api/entrenamiento", entrenamientoRoutes)
 app.use("/api/notificaciones", notificacionRoutes)
 app.use("/api/admin",         adminRoutes)
+app.use("/api/finanzas", finanzasRoutes)
 app.use("/api/convocatorias", convocatoriaRoutes)
 app.use("/api/mensajes",      mensajeRoutes)
 

@@ -17,17 +17,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const { status } = error.response || {};
+    const status = error.response?.status;
 
     if (status === 401) {
-      const isLoginRoute = window.location.pathname.includes("/login");
-      
-      if (!isLoginRoute) {
-        console.warn("Sesión expirada. Redirigiendo...");
-        
-        // 🔥 AQUÍ ESTÁ LA MAGIA: Descomentamos esta línea
-        window.location.href = "/login"; 
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
       }
+    }
+
+    if (status === 403) {
+      console.error("Acceso prohibido (403): Revisa tu conexión o permisos de origen.");
     }
 
     if (error.code === 'ECONNABORTED') {

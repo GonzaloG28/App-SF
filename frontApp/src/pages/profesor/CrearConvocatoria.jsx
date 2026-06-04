@@ -136,7 +136,7 @@ export const CrearConvocatoria = () => {
   })
 
   const handleSubmit = () => {
-    if (!form.nombre.trim() || !form.lugar.trim() || !form.fechaInicio || seleccionados.length === 0) {
+    if (!form.nombre.trim() || !form.lugar.trim() || !form.fechaInicio) {
         setNotificacion({ visible: true, mensaje: "Completa los campos obligatorios y selecciona atletas.", tipo: "error" });
         return;
     }
@@ -269,7 +269,7 @@ export const CrearConvocatoria = () => {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={mutation.isPending || !form.nombre || seleccionados.length === 0}
+            disabled={mutation.isPending || !form.nombre}
             className="flex-1 flex items-center justify-center gap-3 bg-slate-900 hover:bg-blue-600 text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl disabled:opacity-20"
           >
             {mutation.isPending ? <Loader2 className="animate-spin" /> : <Send size={16} />}

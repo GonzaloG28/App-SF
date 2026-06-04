@@ -346,8 +346,8 @@ const ConvocatoriaDetalle = () => {
               </span>
             </div>
             {convocatoria.descripcion && (
-              <p className="text-slate-500 text-[11px] font-medium mt-3 leading-relaxed">
-                {convocatoria.descripcion}
+              <p className="text-slate-300 text-[13px] font-medium mt-3 leading-relaxed">
+                Detalles: {convocatoria.descripcion}
               </p>
             )}
           </div>
