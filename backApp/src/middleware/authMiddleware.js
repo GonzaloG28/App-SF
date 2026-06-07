@@ -4,7 +4,7 @@ import envs from "../utils/envs.utils.js"
 
 export const verificarToken = async (req, res, next) => {
   try {
-    const token = req.cookies?.token
+    const token = req.cookies?.token || req.headers?.authorization?.replace("Bearer ", "")
     if (!token) {
       return res.status(401).json({ message: "No autorizado: falta token" })
     }
