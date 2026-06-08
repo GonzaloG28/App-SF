@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Modal, SafeAreaView, StatusBar, Platform
+  Modal, SafeAreaView, StatusBar
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { Menu, User } from 'lucide-react-native';
 import Sidebar from './Sidebar';
 
 interface AppLayoutProps {
@@ -11,18 +12,19 @@ interface AppLayoutProps {
   role: 'nadador' | 'profesor' | 'admin';
   title?: string;
   subtitle?: string;
+  userName?: string;
+  userEmail?: string;
+  initials?: string;
 }
 
-export default function AppLayout({ children, role, title, subtitle }: AppLayoutProps) {
+export default function AppLayout({
+  children, role, title, subtitle, userName = '', userEmail = '', initials = ''
+}: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const subtitleColor = role === 'nadador' ? theme.colors.green500
-    : role === 'profesor' ? theme.colors.green500
-    : theme.colors.orange500;
-
+  const subtitleColor = role === 'admin' ? theme.colors.orange500 : theme.colors.green500;
   const subtitleDefault = role === 'nadador' ? 'Centro de Atletas'
-    : role === 'profesor' ? 'Club ÑSF'
-    : 'Club ÑSF';
+    : role === 'profesor' ? 'Club ÑSF' : 'Club ÑSF';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,7 +37,7 @@ export default function AppLayout({ children, role, title, subtitle }: AppLayout
             style={styles.menuBtn}
             onPress={() => setSidebarOpen(true)}
           >
-            <Text style={styles.menuIcon}>☰</Text>
+            <Menu size={20} color={theme.colors.slate600} />
           </TouchableOpacity>
           <View>
             <Text style={[styles.headerSubtitle, { color: subtitleColor }]}>
@@ -47,11 +49,13 @@ export default function AppLayout({ children, role, title, subtitle }: AppLayout
           </View>
         </View>
 
-        {/* Avatar */}
+        {/* Avatar con iniciales */}
         <View style={styles.headerAvatar}>
-          <Text style={styles.headerAvatarText}>
-            {role === 'nadador' ? '🏊' : role === 'profesor' ? '👨‍🏫' : '⚙️'}
-          </Text>
+          {initials ? (
+            <Text style={styles.headerInitials}>{initials}</Text>
+          ) : (
+            <User size={16} color={theme.colors.blue600} />
+          )}
         </View>
       </View>
 
@@ -64,21 +68,20 @@ export default function AppLayout({ children, role, title, subtitle }: AppLayout
       <Modal
         visible={sidebarOpen}
         transparent
-        animationType="none"
+        animationType="slide"
         onRequestClose={() => setSidebarOpen(false)}
       >
         <View style={styles.modalOverlay}>
-          {/* Backdrop */}
           <TouchableOpacity
             style={styles.backdrop}
             onPress={() => setSidebarOpen(false)}
             activeOpacity={1}
           />
-
-          {/* Sidebar */}
           <View style={styles.sidebarContainer}>
             <Sidebar
               role={role}
+              userName={userName}
+              userEmail={userEmail}
               onClose={() => setSidebarOpen(false)}
             />
           </View>
@@ -116,10 +119,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuIcon: {
-    fontSize: 18,
-    color: theme.colors.slate700,
-  },
   headerSubtitle: {
     fontSize: 10,
     fontWeight: '900',
@@ -145,12 +144,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.blue500,
   },
-  headerAvatarText: {
-    fontSize: 18,
+  headerInitials: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: theme.colors.blue600,
+    letterSpacing: -0.5,
   },
-  content: {
-    flex: 1,
-  },
+  content: { flex: 1 },
   modalOverlay: {
     flex: 1,
     flexDirection: 'row',
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 280,
+    width: 288,
     backgroundColor: theme.colors.white,
     shadowColor: '#000',
     shadowOffset: { width: 4, height: 0 },

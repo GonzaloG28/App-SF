@@ -2,6 +2,7 @@ export const theme = {
   colors: {
     blue600:    '#2563EB',
     blue500:    '#3B82F6',
+    blue400:    '#60A5FA',
     blue50:     '#EFF6FF',
     green500:   '#22C55E',
     green600:   '#16A34A',
@@ -9,6 +10,7 @@ export const theme = {
     slate900:   '#0F172A',
     slate800:   '#1E293B',
     slate700:   '#334155',
+    slate600:   '#475569',
     slate500:   '#64748B',
     slate400:   '#94A3B8',
     slate300:   '#CBD5E1',

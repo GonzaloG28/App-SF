@@ -1,41 +1,16 @@
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Animated
+  View, Text, TouchableOpacity, StyleSheet, ScrollView
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../constants/theme';
+import {
+  LayoutDashboard, Trophy, User, LogOut, Waves,
+  ChevronRight, ClipboardList, Calendar, MessageSquare,
+  BarChart3, Users, Wallet, X
+} from 'lucide-react-native';
 
-// Íconos simples con texto (sin librería externa)
-const Icon = ({ name, size = 20, color = theme.colors.slate400 }: any) => {
-  const icons: any = {
-    dashboard:      '⊞',
-    swimmers:       '🏊',
-    trainings:      '💪',
-    times:          '⏱',
-    competitions:   '🏆',
-    calendar:       '📅',
-    profile:        '👤',
-    logout:         '→',
-    chat:           '💬',
-    metrics:        '📊',
-    nadadores:      '👥',
-    finanzas:       '💰',
-    convocatorias:  '📋',
-  };
-  return (
-    <Text style={{ fontSize: size, color }}>{icons[name] || '•'}</Text>
-  );
-};
-
-interface NavItemProps {
-  to: string;
-  label: string;
-  icon: string;
-  exact?: boolean;
-}
-
-const NavItem = ({ to, label, icon, exact }: NavItemProps) => {
+const NavItem = ({ to, label, Icon, exact }: any) => {
   const router = useRouter();
   const pathname = usePathname();
   const active = exact ? pathname === to : pathname.startsWith(to);
@@ -43,26 +18,32 @@ const NavItem = ({ to, label, icon, exact }: NavItemProps) => {
   return (
     <TouchableOpacity
       style={[styles.navItem, active && styles.navItemActive]}
-      onPress={() => router.push(to as any)}
+      onPress={() => router.push(to)}
     >
       <View style={styles.navItemLeft}>
-        <Icon name={icon} size={18} color={active ? theme.colors.white : theme.colors.slate400} />
+        <Icon
+          size={19}
+          strokeWidth={active ? 2.5 : 2}
+          color={active ? theme.colors.white : theme.colors.slate500}
+        />
         <Text style={[styles.navLabel, active && styles.navLabelActive]}>
           {label}
         </Text>
       </View>
-      {active && <Text style={styles.navChevron}>›</Text>}
+      {active && <ChevronRight size={14} color={theme.colors.white} opacity={0.7} />}
     </TouchableOpacity>
   );
 };
 
 interface SidebarProps {
   role: 'nadador' | 'profesor' | 'admin';
+  userName?: string;
+  userEmail?: string;
   onClose?: () => void;
 }
 
-export default function Sidebar({ role, onClose }: SidebarProps) {
-  const { user, logout } = useAuth();
+export default function Sidebar({ role, userName = 'Atleta', userEmail = '', onClose }: SidebarProps) {
+  const { logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -71,45 +52,56 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
   };
 
   const navNadador = [
-    { to: '/(nadador)',               label: 'Mi Panel',       icon: 'dashboard', exact: true },
-    { to: '/(nadador)/entrenamientos', label: 'Entrenamientos', icon: 'trainings' },
-    { to: '/(nadador)/tiempos',        label: 'Mis Marcas',     icon: 'times' },
-    { to: '/(nadador)/perfil',         label: 'Ficha Técnica',  icon: 'profile' },
+    { to: '/(nadador)',                label: 'Mi Panel',       Icon: LayoutDashboard, exact: true },
+    { to: '/(nadador)/entrenamientos', label: 'Entrenamientos', Icon: ClipboardList },
+    { to: '/(nadador)/tiempos',        label: 'Mis Marcas',     Icon: Waves },
+    { to: '/(nadador)/competencias',   label: 'Competencias',   Icon: Trophy },
+    { to: '/(nadador)/calendario',     label: 'Calendario',     Icon: Calendar },
+    { to: '/(nadador)/perfil',         label: 'Ficha Técnica',  Icon: User },
   ];
 
   const navProfesor = [
-    { to: '/(profesor)',                label: 'Dashboard',      icon: 'dashboard', exact: true },
-    { to: '/(profesor)/nadadores',      label: 'Nadadores',      icon: 'nadadores' },
-    { to: '/(profesor)/entrenamientos', label: 'Entrenamientos', icon: 'trainings' },
-    { to: '/(profesor)/calendario',     label: 'Calendario',     icon: 'calendar' },
+    { to: '/(profesor)',                label: 'Dashboard',      Icon: LayoutDashboard, exact: true },
+    { to: '/(profesor)/nadadores',      label: 'Nadadores',      Icon: Users },
+    { to: '/(profesor)/entrenamientos', label: 'Entrenamientos', Icon: ClipboardList },
+    { to: '/(profesor)/calendario',     label: 'Calendario',     Icon: Calendar },
+    { to: '/(profesor)/metricas',       label: 'Métricas',       Icon: BarChart3 },
   ];
 
   const navAdmin = [
-    { to: '/(admin)',              label: 'Dashboard',      icon: 'dashboard', exact: true },
-    { to: '/(admin)/nadadores',   label: 'Nadadores',      icon: 'nadadores' },
-    { to: '/(admin)/finanzas',    label: 'Finanzas',       icon: 'finanzas' },
+    { to: '/(admin)',             label: 'Dashboard',     Icon: LayoutDashboard, exact: true },
+    { to: '/(admin)/nadadores',  label: 'Nadadores',     Icon: Users },
+    { to: '/(admin)/finanzas',   label: 'Finanzas',      Icon: Wallet },
+    { to: '/(admin)/chat',       label: 'Mensajes',      Icon: MessageSquare },
   ];
 
   const navItems = role === 'nadador' ? navNadador
-    : role === 'profesor' ? navProfesor
-    : navAdmin;
+    : role === 'profesor' ? navProfesor : navAdmin;
 
   const roleLabel = role === 'nadador' ? 'Atleta'
-    : role === 'profesor' ? 'Coach'
-    : 'Administración';
+    : role === 'profesor' ? 'Coach' : 'Administración';
 
-  const roleColor = role === 'nadador' ? theme.colors.green600
-    : role === 'profesor' ? theme.colors.green600
-    : theme.colors.orange500;
+  const roleColor = role === 'admin' ? theme.colors.orange500 : theme.colors.green600;
+  const sectionLabel = role === 'nadador' ? 'Rendimiento'
+    : role === 'profesor' ? 'Panel Profesor' : 'Panel Admin';
+
+  const initials = [userName?.charAt(0), userName?.split(' ')?.[1]?.charAt(0)]
+    .filter(Boolean).join('').toUpperCase() || 'AT';
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      {/* Close button */}
+      {onClose && (
+        <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+          <X size={20} color={theme.colors.slate400} />
+        </TouchableOpacity>
+      )}
 
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Logo */}
         <View style={styles.logoRow}>
           <View style={styles.logoIcon}>
-            <Text style={styles.logoWave}>🌊</Text>
+            <Waves size={20} color={theme.colors.white} />
           </View>
           <View>
             <Text style={[styles.roleLabel, { color: roleColor }]}>
@@ -122,37 +114,33 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
         </View>
 
         {/* Nav */}
-        <Text style={styles.sectionLabel}>
-          {role === 'nadador' ? 'Rendimiento'
-            : role === 'profesor' ? 'Panel Profesor'
-            : 'Panel Admin'}
-        </Text>
-
+        <Text style={styles.sectionLabel}>{sectionLabel}</Text>
         {navItems.map((item) => (
           <NavItem key={item.to} {...item} />
         ))}
-
       </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
+        {/* User card */}
         <View style={styles.userCard}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>
-              {user?.nombre?.charAt(0) || 'U'}
-            </Text>
+          <View style={styles.userAvatarWrap}>
+            <View style={styles.userAvatar}>
+              <Text style={styles.userAvatarText}>{initials.charAt(0)}</Text>
+            </View>
+            <View style={styles.onlineDot} />
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName} numberOfLines={1}>
-              {user?.nombre || 'Usuario'}
+              {userName.split(' ')[0]}
             </Text>
-            <Text style={styles.userRole}>{roleLabel}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>{userEmail || 'Online'}</Text>
           </View>
-          <View style={styles.onlineDot} />
         </View>
 
+        {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutIcon}>↩</Text>
+          <LogOut size={18} color={theme.colors.slate400} strokeWidth={2.5} />
           <Text style={styles.logoutText}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
@@ -164,41 +152,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.white,
-    paddingTop: 60,
+    paddingTop: 56,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  scroll: {
-    flex: 1,
+  closeBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 10,
   },
+  scroll: { flex: 1 },
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 36,
+    paddingHorizontal: 4,
   },
   logoIcon: {
-    width: 44,
-    height: 44,
-    backgroundColor: theme.colors.blue50,
+    width: 40,
+    height: 40,
     borderRadius: 12,
+    backgroundColor: theme.colors.blue600,
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ rotate: '3deg' }],
   },
-  logoWave: {
-    fontSize: 22,
-  },
   roleLabel: {
     fontSize: 10,
-    fontWeight: theme.font.black,
+    fontWeight: '900',
     textTransform: 'uppercase',
     letterSpacing: 3,
     marginBottom: 2,
   },
   appName: {
     fontSize: 20,
-    fontWeight: theme.font.black,
+    fontWeight: '900',
     color: theme.colors.slate900,
     letterSpacing: -1,
   },
@@ -208,7 +199,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 10,
-    fontWeight: theme.font.black,
+    fontWeight: '900',
     color: theme.colors.slate400,
     textTransform: 'uppercase',
     letterSpacing: 3,
@@ -221,11 +212,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: theme.radius.xl,
-    marginBottom: 4,
+    borderRadius: 20,
+    marginBottom: 6,
   },
   navItemActive: {
     backgroundColor: theme.colors.blue600,
+    shadowColor: theme.colors.blue600,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   navItemLeft: {
     flexDirection: 'row',
@@ -234,34 +230,31 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 14,
-    fontWeight: theme.font.bold,
+    fontWeight: '700',
     color: theme.colors.slate500,
     letterSpacing: -0.3,
   },
   navLabelActive: {
     color: theme.colors.white,
   },
-  navChevron: {
-    color: theme.colors.white,
-    fontSize: 18,
-    opacity: 0.7,
-  },
   footer: {
     borderTopWidth: 1,
     borderTopColor: theme.colors.slate100,
     paddingTop: 16,
-    gap: 8,
+    gap: 4,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: theme.colors.slate50,
+    backgroundColor: theme.colors.white,
     padding: 12,
-    borderRadius: theme.radius.xxl,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: theme.colors.slate100,
+    marginBottom: 4,
   },
+  userAvatarWrap: { position: 'relative' },
   userAvatar: {
     width: 40,
     height: 40,
@@ -272,50 +265,48 @@ const styles = StyleSheet.create({
   },
   userAvatarText: {
     color: theme.colors.white,
-    fontWeight: theme.font.black,
+    fontWeight: '900',
     fontSize: 16,
     fontStyle: 'italic',
   },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 12,
-    fontWeight: theme.font.black,
-    color: theme.colors.slate900,
-    textTransform: 'uppercase',
-    fontStyle: 'italic',
-  },
-  userRole: {
-    fontSize: 10,
-    fontWeight: theme.font.bold,
-    color: theme.colors.slate400,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-  },
   onlineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: theme.colors.green500,
     borderWidth: 2,
     borderColor: theme.colors.white,
   },
+  userInfo: { flex: 1 },
+  userName: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: theme.colors.slate900,
+    textTransform: 'uppercase',
+    fontStyle: 'italic',
+  },
+  userEmail: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.colors.slate400,
+    marginTop: 2,
+  },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: theme.radius.xl,
-  },
-  logoutIcon: {
-    fontSize: 18,
-    color: theme.colors.slate400,
+    borderRadius: 20,
+    gap: 12,
   },
   logoutText: {
+    flex: 1,
     fontSize: 11,
-    fontWeight: theme.font.black,
+    fontWeight: '900',
     color: theme.colors.slate400,
     textTransform: 'uppercase',
     letterSpacing: 3,
