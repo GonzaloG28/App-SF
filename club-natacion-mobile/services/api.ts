@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const BASE_URL = __DEV__
   ? 'http://192.168.1.100:5000/api'  // ← reemplaza XXX con tu IP
-  : 'https://app-sf.onrender.com/api';
+  : ''; //https://app-sf.onrender.com/api
 
 const api = axios.create({
   baseURL: BASE_URL,
