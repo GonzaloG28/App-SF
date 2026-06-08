@@ -1,6 +1,5 @@
-import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Easing  } from 'react-native';
+import { useRef } from 'react';
 import { useRouter, usePathname } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../constants/theme';
@@ -9,28 +8,61 @@ import {
   ChevronRight, ClipboardList, Calendar, MessageSquare,
   BarChart3, Users, Wallet, X
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const NavItem = ({ to, label, Icon, exact }: any) => {
   const router = useRouter();
   const pathname = usePathname();
   const active = exact ? pathname === to : pathname.startsWith(to);
+  const scaleValue = useRef(new Animated.Value(1)).current;
 
-  return (
-    <TouchableOpacity
-      style={[styles.navItem, active && styles.navItemActive]}
-      onPress={() => router.push(to)}
-    >
+  const handlePressIn = () => {
+    Animated.timing(scaleValue, {
+      toValue: 0.95, // Se encoge un poquito
+      duration: 100,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(scaleValue, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+    }).start(() => router.push(to));
+  };
+
+  const Content = (
+    <Animated.View style={[styles.navItem, active && styles.navItemActive, { transform: [{ scale: scaleValue }] }]}>
+      {active ? (
+        <LinearGradient
+          colors={[theme.colors.blue600, theme.colors.green500]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
+      
       <View style={styles.navItemLeft}>
         <Icon
           size={19}
           strokeWidth={active ? 2.5 : 2}
           color={active ? theme.colors.white : theme.colors.slate500}
         />
-        <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-          {label}
-        </Text>
+        <Text style={[styles.navLabel, active && styles.navLabelActive]}>{label}</Text>
       </View>
       {active && <ChevronRight size={14} color={theme.colors.white} opacity={0.7} />}
+    </Animated.View>
+  );
+
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+    >
+      {Content}
     </TouchableOpacity>
   );
 };
@@ -90,7 +122,6 @@ export default function Sidebar({ role, userName = 'Atleta', userEmail = '', onC
 
   return (
     <View style={styles.container}>
-      {/* Close button */}
       {onClose && (
         <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
           <X size={20} color={theme.colors.slate400} />
@@ -98,47 +129,39 @@ export default function Sidebar({ role, userName = 'Atleta', userEmail = '', onC
       )}
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Logo */}
+        {/* Logo con Gradiente como en la web */}
         <View style={styles.logoRow}>
-          <View style={styles.logoIcon}>
+          <LinearGradient
+            colors={[theme.colors.blue600, theme.colors.green500]}
+            style={styles.logoIcon}
+          >
             <Waves size={20} color={theme.colors.white} />
-          </View>
+          </LinearGradient>
           <View>
-            <Text style={[styles.roleLabel, { color: roleColor }]}>
-              {roleLabel}
-            </Text>
+            <Text style={[styles.roleLabel, { color: theme.colors.green600 }]}>{roleLabel}</Text>
             <Text style={styles.appName}>
               App<Text style={styles.appNameBlue}>ÑSF</Text>
             </Text>
           </View>
         </View>
 
-        {/* Nav */}
         <Text style={styles.sectionLabel}>{sectionLabel}</Text>
-        {navItems.map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
+        {navItems.map((item) => <NavItem key={item.to} {...item} />)}
       </ScrollView>
 
-      {/* Footer */}
+      {/* Footer mejorado */}
       <View style={styles.footer}>
-        {/* User card */}
         <View style={styles.userCard}>
-          <View style={styles.userAvatarWrap}>
-            <View style={styles.userAvatar}>
-              <Text style={styles.userAvatarText}>{initials.charAt(0)}</Text>
-            </View>
-            <View style={styles.onlineDot} />
-          </View>
+          <LinearGradient colors={[theme.colors.blue600, theme.colors.green500]} style={styles.userAvatar}>
+            <Text style={styles.userAvatarText}>{initials.charAt(0)}</Text>
+          </LinearGradient>
+          <View style={styles.onlineDot} />
           <View style={styles.userInfo}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {userName.split(' ')[0]}
-            </Text>
+            <Text style={styles.userName} numberOfLines={1}>{userName.split(' ')[0]}</Text>
             <Text style={styles.userEmail} numberOfLines={1}>{userEmail || 'Online'}</Text>
           </View>
         </View>
 
-        {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <LogOut size={18} color={theme.colors.slate400} strokeWidth={2.5} />
           <Text style={styles.logoutText}>Cerrar Sesión</Text>
@@ -175,7 +198,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: theme.colors.blue600,
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ rotate: '3deg' }],
@@ -212,16 +234,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 20,
+    borderRadius: 16, // Más redondeado como la web
     marginBottom: 6,
+    overflow: 'hidden', // Necesario para que el LinearGradient no se salga de las esquinas
   },
   navItemActive: {
-    backgroundColor: theme.colors.blue600,
-    shadowColor: theme.colors.blue600,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderRadius: 16,
   },
   navItemLeft: {
     flexDirection: 'row',
@@ -247,19 +265,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: theme.colors.white,
     padding: 12,
-    borderRadius: 28,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: theme.colors.slate100,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   userAvatarWrap: { position: 'relative' },
   userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: theme.colors.blue600,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,5 +1,17 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+#eas update --branch preview --message "Descripción de lo que cambiaste" (actualizar)
+
+#solo necesitarás volver a hacer  (generar un nuevo APK) si haces cambios que tocan el "corazón" del teléfono, por ejemplo:eas build
+
+#Si decides usar la cámara del dispositivo.
+
+#Si agregas notificaciones push complejas.
+
+#Si cambias el icono de la aplicación o el nombre que aparece en la pantalla de inicio del celular.
+
+#Si cambias los permisos básicos de Android en el archivo .app.json
+
 # dependencies
 node_modules/
 
