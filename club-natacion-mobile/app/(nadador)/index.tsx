@@ -34,7 +34,7 @@ export default function DashboardNadador() {
   const { data: competencias = [], isLoading: loadComp } = useQuery({
     queryKey: ['misCompetenciasDashboard', perfil?._id],
     queryFn: async () => {
-      const res = await api.get(`/competencias/nadador/${perfil._id}`);
+      const res = await api.get(`/competencias/${perfil._id}`);
       return Array.isArray(res.data) ? res.data : (res.data?.competencias || []);
     },
     enabled: !!perfil?._id,
@@ -51,7 +51,10 @@ export default function DashboardNadador() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const isLoading = loadPerfil || loadComp || loadEntreno;
+  const isLoading = 
+  (loadPerfil && !perfil) || 
+  (loadComp && competencias.length === 0) || 
+  (loadEntreno && entrenamientos.length === 0);
 
   const userName = perfil?.user?.nombre || user?.nombre || 'Atleta';
   const userEmail = perfil?.user?.correo || user?.correo || '';
@@ -174,7 +177,7 @@ export default function DashboardNadador() {
             onPress={() => router.push('/(nadador)/tiempos')}
           >
             <Flame size={60} color="#EA580C" opacity={0.15} style={styles.flameBg} />
-            <Text style={styles.specialtyLabel}>Especialidad</Text>
+            <Text style={styles.specialtyLabel}>Especialidad principal</Text>
             <Text style={styles.specialtyValue}>{mejorPrueba}</Text>
             <View style={styles.specialtyLink}>
               <Text style={styles.specialtyLinkText}>Analizar Progreso</Text>
@@ -299,8 +302,8 @@ const styles = StyleSheet.create({
 
   // HERO
   hero: {
-    backgroundColor: theme.colors.slate900,
-    borderRadius: 32,
+    backgroundColor: theme.colors.slate100,
+    borderRadius: 50,
     padding: 24,
     gap: 4,
   },
@@ -316,11 +319,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase', letterSpacing: 4,
   },
   heroName: {
-    fontSize: 42, fontWeight: '900', color: theme.colors.white,
+    fontSize: 30, fontWeight: '900', color: theme.colors.slate900,
     fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: -1, lineHeight: 44,
   },
   heroLastName: {
-    fontSize: 42, fontWeight: '900', color: theme.colors.blue500,
+    fontSize: 30, fontWeight: '900', color: theme.colors.blue500,
     fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: -1, lineHeight: 44,
     marginBottom: 16,
   },
