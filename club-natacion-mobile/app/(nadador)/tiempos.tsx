@@ -216,7 +216,7 @@ export default function MisTiempos() {
                 onPress={() => handleUpdateFiltro("orden", filtros.orden === "fecha_desc" ? "tiempo_asc" : "fecha_desc")}
               >
                 <Text style={styles.orderSelectorText}>
-                  {filtros.orden === "fecha_desc" ? "RECIE. (FECHA ↓)" : "MEJORES (CRONO ↑)"}
+                  {filtros.orden === "fecha_desc" ? "RECIE. (FECHA ↓)" : "PB. (CRONO ↑)"}
                 </Text>
               </TouchableOpacity>
             </View>

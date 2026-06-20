@@ -12,6 +12,7 @@ import {
   Activity, ChevronRight, Trophy, Ruler, Weight,
   ArrowUpRight, Calendar, Timer, History, Waves, Award, Flame
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function DashboardNadador() {
   const { user } = useAuth();
@@ -105,6 +106,7 @@ export default function DashboardNadador() {
           </View>
           <Text style={styles.heroName}>{perfil?.user?.nombre || userName}</Text>
           <Text style={styles.heroLastName}>{perfil?.apellido || ''}</Text>
+
 
           {/* Categoría */}
           <TouchableOpacity
@@ -261,27 +263,35 @@ export default function DashboardNadador() {
           </View>
 
           {pasadasComp.length > 0 ? (
-            pasadasComp.slice(0, 3).map((comp: any, idx: number) => (
-              <View key={idx} style={styles.compItem}>
-                <View style={styles.compItemIcon}>
-                  <Award size={18} color="#F97316" strokeWidth={2.5} />
-                </View>
-                <View style={styles.compItemInfo}>
-                  <Text style={styles.compItemName} numberOfLines={1}>{comp.nombre}</Text>
-                  <Text style={styles.compItemDate}>
-                    {new Date(comp.fecha).toLocaleDateString()} • Piscina {comp.piscina}M
-                  </Text>
-                </View>
-                <ChevronRight size={16} color={theme.colors.slate600} />
-              </View>
-            ))
-          ) : (
-            <View style={styles.noDataDark}>
-              <Text style={styles.noDataDarkText}>
-                No se han registrado tiempos de competencia
-              </Text>
-            </View>
-          )}
+  pasadasComp.slice(0, 3).map((comp: any, idx: number) => (
+    <TouchableOpacity
+      key={idx}
+      onPress={() => router.push('/(nadador)/entrenamientos')}
+      activeOpacity={0.8}
+    >
+      <View style={styles.compItem}>
+        <View style={styles.compItemIcon}>
+          <Award size={18} color="#F97316" strokeWidth={2.5} />
+        </View>
+        <View style={styles.compItemInfo}>
+          <Text style={styles.compItemName} numberOfLines={1}>
+            {comp.nombre}
+          </Text>
+          <Text style={styles.compItemDate}>
+            {new Date(comp.fecha).toLocaleDateString()} • Piscina {comp.piscina}M
+          </Text>
+        </View>
+        <ChevronRight size={16} color={theme.colors.slate600} />
+      </View>
+    </TouchableOpacity>
+  ))
+) : (
+  <View style={styles.noDataDark}>
+    <Text style={styles.noDataDarkText}>
+      No se han registrado tiempos de competencia
+    </Text>
+  </View>
+)}
         </View>
 
       </ScrollView>
@@ -323,7 +333,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: -1, lineHeight: 44,
   },
   heroLastName: {
-    fontSize: 30, fontWeight: '900', color: theme.colors.blue500,
+    fontSize: 30, fontWeight: '900', color: theme.colors.orange600,
     fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: -1, lineHeight: 44,
     marginBottom: 16,
   },

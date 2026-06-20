@@ -166,14 +166,6 @@ export default function MiPerfil() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const proximasConv = useMemo(() => {
-    if (!Array.isArray(convocatorias)) return [];
-    return convocatorias
-      .filter((c: any) => new Date(c.fechaFin) >= new Date())
-      .sort((a: any, b: any) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())
-      .slice(0, 2);
-  }, [convocatorias]);
-
   const fechaFormateada = useMemo(() => {
     if (!nadador?.fechaNacimiento) return "No registrado";
     return new Date(nadador.fechaNacimiento).toLocaleDateString("es-ES", {
@@ -233,7 +225,7 @@ export default function MiPerfil() {
           <View style={[styles.statusBadge, nadador.pagoAlDia ? styles.statusBadgeActive : styles.statusBadgeInactive]}>
             <View style={[styles.statusDot, { backgroundColor: nadador.pagoAlDia ? '#10b981' : '#f97316' }]} />
             <Text style={[styles.statusBadgeText, { color: nadador.pagoAlDia ? '#047857' : '#c2410c' }]}>
-              {nadador.pagoAlDia ? "CUENTA ACTIVA" : "REVISAR CUENTA"}
+              {nadador.pagoAlDia ? "CUENTA ACTIVA"  : "REVISAR CUENTA"}
             </Text>
           </View>
         </View>
@@ -288,24 +280,6 @@ export default function MiPerfil() {
         <CambiarCorreo perfil={nadador} />
 
         {/* PRÓXIMAS COMPETENCIAS */}
-        <View style={styles.card}>
-          <View style={styles.competitionsHeader}>
-            <View style={styles.iconLabelGroup}>
-              <View style={styles.trophyWrapper}><Trophy size={14} color="white" /></View>
-              <Text style={styles.blockSectionTitle}>PRÓXIMAS COMPETENCIAS</Text>
-            </View>
-          </View>
-
-          <View style={{ gap: 10 }}>
-            {proximasConv.length > 0 ? (
-              proximasConv.map((c: any) => <ConvocatoriaRow key={c._id} conv={c} />)
-            ) : (
-              <View style={styles.emptyStateContainer}>
-                <Text style={styles.emptyStateText}>SIN CONVOCATORIAS PRÓXIMAS</Text>
-              </View>
-            )}
-          </View>
-        </View>
 
         {/* ESPECIALIDADES DE ESTILO */}
         {nadador.pruebasEspecialidad?.length > 0 && (
@@ -414,7 +388,7 @@ const styles = StyleSheet.create({
   tagBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   tagBadgeText: { fontSize: 8, fontWeight: '900', color: '#64748b' },
   athleteName: { fontSize: 22, fontWeight: '900', fontStyle: 'italic', color: theme.colors.slate900, textTransform: 'uppercase' },
-  athleteLastName: { color: '#64748b', fontWeight: '800' },
+  athleteLastName: { color: theme.colors.green600, fontWeight: '800' },
   metadataGrid: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#f1f5f9', marginTop: 12, paddingTop: 12, gap: 12 },
   dataLabelBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   dataLabelIconBox: { width: 26, height: 26, borderRadius: 8, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center', borderStyle: 'solid', borderWidth: 1, borderColor: '#edf2f7' },

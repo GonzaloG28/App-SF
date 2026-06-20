@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
     textTransform: 'uppercase',
-    letterSpacing: 3,
+    letterSpacing: 2,
   },
   cardFooter: {
     alignItems: 'center',

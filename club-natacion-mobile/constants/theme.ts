@@ -18,6 +18,7 @@ export const theme = {
     slate100:   '#F1F5F9',
     slate50:    '#F8FAFC',
     orange500:  '#F97316',
+    orange600:  '#da5b00',
     orange50:   '#FFF7ED',
     red500:     '#EF4444',
     red50:      '#FEF2F2',

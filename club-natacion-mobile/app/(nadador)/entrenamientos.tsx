@@ -14,7 +14,7 @@ function StatusBadge({ completed, type }: { completed: boolean; type: string }) 
   return (
     <View style={[styles.badge, completed ? styles.badgeSuccess : styles.badgeDefault]}>
       <Text style={[styles.badgeText, completed ? styles.badgeTextSuccess : styles.badgeTextDefault]}>
-        {completed ? "✓ Éxito" : `Fase: ${type}`}
+        {completed ? "✓ Éxito" : `Tipo: ${type}`}
       </Text>
     </View>
   );
@@ -129,7 +129,7 @@ export default function MisEntrenamientos() {
   // Mutación para completar rutina
   const completarMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await api.put(`/entrenamiento/completar/${id}`);
+      const res = await api.patch(`/entrenamiento/${id}/completar`);
       return res.data;
     },
     onSuccess: () => {
@@ -219,9 +219,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', marginBottom: 24 },
   badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   badgeBrand: { backgroundColor: theme.colors.blue600, color: 'white', fontSize: 10, fontWeight: '900', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
-  panelSubtitle: { color: theme.colors.blue600, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
-  mainTitle: { fontSize: 36, fontWeight: '900', fontStyle: 'italic', color: theme.colors.slate900 },
-  counterBox: { alignItems: 'flex-end' },
+  panelSubtitle: { color: theme.colors.blue600, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  mainTitle: { fontSize: 25, fontWeight: '900', fontStyle: 'italic', color: theme.colors.slate900 },
+  counterBox: { alignItems: 'center', minWidth: 70, backgroundColor: 'white', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9' },
   counterLabel: { fontSize: 9, fontWeight: '900', color: theme.colors.slate400, letterSpacing: 1 },
   counterNumber: { fontSize: 28, fontWeight: '900', fontStyle: 'italic', color: theme.colors.slate900, marginTop: -4 },
   

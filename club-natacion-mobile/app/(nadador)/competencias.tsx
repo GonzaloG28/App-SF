@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
     fontSize: 10, fontWeight: '900', paddingHorizontal: 6,
     paddingVertical: 2, borderRadius: 4, overflow: 'hidden', fontStyle: 'italic',
   },
-  headerSubtitle: { color: theme.colors.blue600, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+  headerSubtitle: { color: theme.colors.blue600, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   mainTitle: {
-    fontSize: 30, fontWeight: '900', color: '#0f172a',
+    fontSize: 20, fontWeight: '900', color: '#0f172a',
     fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: -0.5,
   },
   mainTitleAccent: { color: theme.colors.blue600 },

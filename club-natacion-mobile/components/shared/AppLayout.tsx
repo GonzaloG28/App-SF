@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
-    letterSpacing: 3,
+    letterSpacing: 1,
     marginBottom: 2,
   },
   headerTitle: {

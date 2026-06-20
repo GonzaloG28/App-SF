@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     fontWeight: '900', letterSpacing: 3,
   },
   mainTitle: {
-    fontSize: 28, fontWeight: '900', color: '#0f172a',
+    fontSize: 20, fontWeight: '900', color: '#0f172a',
     fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: -0.5,
   },
   mainTitleAccent: { color: theme.colors.blue600 },
