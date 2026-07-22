@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Modal, SafeAreaView, StatusBar
+  Modal, StatusBar
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
 import { Menu, User } from 'lucide-react-native';
 import Sidebar from './Sidebar';

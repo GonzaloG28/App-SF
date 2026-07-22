@@ -291,7 +291,7 @@ export default function ProfesorNadadores() {
           </View>
           <TouchableOpacity
             style={styles.newBtn}
-            onPress={() => router.push('/(profesor)/nadadores/nuevo')}
+            onPress={() => router.push('/(profesor)/nadadorForm')}
             activeOpacity={0.85}
           >
             <UserPlus size={17} color="white" strokeWidth={2.5} />
